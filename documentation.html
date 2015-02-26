@@ -5,20 +5,85 @@ title: Documentation
 submenu: documentation
 ---
 
-<h2>Typical working session</h1>
+<h2>Getting started</h1>
 
-<p>FIXME: probably 3 lines here</p>
+<p>When you first use <code>nota</code>, it will create a (sqlite) database for
+you.  By default this will be in a the file <code>~/Dropbox/nota.db</code>,
+although it's possible to set the file name with the <code>--database</code>
+option or, better, as named in a <code>~/.notarc</code> file, in a line like
+<pre>
+database = "~/nota.db"
+</pre>
+perhaps. In any case, the database will be populated with tables that will store note items and keywords. 
 
-<h2>Listing notes</h1>
+<h2>Adding notes<h2>
 
-<p>FIXME: listing all, listing by hash, listing by key</p>
+<p>To add a note, try using
+<pre>
+nota -a
+</pre>
+which will launch an editor (as defined in your <code>EDITOR</code> shell variable) that invites you to fill in some content. The file contains comments that explain where you should enter a title, keywords, and content; you can also enter a due date, if you like.
+</p>
 
-<h2>Adding notes</h1>
+<h2>Listing notes</h2>
+Typing
+<pre>
+nota
+</pre>
+will display the note we just added. At the start of the display is a ``hash'' code that
+identifies the note. The hash will be 7 characters long, as is always the case
+when a single note is being displayed. However, if you add a second note and list
+the notes, you'll get an abbreviated form that gives a shortened hash, plus the title,
+plus the keywords (the last within square brackets).</p>
 
-<p>FIXME: both interactive and noninteractive styles. Must get in to editors I
-guess ... no idea if I can call out to textedit.</p>
+<p>To display a single note, give its hash code in the call, e.g. if the hash
+is <code>ab</code>, type
+<pre>
+nota ab
+</pre>
+You can get the same results with just a leading part of the hash code, so long
+as it is sufficient to identify the note.</p>
 
-<h2>Deleting notes</h1>
+<p>It is also possible to get a list of notes containing a given keyword, e.g. to get 
+notes with the keyword <code>ocean</code>, try
+<pre>
+nota -k ocean
+</pre>
+Note that keywords are matched using a ``fuzzy'' algorithm, so partial words often also work.
+</p>
 
+<h2>Editing notes</h2>
+
+<p>To edit a note, use the <code>-e</code> argument, e.g.
+<pre>
+nota -e ab
+</pre>
+will open an editor to let you alter the note specified by the hash
+<code>ab</code>. If the hash code matches several notes, an error message will
+be provided to tell you to use more characters in the hash code.  </p>
+
+<h2>Deleting notes</h2>
+
+<p>The <code>-d</code> is used to delete notes, e.g.
+<pre>
+nota -d ab
+</pre>
+
+will delete the note.  Actually, what it does is to move it to a trash bin. If
+you relist the notes, you'll see that the trash now has contents. You can see
+what's in the trash with
+<pre>
+nota --trash
+</pre>
+
+<p>If you wish to undelete a note in the trash, use e.g.
+<pre>
+nota --undelete ab
+</pre>
+but, on the other hand, if you're sure the trash contains nothing you'll ever
+need again, you can empty it with
+<pre>
+nota --emptytrash
+</pre>
 
 
