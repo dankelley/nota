@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='nota',
-      version='0.5.1',
+      version='0.5.5',
       description='Text-based note taker',
       url='https://github.com/dankelley/nota',
       author='Dan Kelley',
@@ -10,4 +10,7 @@ setup(name='nota',
       packages=['nota'],
       classifiers=['Development Status :: 3 - Alpha',
           'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'],
+      entry_points={ 'console_scripts':
+          [ 'nota = nota.main:nota' ]
+          },
       zip_safe=True)
