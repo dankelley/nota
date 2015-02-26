@@ -141,8 +141,9 @@ following:
 parser.add_argument("hash", nargs="?", default="", help="abbreviated hash to search for", metavar="hash")
 parser.add_argument("-a", "--add", action="store_true", dest="add", default=False, help="add a note")
 parser.add_argument("-e", "--edit", type=str, default=None, help="edit note with abbreviated hash 'h'", metavar="h")
-parser.add_argument("-d", "--delete", type=str, default=None, help="delete note abbreviated hash 'h'", metavar="h")
-parser.add_argument("--undelete", type=str, default=None, help="undelete note abbreviated hash 'h'", metavar="h")
+parser.add_argument("-d", "--delete", type=str, default=None, help="move note abbreviated hash 'h' to trash", metavar="h")
+parser.add_argument("--undelete", type=str, default=None, help="remove note abbreviated hash 'h' from trash", metavar="h")
+parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty the trash, permanently deleting notes therein")
 parser.add_argument("-i", "--id", type=int, help="ID number of note to work with (MAY BE REMOVED)")
 parser.add_argument("-H", "--Hints", action="store_true", dest="hints", default=False, help="get hints")
 parser.add_argument("-m", "--mode", type=str, default="interactive", choices=['interactive', 'plain', 'json', 'markdown'],
@@ -215,6 +216,11 @@ if args.delete:
 if args.undelete:
     nota.fyi("should now undelete note with hash %s" % args.undelete)
     nota.undelete(args.undelete)
+    sys.exit(0)
+
+if args.emptytrash:
+    nota.fyi("should now empty the trash")
+    nota.emptytrash()
     sys.exit(0)
 
 if args.edit:

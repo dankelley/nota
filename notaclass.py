@@ -298,6 +298,23 @@ class Nota:
         self.con.commit()
         return True
 
+
+    def emptytrash(self):
+        self.fyi("about to empty the trash")
+        try:
+            noteIds = []
+            noteIds.extend(self.con.execute("SELECT noteId from note WHERE in_trash=1;"))
+            for n in noteIds:
+                self.fyi("  trashing note with noteId: %s" % n)
+                self.con.execute("DELETE FROM note where noteId=?", n)
+                self.fyi("  trashing notekeyword with noteId: %s" % n)
+                self.con.execute("DELETE FROM notekeyword where noteid=?", n)
+            self.fyi("trashed %s notes" % len(noteIds))
+            self.con.commit()
+        except:
+            self.error("problem encountered when emptying the trash")
+
+
     def edit(self, id=-1):
         # Edit a note, avoiding code repetition by making a new one and then renumbering it
         if id < 0:
