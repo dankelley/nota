@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!--[if lt IE 7 ]><html class="ie ie6" lang="en"> <![endif]-->
+<!--[if IE 7 ]><html class="ie ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]><html class="ie ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--><html lang="en"> <!--<![endif]-->
+<head>
+
+<!-- the css and html are based on https://github.com/dhg/Skeleton -->
+
+<!-- Basic Page Needs
+  ================================================== -->
+<meta charset="utf-8">
+<title>Oce: an R package for Oceanography</title>
+<meta name="description" content="Oce: an R package for oceanographic analysis">
+<meta name="author" content="Dan Kelley">
+
+<!--[if lt IE 9]>
+                <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+
+<!-- Mobile Specific Metas
+  ================================================== -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<!-- CSS
+  ================================================== -->
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/skeleton.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/syntax.css">
+<!-- <link rel="stylesheet" href="/css/style.css"> -->
+
+<!-- Favicon
+        ================================================== -->
+<link rel="shortcut icon" href="src/images/favicon.ico">
+
+</head>
+
+<body>
+<div class="container">
+    <div class="three columns sidebar">
+        <nav>
+        <img src="css/oce-logo-2.png" alt="OCE">
+            <ul>
+                <li><a href="/oce/index.html">Overview</a></li>
+                <li><a href="/oce/installation.html">Installation</a></li>
+                <li><a href="/oce/examples.html">Examples</a></li>
+                <li><a href="/oce/documentation.html">Documentation</a></li>
+                <li><a href="/oce/bugs.html">Bugs</a></li>
+            </ul>
+        </nav>
+        &nbsp;
+    </div>
+    <div class="twelve columns offset-by-one content">
+        <header>
+            <h1>Overview</h1>
+            <!--<a href="http://twitter.com/share" class="twitter-share-button" data-text="Skeleton - A Beautiful Boilerplate for Responsive, Mobile-Friendly Development" data-count="horizontal" data-via="dhg">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>-->
+        </header>
+        <hr class="large" />
+
+<div id="content">
+    <p>Oce is a package for the <a href="http://www.r-project.org/">R statistical
+    language</a> that helps Oceanographers do their work by providing functions
+to read Oceanographic data files, to process the data in instrument-specific
+ways, and to represent the results with plots that follow Oceanographic
+convention.</p>
+
+<p>Developed in a university and research setting, Oce is simple enough for
+novices but powerful enough for experts.</p>
+
+<p>Oce makes heavy use of the R notion of <i>generic functions</i>, which means
+that a single function call works across a wide range of data types.  For example,</p>
+<div class="highlight"><pre><code class="r">library<span class="p">(</span>oce<span class="p">)</span>
+d <span class="o">&lt;-</span> read.oce<span class="p">(</span><span class="s">&quot;file&quot;</span><span class="p">)</span>
+plot<span class="p">(</span>d<span class="p">)</span></code></pre></div>
+<p>will produce a useful plot that is tailored to the type of data stored in
+the file named <code>file</code>.  For example, if <code>file</code> contains
+CTD data, then the <code>read.oce()</code> function will return an object of
+class <code>ctd</code>, causing <code>plot()</code> to produce profiles of
+salinity, temperature, density and buoyancy frequency, along with a TS plot and
+a location map.  But if <code>file</code> contains ADCP data, the results will
+instead be a set of images giving space-time variation of velocity components.
+Similar behaviours result from the dozens of data types recognized by Oce.</p>
+
+<p>Installing Oce is a simple matter, as shown in the next tab of this website.
+Other tabs provide entries into the documentation and the bug-reporting
+system.</p>
+
+</div>
+
+        <!-- END {the actual content} -->
+
+
+    </div><!-- container -->
+</div><!-- container -->
+
+<p class="footnote">This website is written in <a
+    href="http://jekyllrb.com">Jekyll</a>, and the source is available on <a
+    href="https://github.com/dankelley/oce/tree/gh-pages">GitHub</a>.</p>
+
+<div class="resize"></div>
+</body>
+</html>
+
