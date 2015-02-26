@@ -54,8 +54,7 @@ def nota():
                                 return(tokens[1])
                 return(default)
         except:
-            print("cannot open file '%s'" % file, file=sys.stderr)
-            exit(1)
+            return(default)
     
     
     # If second arg is a number, it is a noteId
