@@ -147,7 +147,7 @@ class Nota:
         self.cur.execute("CREATE TABLE notekeyword(notekeywordId integer primary key autoincrement, noteid, keywordid);")
         self.con.commit()
 
-    def add(self, title="", keywords="", content="", due="", privacy=0, date="", modified="", hash=""):
+    def add(self, title="", keywords="", content="", due="", privacy=0, date="", modified=""):
         ''' Add a note to the database.  The title should be short (perhaps 3
         to 7 words).  The keywords are comma-separated, and should be similar
         in style to others in the database.  The content may be of any length.
@@ -159,12 +159,19 @@ class Nota:
         now = datetime.datetime.now()
         if date == "":
             date = now.strftime("%Y-%m-%d %H:%M:%S")
-        if not len(hash):
-            noteId = self.cur.nextrowid
-            hash = hashlib.sha256(noteId+date+title).hexdigest()
-        self.cur.execute("INSERT INTO note(authorId, date, modified, title, content, privacy, due, hash) VALUES(?, ?, ?, ?, ?, ?, ?, ?);",
-                (self.authorId, date, modified, title, content, privacy, due, hash))
+        try:
+            self.cur.execute("INSERT INTO note(authorId, date, modified, title, content, privacy, due) VALUES(?, ?, ?, ?, ?, ?, ?);",
+                (self.authorId, date, modified, title, content, privacy, due))
+        except:
+            self.error("error adding note to the database")
         noteId = self.cur.lastrowid
+        self.fyi("noteId: %s" % noteId)
+        hash = hashlib.sha256(str(noteId)+date+title).hexdigest()
+        self.fyi("hash: %s" % hash)
+        try:
+            self.cur.execute("UPDATE note SET hash=? WHERE noteId=?;", (hash, noteId))
+        except:
+            self.error("error adding note hash to the database")
         # FIXME: replace next with keyword_hookup() call?
         for keyword in keywords:
             keyword = keyword.decode('utf-8')
