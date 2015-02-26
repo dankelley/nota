@@ -50,14 +50,19 @@ against obsolescence.
 
 ### Installation
 
+**IMPORTANT** By perhaps the end of March, 2015, it will be possible to install
+``nota`` as an offical python package, and at that stage the installation
+method will change for normal users ... but experts will still want to download
+the repository from github and do as follows...
+
 Download the source code to some directory, and then create an alias along the
 following lines, adjusted for the directory name
 
-    alias nota=~/src/nota/nota
+    alias nota=~/src/nota/nota/__init__.py
 
 or, for faster typing, 
 
-    alias n=~/src/nota/nota
+    alias n=~/src/nota/nota/__init__.py
 
 ### Specifying a database file
 
