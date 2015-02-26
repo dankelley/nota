@@ -273,20 +273,19 @@ python setup.py bdist_wheel --universal
 twine upload dist/*
 ``
 
-To install from the official site, use
+Installing from the official site
 ```
 sudo pip install nota
 ```
-or, if you're upgrading, use
+
+To use this official version, set up an alias (only on OSX):
 ```
-sudo pip install nota --upgrade
+alias nota= python /Library/Python/2.7/site-packages/nota/__init__.py
 ```
 
-Thereafter, use as e.g.
+FIXME: surely there is a way to get a commandline version. How does e.g. 
 ```
-nota
+/Library/Python/2.7/site-packages/twine
 ```
-although it seems likely that an alias will be preferred, e.g.
-```
-alias na=nota
+do it??
 
