@@ -570,7 +570,8 @@ CONTENT...
             elif "CONTENT" in line:
                 inContent = True
         content = content.rstrip('\n')
-        keywords = keywords.split(',')
+        #keywords = keywords.split(',')
+        keywords = [key.lstrip().rstrip() for key in keywords.split(',')]
         self.fyi("LATE keywords= %s" % keywords)
         return {"title":title, "keywords":keywords, "content":content, "privacy":privacy, "due":due}
 

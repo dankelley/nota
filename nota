@@ -168,7 +168,7 @@ parser.add_argument("--developer", action="store_true", default=False, help="fla
 args = parser.parse_args()
 
 args.keywordsoriginal = args.keywords
-args.keywords = args.keywords.split(',')
+args.keywords = [key.lstrip().rstrip() for key in args.keywords.split(',')]
 
 if not args.debug:
     args.debug = debug
@@ -259,12 +259,14 @@ if args.add:
                     sys.exit(1)
                 if 'content' not in j:
                     j['content'] = ""
+                ## FIXME keywords (chop whitespace)
                 if 'keywords' in j:
                     keyword = j['keywords'].split(',')
                 else:
                     keyword = ''
                 if 'privacy' not in j:
                     j['privacy'] = 0
+                ## FIXME keywords (next does nothing?)
                 j['keywords'].split(',')
                 id = nota.add(title=j['title'], keywords=keyword, content=j['content'], privacy=j['privacy'])
         sys.exit(0)
@@ -305,7 +307,8 @@ if args.add:
                 keywords = re.sub(r' *\] *\[ *', ',', keywords).strip()
                 keywords = re.sub(r' *\[ *', '', keywords).strip()
                 keywords = re.sub(r' *\] *', '', keywords).strip()
-                keywords = keywords.split(',')
+                #keywords = keywords.split(',')
+                keywords = [key.lstrip().rstrip() for key in keywords.split(',')]
             else:
                 if content == "" and line == "":
                     next # FIXME: should this be 'continue'?
