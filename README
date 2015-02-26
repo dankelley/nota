@@ -50,19 +50,28 @@ against obsolescence.
 
 ### Installation
 
-**IMPORTANT** By perhaps the end of March, 2015, it will be possible to install
-``nota`` as an offical python package, and at that stage the installation
-method will change for normal users ... but experts will still want to download
-the repository from github and do as follows...
+#### Official version
+
+To install from the official site, use
+```
+sudo pip install nota
+```
+or, if you're upgrading, use
+```
+sudo pip install nota --upgrade
+```
+
+#### Development version
 
 Download the source code to some directory, and then create an alias along the
 following lines, adjusted for the directory name
-
-    alias nota=~/src/nota/nota/__init__.py
-
+```
+alias nota=~/src/nota/nota/__init__.py
+```
 or, for faster typing, 
-
-    alias n=~/src/nota/nota/__init__.py
+```
+alias n=~/src/nota/nota/__init__.py
+```
 
 ### Specifying a database file
 
@@ -263,29 +272,15 @@ is not a high priority.
 
 * ... your item here :-)
 
-# DEVELOPER NOTES
+# Developer notes
 
 Below are the steps for updating the package and submiting to
 ``pypi.python.org``.
 ```
 python setup.py sdist
 python setup.py bdist_wheel --universal
+# manually remove old versions from dist
 twine upload dist/*
-``
-
-Installing from the official site
-```
-sudo pip install nota
 ```
 
-To use this official version, set up an alias (only on OSX):
-```
-alias nota= python /Library/Python/2.7/site-packages/nota/__init__.py
-```
-
-FIXME: surely there is a way to get a commandline version. How does e.g. 
-```
-/Library/Python/2.7/site-packages/twine
-```
-do it??
 
