@@ -5,5 +5,27 @@ title: Installation
 submenu: installation
 ---
 
-<p>FIXME: write this page</p>
+<p>The stable version is stored on
+[pypy.python.org](http://pypi.python.org/nota), and can be installed with the
+<code>pip</code> system command. Most systems will already have python
+installed, but it may be necessary to install <code>pip</code> also. Do that
+with</p>
+<pre>
+sudo easy_install pip
+</pre>
+<p>in a unix shell. This must only be done once; after that, the <code>pip</code> command will be available for installing any python package on pypi.</p>
+
+<p>Now that the OS is set up, it's time to install <code>nota</code> itself. This is done with</p>
+<pre>
+sudo pip install nota
+</pre>
+or, if you are upgrading to a new version, use
+<pre>
+sudo pip install nota --upgrade
+</pre>
+
+<p>At this point, you may use <code>nota</code> as e.g. below, to list notes:</p>
+<pre>
+nota
+</pre>
 

@@ -1,0 +1,12 @@
+README
+setup.cfg
+setup.py
+nota/__init__.py
+nota/main.py
+nota/notaclass.py
+nota.egg-info/PKG-INFO
+nota.egg-info/SOURCES.txt
+nota.egg-info/dependency_links.txt
+nota.egg-info/entry_points.txt
+nota.egg-info/top_level.txt
+nota.egg-info/zip-safe
