@@ -163,7 +163,7 @@ parser.add_argument("--database", type=str, default=defaultDatabase, help="filen
 parser.add_argument("--strict", action="store_true", default=False, help="use strict search?")
 parser.add_argument("--due", type=str, default="", help="time when item is due [not used yet]", metavar="when")
 parser.add_argument("-p", "--pretty", type=str, default="", metavar="fmt", help="format for note output")
-parser.add_argument("-v'" "--version", action="store_true", dest="version", default=False, help="get version number")
+parser.add_argument("-v", "--version", action="store_true", dest="version", default=False, help="get version number")
 parser.add_argument("--developer", action="store_true", default=False, help="flag for the developer *only*")
 args = parser.parse_args()
 
