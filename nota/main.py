@@ -15,24 +15,22 @@ import subprocess
 def nota():
 
     hints = [
-            'to add a note, type "nota -a" (which opens an editor)', 
-            'to see all notes, type "nota"',
-            'to read notes from a JSON file, type "nota -a -m json < notes.json"',
-            'to store notes into a JSON file, type "nota -m json > notes.json"',
-            'to see all notes in markdown format, type "nota -m markdown"',
-            'to see all notes in json format, type "nota -m json"',
-            'to edit note with hash \'ab...\', type "nota -e ab" (which opens an editor)',
-            'to delete note with hash \'ab...\', type "nota -d ab"',
-            'to see notes with keyword \'foo\', type "nota -k foo"',
-            'to see note with hash \'ab...\', type "nota ab"',
-            'to see note with hash \'ab...\', type "nota ab"',
-            'to see notes in the trash, type "nota --trash"',
-            'to remove notes with hash \'ab...\' from the trash, type "nota --undelete ab"',
-            'to recreate note hashes, type "nota --rehash" (a RARE need)',
-            'notes are ordered by time of entry']
+            'add a note: "nota -a" (opens an editor)', 
+            'see all notes: "nota"',
+            'read notes from a JSON file: "nota -a -m json < notes.json"',
+            'store notes into a JSON file: "nota -m json > notes.json"',
+            'see all notes in markdown format: "nota -m markdown"',
+            'see all notes in json format: "nota -m json"',
+            'edit note with hash \'ab...\': "nota -e ab" (opens an editor)',
+            'delete note with hash \'ab...\': "nota -d ab"',
+            'see notes with keyword \'foo\': "nota -k foo"',
+            'see note with hash \'ab...\': "nota ab"',
+            'see notes in the trash: "nota --trash"',
+            'untrash notes with hash \'ab...\': "nota --undelete ab"',
+            'recreate note hashes: "nota --rehash" (a RARE need)']
     
     def random_hint():
-       return hints[randint(0, len(hints)-1)]
+        return hints[randint(0, len(hints)-1)]
     
     def get_from_dotfile(file, token, default=""):
         try:
@@ -76,6 +74,7 @@ def nota():
         keyword = '\033[4m' # darkcyan [git '@@' color]
         normal = '\033[0m' # black
     color_scheme = get_from_dotfile("~/.notarc", "color", True)
+    use_color = True
     
     if isinstance(color_scheme, str):
         if color_scheme == "dk1":
@@ -185,7 +184,10 @@ def nota():
     
     if args.hints:
         for hint in hints:
-            print(hint)
+            if use_color:
+                print(hint.replace(' "',' \'\033[1m').replace('"', '\033[0m\''))
+            else:
+                print(hint)
         sys.exit(0)
     
     # look in ~/.notarc to see if a database is named there
@@ -486,6 +488,10 @@ def nota():
             print(count)
         if args.mode != "json" and not args.count:
             print("%s notes are in the trash" % nota.trash_length())
-            print("\nHINT:", end=" ")
-            print(random_hint())
+            print("HINT:", end=" ")
+            hint = random_hint()
+            if use_color:
+                print(hint.replace(' "',' \'\033[1m').replace('"', '\033[0m\''))
+            else:
+                print(hint)
     
