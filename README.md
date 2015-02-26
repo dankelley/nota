@@ -263,3 +263,13 @@ is not a high priority.
 
 * ... your item here :-)
 
+# DEVELOPER NOTES
+
+Below are the steps for updating the package and submiting to
+``pypi.python.org``.
+```
+python setup.py sdist
+python setup.py bdist_wheel --universal
+twine upload dist/*
+``
+

@@ -1,11 +1,13 @@
 from setuptools import setup
 
 setup(name='nota',
-      version='0.5',
+      version='0.5.1',
       description='Text-based note taker',
       url='https://github.com/dankelley/nota',
       author='Dan Kelley',
       author_email='kelley.dan@google.com',
       license='GPL3',
       packages=['nota'],
-      zip_safe=False)
+      classifiers=['Development Status :: 3 - Alpha',
+          'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'],
+      zip_safe=True)
