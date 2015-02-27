@@ -93,12 +93,16 @@ def nota():
                              #
                              # It is also possible to specify a color scheme, with the 
                              # choices being as follows (SUBJECT TO CHANGE!)
-                             #   color = "default"
-                             #   color = "forest"
-                             #   color = "cr1"
-        color.hash = "36m"   # darkcyan;  see http://en.wikipedia.org/wiki/ANSI_escape_code
-        color.title = "1m"   # bold;      see http://en.wikipedia.org/wiki/ANSI_escape_code
-        color.keyword = "4m" # underline; see http://en.wikipedia.org/wiki/ANSI_escape_code
+                             #   color = "bubblegum" # red hash, cyan keywords
+                             #   color = "forest" # green hash, straw keywords
+                             #   color = "bun" # blue hash, underlined keywords
+                             #   color = "gun" # green hash, underlined keywords
+                             #   color = "run" # red hash, underlined keywords
+                             #   color = "default" # same as "run"
+                             # (see http://en.wikipedia.org/wiki/ANSI_escape_code)
+        color.hash = "36m"   # darkcyan
+        color.title = "1m"   # bold
+        color.keyword = "4m" # underline
         '''))
     
     parser.add_argument("hash", nargs="?", default="", help="abbreviated hash to search for", metavar="hash")
@@ -153,6 +157,14 @@ def nota():
             color.title = '\033[' + '1m' # bold
             #color.keyword = '\033[' + '4m' # underline
             color.keyword = '\033[' + '33m' # yellow (like commit hash from git)
+        elif color_scheme == "gun": # green-underline
+            color.hash = '\033[' + '32m' # green
+            color.title = '\033[' + '1m' # bold
+            color.keyword = '\033[' + '4m' # underline
+        elif color_scheme == "bun": # blue-underline
+            color.hash = '\033[' + '34m' # blue
+            color.title = '\033[' + '1m' # bold
+            color.keyword = '\033[' + '4m' # underline
         elif color_scheme == "run": # red-underline
             color.hash = '\033[' + '31m' # red 
             color.title = '\033[' + '1m' # bold
@@ -162,7 +174,7 @@ def nota():
             color.title = '\033[' + '1m' # bold
             color.keyword = '\033[' + '35m'
         elif color_scheme == "default":
-            color.hash = '\033[' + '32m' # green
+            color.hash = '\033[' + '31m' # red 
             color.title = '\033[' + '1m' # bold
             color.keyword = '\033[' + '4m' # underline
         else:
