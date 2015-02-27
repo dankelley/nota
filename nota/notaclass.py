@@ -153,8 +153,8 @@ class Nota:
         in style to others in the database.  The content may be of any length.
         Notes with privacy > 0 are increasingly hidden (or will be, when the
         application is more complete). '''
-        title = title.decode('utf-8')
-        content = content.decode('utf-8')
+        # title = title.decode('utf-8')
+        # content = content.decode('utf-8')
         due = self.interpret_time(due)[0]
         now = datetime.datetime.now()
         if date == "":
@@ -174,7 +174,7 @@ class Nota:
             self.error("error adding note hash to the database")
         # FIXME: replace next with keyword_hookup() call?
         for keyword in keywords:
-            keyword = keyword.decode('utf-8')
+            #keyword = keyword.decode('utf-8')
             self.fyi(" inserting keyword:", keyword)
             keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword = ?;", [keyword]).fetchone()
             if keywordId:
