@@ -271,7 +271,7 @@ After this, the ``dist`` directory will contain some packages.
 
 To install a local test version, do e.g. (with altered version number)
 ```
-sudo pip install dist/nota-0.5.9.tar.gz --upgrade
+sudo pip install dist/nota-0.5.10.tar.gz --upgrade
 ```
 
 ## Installing package on pypi.python
