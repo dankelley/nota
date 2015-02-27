@@ -84,7 +84,7 @@ class Nota:
                         if row == None:
                             break
                         id.append(row[0])
-                        h = hashlib.sha256(row[0]+row[1]+row[2]).hexdigest()
+                        h = hashlib.sha256((row[0]+row[1]+row[2]).encode('utf8')).hexdigest()
                         hash.append(h)
                     if self.debug:
                         print(id)
@@ -166,7 +166,7 @@ class Nota:
             self.error("error adding note to the database")
         noteId = self.cur.lastrowid
         self.fyi("noteId: %s" % noteId)
-        hash = hashlib.sha256(str(noteId)+date+title).hexdigest()
+        hash = hashlib.sha256((str(noteId)+date+title).encode('utf8')).hexdigest()
         self.fyi("hash: %s" % hash)
         try:
             self.cur.execute("UPDATE note SET hash=? WHERE noteId=?;", (hash, noteId))
@@ -270,7 +270,7 @@ class Nota:
             print("time:     %s" % n[1])
             print("title:    %s" % n[2])
             print("old hash: %s" % n[3])
-            hash = hashlib.sha256(str(n[0])+n[1]+n[2]).hexdigest()
+            hash = hashlib.sha256((str(n[0])+n[1]+n[2]).encode('utf8')).hexdigest()
             print("new hash: %s" % hash)
             try:
                 self.cur.execute("UPDATE note SET hash=? WHERE noteId=?;", (hash, n[0]))
