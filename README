@@ -272,14 +272,22 @@ is not a high priority.
 
 * ... your item here :-)
 
+
 # Developer notes
 
-Below are the steps for updating the package and submiting to
-``pypi.python.org``.
+Below are the steps for updating the package:
 ```
 python setup.py sdist
 python setup.py bdist_wheel --universal
-# manually remove old versions from dist
+```
+
+To test, do e.g. (with proper version number):
+```
+sudo pip install dist/nota-0.5.9.tar.gz --upgrade
+```
+
+To submit to ``pypi.python.org`` remove old versions from ``dist`` and then do:
+```
 twine upload dist/*
 ```
 
