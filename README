@@ -281,7 +281,12 @@ python setup.py sdist
 python setup.py bdist_wheel --universal
 ```
 
-To test, do e.g. (with proper version number):
+To test quickly, run as e.g.
+```
+PYTHONPATH=/Users/kelley/src/nota python -m nota
+```
+
+To install a local test version, do e.g. (with altered version number)
 ```
 sudo pip install dist/nota-0.5.9.tar.gz --upgrade
 ```
