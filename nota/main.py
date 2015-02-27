@@ -146,11 +146,15 @@ def nota():
         keyword = '\033[4m' # darkcyan [git '@@' color]
         normal = '\033[0m' # black
     if args.color:
-        color_scheme = args.color
+        if args.color == "True":
+            color_scheme = True
+        elif args.color == "False":
+            color_scheme = False
+        else:
+            color_scheme = args.color
     else:
         color_scheme = get_from_dotfile("~/.notarc", "color", True)
     use_color = True
-    
     if isinstance(color_scheme, str):
         if color_scheme == "forest": # green-straw
             color.hash = '\033[' + '32m' # green
@@ -178,6 +182,7 @@ def nota():
             color.title = '\033[' + '1m' # bold
             color.keyword = '\033[' + '35m'
         else:
+            print("Unknown color scheme '%s'; using 'default' instead." % color_scheme)
             color.hash = '\033[' + '31m' # red
             color.title = '\033[' + '1m' # bold
             color.keyword = '\033[' + '35m'
