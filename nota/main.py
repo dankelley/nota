@@ -86,6 +86,10 @@ def nota():
             color.hash = '\033[' + '31m' # red 
             color.title = '\033[' + '1m' # bold
             color.keyword = '\033[' + '4m' # underline
+        elif color_scheme == "default":
+            color.hash = '\033[' + '32m' # green
+            color.title = '\033[' + '1m' # bold
+            color.keyword = '\033[' + '4m' # underline
         else:
             color.hash = '\033[' + '32m' # green
             color.title = '\033[' + '1m' # bold
@@ -132,6 +136,7 @@ def nota():
                              #
                              # It is also possible to specify a color scheme, with the 
                              # choices being as follows (SUBJECT TO CHANGE!)
+                             #   color = "default"
                              #   color = "forest"
                              #   color = "cr1"
         color.hash = "36m"   # darkcyan;  see http://en.wikipedia.org/wiki/ANSI_escape_code
