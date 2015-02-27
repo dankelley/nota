@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from __future__ import print_function
-from notaclass import Nota
+from .notaclass import Nota
 import argparse
 import sys
 import json
@@ -360,7 +360,7 @@ def nota():
             if id_desired[0:1] == '-': # don't get confused by arg flags
                 id_desired = None
         if id_desired is not None:
-            if id_desired <= 0:
+            if isinstance(id_desired, int) and id_desired <= 0:
                 ids = nota.get_id_list()
                 nids = len(ids)
                 if (id_desired + nids - 1) < 0:
