@@ -494,7 +494,7 @@ def nota():
             print(count)
         if args.mode != "json" and not args.count:
             print("%s notes are in the trash" % nota.trash_length())
-            print("HINT:", end=" ")
+            print("Hint:", end=" ")
             hint = random_hint()
             if use_color:
                 print(hint.replace(' "',' \'\033[1m').replace('"', '\033[0m\''))
