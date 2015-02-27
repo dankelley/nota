@@ -77,7 +77,7 @@ def nota():
     use_color = True
     
     if isinstance(color_scheme, str):
-        if color_scheme == "dk1":
+        if color_scheme == "forest":
             color.hash = '\033[' + '32m' # green
             color.title = '\033[' + '1m' # bold
             #color.keyword = '\033[' + '4m' # underline
@@ -87,8 +87,9 @@ def nota():
             color.title = '\033[' + '1m' # bold
             color.keyword = '\033[' + '4m' # underline
         else:
-           print("Unknown color scheme color=\"%s\" specified in ~/.nrbc file." % color_scheme) 
-           exit(1)
+            color.hash = '\033[' + '32m' # green
+            color.title = '\033[' + '1m' # bold
+            color.keyword = '\033[' + '4m' # underline
         use_color = True
     elif isinstance(color_scheme, bool):
         use_color = color_scheme
@@ -131,7 +132,7 @@ def nota():
                              #
                              # It is also possible to specify a color scheme, with the 
                              # choices being as follows (SUBJECT TO CHANGE!)
-                             #   color = "dk1"
+                             #   color = "forest"
                              #   color = "cr1"
         color.hash = "36m"   # darkcyan;  see http://en.wikipedia.org/wiki/ANSI_escape_code
         color.title = "1m"   # bold;      see http://en.wikipedia.org/wiki/ANSI_escape_code
