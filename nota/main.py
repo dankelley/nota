@@ -98,7 +98,7 @@ def nota():
                              #   color = "bun" # blue hash, underlined keywords
                              #   color = "gun" # green hash, underlined keywords
                              #   color = "run" # red hash, underlined keywords
-                             #   color = "default" # same as "run"
+                             #   color = "default" # same as "bubblegum"
                              # (see http://en.wikipedia.org/wiki/ANSI_escape_code)
         color.hash = "36m"   # darkcyan
         color.title = "1m"   # bold
@@ -174,20 +174,20 @@ def nota():
             color.title = '\033[' + '1m' # bold
             color.keyword = '\033[' + '35m'
         elif color_scheme == "default":
-            color.hash = '\033[' + '31m' # red 
+            color.hash = '\033[' + '31m' # red
             color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '4m' # underline
+            color.keyword = '\033[' + '35m'
         else:
-            color.hash = '\033[' + '32m' # green
+            color.hash = '\033[' + '31m' # red
             color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '4m' # underline
+            color.keyword = '\033[' + '35m'
         use_color = True
     elif isinstance(color_scheme, bool):
         use_color = color_scheme
         if use_color:
-            color.hash = '\033[' + get_from_dotfile("~/.notarc", "color.hash", '33m') # darkcyan
-            color.title = '\033[' + get_from_dotfile("~/.notarc", "color.title", '1m') # bold
-            color.keyword = '\033[' + get_from_dotfile("~/.notarc", "color.keyword", '4m') # underline
+            color.hash = '\033[' + get_from_dotfile("~/.notarc", "color.hash", '31m')
+            color.title = '\033[' + get_from_dotfile("~/.notarc", "color.title", '1m')
+            color.keyword = '\033[' + get_from_dotfile("~/.notarc", "color.keyword", '35m')
     else:
         print("The color scheme given in the ~/.notarc file should be a string or logical")
         exit(1)
