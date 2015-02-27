@@ -16,16 +16,16 @@ def nota():
 
     hints = [
             'add a note: "nota -a" (opens an editor)', 
-            'see all notes: "nota"',
+            'list all notes: "nota"',
             'read notes from a JSON file: "nota -a -m json < notes.json"',
             'store notes into a JSON file: "nota -m json > notes.json"',
-            'see all notes in markdown format: "nota -m markdown"',
-            'see all notes in json format: "nota -m json"',
+            'list notes in markdown format: "nota -m markdown"',
+            'list notes in json format: "nota -m json"',
             'edit note with hash \'ab...\': "nota -e ab" (opens an editor)',
             'delete note with hash \'ab...\': "nota -d ab"',
-            'see notes with keyword \'foo\': "nota -k foo"',
-            'see note with hash \'ab...\': "nota ab"',
-            'see notes in the trash: "nota --trash"',
+            'list notes with keyword \'foo\': "nota -k foo"',
+            'list note with hash \'ab...\': "nota ab"',
+            'list notes in the trash: "nota --trash"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
             'recreate note hashes: "nota --rehash" (a RARE need)']
     
@@ -520,7 +520,13 @@ def nota():
         if args.count:
             print(count)
         if args.mode != "json" and not args.count:
-            print("%s notes are in the trash" % nota.trash_length())
+            t = nota.trash_length()[0]
+            if t == 0:
+                print("The trash is empty.")
+            elif t == 1:
+                print("The trash contains 1 note.")
+            else:
+                print("The trash contains %s notes." % t)
             print("Hint:", end=" ")
             hint = random_hint()
             if use_color:
