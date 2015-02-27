@@ -67,50 +67,7 @@ def nota():
     show_id = get_from_dotfile("~/.notarc", "show_id", False)
     debug = get_from_dotfile("~/.notarc", "debug", None)
     
-    # Handle color scheme
-    class color:
-        hash = '\033[33m'   # yellow [git hash color]
-        title = '\033[1m'   # bold
-        keyword = '\033[4m' # darkcyan [git '@@' color]
-        normal = '\033[0m' # black
-    color_scheme = get_from_dotfile("~/.notarc", "color", True)
-    use_color = True
-    
-    if isinstance(color_scheme, str):
-        if color_scheme == "forest":
-            color.hash = '\033[' + '32m' # green
-            color.title = '\033[' + '1m' # bold
-            #color.keyword = '\033[' + '4m' # underline
-            color.keyword = '\033[' + '33m' # yellow (like commit hash from git)
-        elif color_scheme == "cr1":
-            color.hash = '\033[' + '31m' # red 
-            color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '4m' # underline
-        elif color_scheme == "default":
-            color.hash = '\033[' + '32m' # green
-            color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '4m' # underline
-        else:
-            color.hash = '\033[' + '32m' # green
-            color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '4m' # underline
-        use_color = True
-    elif isinstance(color_scheme, bool):
-        use_color = color_scheme
-        if use_color:
-            color.hash = '\033[' + get_from_dotfile("~/.notarc", "color.hash", '33m') # darkcyan
-            color.title = '\033[' + get_from_dotfile("~/.notarc", "color.title", '1m') # bold
-            color.keyword = '\033[' + get_from_dotfile("~/.notarc", "color.keyword", '4m') # underline
-    else:
-        print("The color scheme given in the ~/.notarc file should be a string or logical")
-        exit(1)
-    
-    if not use_color:
-        color.hash = ''
-        color.title = ''
-        color.keyword = ''
-        color.normal = ""
-    
+   
     parser = argparse.ArgumentParser(prog="nota", description="Nota: an organizer for textual notes",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=textwrap.dedent('''\
@@ -148,6 +105,7 @@ def nota():
     parser.add_argument("-a", "--add", action="store_true", dest="add", default=False, help="add a note")
     parser.add_argument("-e", "--edit", type=str, default=None, help="edit note with abbreviated hash 'h'", metavar="h")
     parser.add_argument("-d", "--delete", type=str, default=None, help="move note abbreviated hash 'h' to trash", metavar="h")
+    parser.add_argument("--color", type=str, default=None, help="specify named scheme or True/False", metavar="c")
     parser.add_argument("--undelete", type=str, default=None, help="remove note abbreviated hash 'h' from trash", metavar="h")
     parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty the trash, permanently deleting notes therein")
     parser.add_argument("-i", "--id", type=int, help="ID number of note to work with (MAY BE REMOVED)")
@@ -176,6 +134,58 @@ def nota():
     
     args.keywordsoriginal = args.keywords
     args.keywords = [key.lstrip().rstrip() for key in args.keywords.split(',')]
+
+    # Handle color scheme
+    class color:
+        hash = '\033[33m'   # yellow [git hash color]
+        title = '\033[1m'   # bold
+        keyword = '\033[4m' # darkcyan [git '@@' color]
+        normal = '\033[0m' # black
+    if args.color:
+        color_scheme = args.color
+    else:
+        color_scheme = get_from_dotfile("~/.notarc", "color", True)
+    use_color = True
+    
+    if isinstance(color_scheme, str):
+        if color_scheme == "forest": # green-straw
+            color.hash = '\033[' + '32m' # green
+            color.title = '\033[' + '1m' # bold
+            #color.keyword = '\033[' + '4m' # underline
+            color.keyword = '\033[' + '33m' # yellow (like commit hash from git)
+        elif color_scheme == "run": # red-underline
+            color.hash = '\033[' + '31m' # red 
+            color.title = '\033[' + '1m' # bold
+            color.keyword = '\033[' + '4m' # underline
+        elif color_scheme == "bubblegum":
+            color.hash = '\033[' + '31m' # red
+            color.title = '\033[' + '1m' # bold
+            color.keyword = '\033[' + '35m'
+        elif color_scheme == "default":
+            color.hash = '\033[' + '32m' # green
+            color.title = '\033[' + '1m' # bold
+            color.keyword = '\033[' + '4m' # underline
+        else:
+            color.hash = '\033[' + '32m' # green
+            color.title = '\033[' + '1m' # bold
+            color.keyword = '\033[' + '4m' # underline
+        use_color = True
+    elif isinstance(color_scheme, bool):
+        use_color = color_scheme
+        if use_color:
+            color.hash = '\033[' + get_from_dotfile("~/.notarc", "color.hash", '33m') # darkcyan
+            color.title = '\033[' + get_from_dotfile("~/.notarc", "color.title", '1m') # bold
+            color.keyword = '\033[' + get_from_dotfile("~/.notarc", "color.keyword", '4m') # underline
+    else:
+        print("The color scheme given in the ~/.notarc file should be a string or logical")
+        exit(1)
+    
+    if not use_color:
+        color.hash = ''
+        color.title = ''
+        color.keyword = ''
+        color.normal = ""
+ 
     
     if not args.debug:
         args.debug = debug
