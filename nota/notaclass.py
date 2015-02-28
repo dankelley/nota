@@ -381,7 +381,7 @@ class Nota:
         except:
             self.error("cannot determine number of items in trash")
 
-    def find(self, id=None, keywords="", mode="plain", strict=False, trash=False):
+    def find(self, id=None, keywords="", strict=False, trash=False):
         '''Search notes for a given id or keyword, printing the results in
         either 'plain' or 'JSON' format.'''
         if trash:
@@ -466,17 +466,20 @@ class Nota:
                 keywords = []
                 for k in keywordIds:
                     keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId = ?;", k).fetchone()[0])
-                if mode == 'json':
-                    content = note[4].replace('\n', '\\n')
-                    keywordsStr = ','.join(keywords[i] for i in range(len(keywords)))
-                    c = {"authorId":note[1], "date":date,"due":due,"title":note[3],"content":content,"privacy":privacy}
-                    c["keywords"] = keywordsStr
-                    #rval.append({"json":json.dumps(c)})
-                    rval.append(json.dumps(c))
-                else:
-                    rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
-                        "content":note[4], "due":note[5], "privacy":note[6],
-                        "date":note[2], "modified":note[7], "hash":note[8]})
+                #if mode == 'json':
+                #    content = note[4].replace('\n', '\\n')
+                #    keywordsStr = ','.join(keywords[i] for i in range(len(keywords)))
+                #    c = {"authorId":note[1], "date":date,"due":due,"title":note[3],"content":content,"privacy":privacy}
+                #    c["keywords"] = keywordsStr
+                #    #rval.append({"json":json.dumps(c)})
+                #    rval.append(json.dumps(c))
+                #else:
+                #    rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
+                #        "content":note[4], "due":note[5], "privacy":note[6],
+                #        "date":note[2], "modified":note[7], "hash":note[8]})
+                rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
+                    "content":note[4], "due":note[5], "privacy":note[6],
+                    "date":note[2], "modified":note[7], "hash":note[8]})
             else:
                 self.error("There is no note with abbreviated hash '%s'" % n[0])
         return rval

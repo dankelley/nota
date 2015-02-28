@@ -23,13 +23,33 @@ def nota():
             'export notes with hash \'ab...\': "nota --export ab" (output handled by "--import")',
             'import notes in file \'file.json\': "nota --import file.json" (file made by "--export")',
             'list all notes: "nota"',
-            'list notes in the trash: "nota --trash"',
+            'list notes contained in the trash: "nota --trash"',
+            'list notes due today: "nota --due today"',
+            'list notes in markdown format: "nota --markdown"',
             'list note with hash \'ab...\': "nota ab"',
             'list notes with keyword \'foo\': "nota -k foo"',
-            'list notes with markdown format: "nota -m markdown"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
             'visit http://dankelley.github.io/nota/documentation.html to learn more']
     
+    def due_str(due):
+        due = datetime.datetime.strptime(due, '%Y-%m-%d %H:%M:%S.%f') # FIXME: make this 'due' DRY (+-20 lines)
+        now = datetime.datetime.now()
+        when = abs(due - now).total_seconds()
+        if due > now:
+            if when < 2 * 3600:
+                return("(due in %d minutes)" % round(when / 60))
+            elif when < 86400:
+                return("(due in %d hours)" % round(when / 3600))
+            else:
+                return("(due in %d days)" % round(when / 3600 / 24))
+        else:
+            if when < 2 * 3600:
+                return("(overdue by %d minutes)" % (when / 60))
+            elif when < 86400:
+                return("(overdue by %d hours)" % (when / 3600))
+            else:
+                return("(overdue by %.1f days)" % (when / 3600 / 24))
+ 
     def random_hint():
         return hints[randint(0, len(hints)-1)]
     
@@ -81,6 +101,8 @@ def nota():
         nota -a -t=... -c=... # add a note (without a text editor)
         nota -e ab            # edit note with hash starting with 'ab' (opens a text editor)
         nota -d ab            # delete note with hash starting with 'ab'
+        nota --export ab > F  # export note to file 'F'
+        nota --import F       # import note from file 'F'
 
     The ~/.notarc file may be used for customization, and may contain e.g. the
     following:
@@ -122,8 +144,9 @@ def nota():
     parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty the trash, permanently deleting notes therein")
     #parser.add_argument("-i", "--id", type=int, help="ID number of note to work with (MAY BE REMOVED)")
     parser.add_argument("-H", "--Hints", action="store_true", dest="hints", default=False, help="get hints")
-    parser.add_argument("-m", "--mode", type=str, default="interactive", choices=['interactive', 'plain', 'markdown'],
-            metavar="m", help="i/o mode: 'interactive', 'plain', or 'markdown'")
+    #parser.add_argument("-m", "--mode", type=str, default="plain", choices=['plain', 'markdown'],
+    #        metavar="m", help="i/o mode: 'plain', or 'markdown' THIS ARG MAY BE REMOVED SOON")
+    parser.add_argument("--markdown", action="store_true", dest="markdown", default=False, help="use markdown format for output")
     parser.add_argument("-t", "--title", type=str, default="", help="a short title", metavar="t")
     parser.add_argument("-k", "--keywords", type=str, default="", help="string containing comma-separated keywords", metavar="k")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
@@ -142,7 +165,7 @@ def nota():
     parser.add_argument("--strict", action="store_true", default=False, help="use strict search?")
     parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
     parser.add_argument("-p", "--pretty", type=str, default="", metavar="fmt", help="format for note output")
-    parser.add_argument("-v", "--version", action="store_true", dest="version", default=False, help="get version number")
+    parser.add_argument("--version", action="store_true", dest="version", default=False, help="get version number")
     parser.add_argument("--special", type=str, default="", help="special actions", metavar="action")
     args = parser.parse_args()
     
@@ -300,7 +323,7 @@ def nota():
         for n in notes:
             # date will get set to now, which means also a new hash will be made
             try:
-                id = nota.add(title=n["title"], keywords=n['keywords'], content=n["content"], due=n['due'])
+                id = nota.add(title=n["title"], keywords=n['keywords'], content=n["content"], date=n['date'], due=n['due'])
             except:
                 nota.error("cannot create note with title '%s'" % n["title"])
 
@@ -357,7 +380,7 @@ def nota():
         #            id = nota.add(title=j['title'], keywords=keyword, content=j['content'], privacy=j['privacy'])
         #    sys.exit(0)
         #elif args.mode== 'plain' and (args.title == "" and args.content == ""):
-        if args.mode== 'plain' and (args.title == "" and args.content == ""):
+        if args.title == "" and args.content == "":
             lines = sys.stdin.readlines()
             nota.fyi('reading from stdin')
             # trim newlines, plus any blank lines at start and end [FIXME: inelegant in the extreme]
@@ -404,9 +427,8 @@ def nota():
                 print("keywords:", keywords)
                 print("content: (%s)" % content)
             id = nota.add(title=title, keywords=keywords, content=content, privacy=args.privacy)
-        elif args.mode == 'interactive' and (args.title == "" or args.content == "" or args.keywords == ""):
-            if args.debug:
-                print("should handle interactive now")
+        elif args.title == "" or args.content == "" or args.keywords == "": # FIXME: really need key??
+            self.fyi("should handle interactive now")
             ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, privacy=args.privacy, due=args.due)
             id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], privacy=ee["privacy"], due=ee["due"])
         else:
@@ -447,16 +469,16 @@ def nota():
                 #print(nids)
                 id = ids[nids + id_desired - 1][0]
                 #print("id:", id)
-                found = nota.find(id=int(id), mode=args.mode, strict=args.strict, trash=False)
+                found = nota.find(id=int(id), strict=args.strict, trash=False)
             else:
-                found = nota.find(id=id_desired, mode=args.mode, strict=args.strict, trash=False)
+                found = nota.find(id=id_desired, strict=args.strict, trash=False)
         elif args.keywords[0] != '':
-            found = nota.find(keywords=args.keywords, mode=args.mode, strict=args.strict)
+            found = nota.find(keywords=args.keywords, strict=args.strict)
         #elif args.id:
         #    print("FIXME: args.id case ... broken, I think (id=%s)" % args.id)
         #    found = nota.find(id=args.id, mode=args.mode, strict=args.strict)
         else:
-            found = nota.find(keywords='?'.split(','), mode=args.mode, strict=args.strict)
+            found = nota.find(keywords='?'.split(','), strict=args.strict)
         count = 0
         nfound = len(found)
         i = -1
@@ -494,73 +516,90 @@ def nota():
             count += 1
             if args.count:
                 continue
-            #elif args.mode == "json":
-            #    print(f['json'])
-            elif args.mode== 'markdown':
-                ## FIXME: redo this as the interactive UI firms up
-                print("**%s**\n" %f ['title'])
-                print("%s " %f ['hash'], end='')
-                for k in f['keywords']:
-                    print("[%s] " % k, end='')
-                print("{%s / %s}\n" % (f['date'], f['modified']))
-                print(f['content'].lstrip())
+            #elif args.markdown:
+            #    ## FIXME: redo this as the interactive UI firms up
+            #    print("**%s**\n" %f ['title'])
+            #    print("%s " %f ['hash'], end='')
+            #    for k in f['keywords']:
+            #        print("[%s] " % k, end='')
+            #    print("{%s / %s}\n" % (f['date'], f['modified']))
+            #    print(f['content'].lstrip())
             else:
                 if args.pretty == "oneline" and nfound > 1:
-                    print(color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print(color.keyword + f['keywords'][i] + color.normal, end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n")
-                else:
-                    print(color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print(color.keyword + f['keywords'][i] + color.normal, end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n")
-                    #this commented-out block shows how to e.g. show just hour of day.
-                    #created = f['date']
-                    #dan = datetime.datetime.strptime(created, "%Y-%m-%d %H:%M:%S")
-                    #print(datetime.datetime.strftime(dan, "%Y-%m-%d %Hh"))
-                    print("  created %s" % f['date'], end=" ")
-                    if f['due'] and len(f['due']) > 0:
-                        due = datetime.datetime.strptime(f['due'], '%Y-%m-%d %H:%M:%S.%f') # FIXME: make this 'due' DRY (+-20 lines)
-                        now = datetime.datetime.now()
-                        when = abs(due - now).total_seconds()
-                        if due > now:
-                            if when < 2 * 3600:
-                                print("(due in %d minutes)" % round(when / 60))
-                            elif when < 86400:
-                                print("(due in %d hours)" % round(when / 3600))
-                            else:
-                                print("(due in %d days)" % round(when / 3600 / 24))
-                        else:
-                            if when < 2 * 3600:
-                                print("(overdue by %d minutes)" % (when / 60))
-                            elif when < 86400:
-                                print("(overdue by %d hours)" % (when / 3600))
-                            else:
-                                print("(overdue by %.1f days)" % (when / 3600 / 24))
+                    if args.markdown:
+                        print("%s: " % f['hash'][0:hal], end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print("**%s** " % f['title'], end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print("*%s*" % f['keywords'][i], end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n\n")
                     else:
+                        print(color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print(color.keyword + f['keywords'][i] + color.normal, end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n")
+                else:
+                    if args.markdown:
+                        print("%s: " % f['hash'][0:7], end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print("**%s** " % f['title'], end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print(f['keywords'][i], end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n\n")
+                        print("  created %s" % f['date'], end=" ")
+                        if f['due'] and len(f['due']) > 0:
+                            print(due_str(f['due']))
+                        else:
+                            print('')
                         print('')
-                    content = f['content'].replace('\\n', '\n')
-                    if not args.pretty == "twoline":
-                        for contentLine in content.split('\n'):
-                            c = contentLine.rstrip('\n')
-                            if len(c):
-                                print(" ", contentLine.rstrip('\n'))
-                        print('')
+                        content = f['content'].replace('\\n', '\n')
+                        if not args.pretty == "twoline":
+                            for contentLine in content.split('\n'):
+                                c = contentLine.rstrip('\n')
+                                if len(c):
+                                    print(" ", contentLine.rstrip('\n'), '\n')
+                            print('')
+                    else:
+                        print(color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print(color.keyword + f['keywords'][i] + color.normal, end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n")
+                        print("  created %s" % f['date'], end=" ")
+                        if f['due'] and len(f['due']) > 0:
+                            print(due_str(f['due']))
+                        else:
+                            print('')
+                        content = f['content'].replace('\\n', '\n')
+                        if not args.pretty == "twoline":
+                            for contentLine in content.split('\n'):
+                                c = contentLine.rstrip('\n')
+                                if len(c):
+                                    print(" ", contentLine.rstrip('\n'))
+                            print('')
         if args.count:
             print(count)
         #if args.mode != "json" and not args.count:
@@ -572,9 +611,13 @@ def nota():
                 print("The trash contains 1 note.")
             else:
                 print("The trash contains %s notes." % t)
+            if args.markdown:
+                print("\n")
             print("Hint:", end=" ")
             hint = random_hint()
-            if use_color:
+            if args.markdown:
+                print(hint.replace(' "', ' `').replace('"', '`'))
+            elif use_color:
                 print(hint.replace(' "',' \'\033[1m').replace('"', '\033[0m\''))
             else:
                 print(hint)
