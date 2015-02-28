@@ -14,23 +14,21 @@ import subprocess
 
 def nota():
     hints = [
-            'add a note: "nota -a" (opens an editor)', 
-            'list all notes: "nota"',
-            # 'read notes from a JSON file: "nota -a -m json < notes.json"',
-            # 'store notes into a JSON file: "nota -m json > notes.json"',
-            'visit http://dankelley.github.io/nota/documentation.html to learn more about nota',
-            'export notes with hash \'ab...\': "nota --export ab" (output handled by \'--import\')',
-            'export all notes: "nota --export -" (output handled by \'--import\')',
-            'import notes in file \'file.json\': "nota --import file.json" (file made by \'--export\')',
-            'list notes in markdown format: "nota -m markdown"',
-            #'list notes in json format: "nota -m json"',
-            'edit note with hash \'ab...\': "nota -e ab" (opens an editor)',
+            'add a note: "nota -a" (opens EDITOR)', 
+            'add a note: "nota -a -t=title -c=content" (no EDITOR)', 
+            'create new note hashes: "nota --developer=rehash"',
             'delete note with hash \'ab...\': "nota -d ab"',
-            'list notes with keyword \'foo\': "nota -k foo"',
-            'list note with hash \'ab...\': "nota ab"',
+            'edit note with hash \'ab...\': "nota -e ab" (opens EDITOR)',
+            'export all notes: "nota --export -" (output handled by \'--import\')',
+            'export notes with hash \'ab...\': "nota --export ab" (output handled by "--import")',
+            'import notes in file \'file.json\': "nota --import file.json" (file made by "--export")',
+            'list all notes: "nota"',
             'list notes in the trash: "nota --trash"',
+            'list note with hash \'ab...\': "nota ab"',
+            'list notes with keyword \'foo\': "nota -k foo"',
+            'list notes with markdown format: "nota -m markdown"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
-            'recreate note hashes: "nota --rehash" (a RARE need)']
+            'visit http://dankelley.github.io/nota/documentation.html to learn more']
     
     def random_hint():
         return hints[randint(0, len(hints)-1)]
@@ -76,36 +74,43 @@ def nota():
             epilog=textwrap.dedent('''\
     There are several ways to use nota.  Try 'nota -h' for some hints.  The most common uses are
     
-        nota         # list notes, with first column being hash code
-        nota -k key  # list notes with indicated keyword
-        nota ab      # list notes with hash starting 'ab' (in detail, if only one note)
-        nota -a      # add a note (opens a text editor)
-        nota -e ab   # edit note with hash starting with 'ab' (opens a text editor)
-        nota -d ab   # delete note with hash starting with 'ab'
-    
+        nota                  # list notes, with first column being hash code
+        nota -k key           # list notes with indicated keyword
+        nota ab               # list notes with hash starting 'ab' (in detail, if only one note)
+        nota -a               # add a note (opens a text editor)
+        nota -a -t=... -c=... # add a note (without a text editor)
+        nota -e ab            # edit note with hash starting with 'ab' (opens a text editor)
+        nota -d ab            # delete note with hash starting with 'ab'
+
     The ~/.notarc file may be used for customization, and may contain e.g. the
     following:
     
         db = \"~/Dropbox/nota.db\" # this permits the use of different files
-        pretty = \"oneline\" # no other option
-        show_id = False      # (only for developer) show database key in listings
-        debug = False        # set True (or use --debug flag) to turn on debugging
-        color = True         # set False to avoid colors (optionally customized as below)
-                             # Colours (as below) are specified with just the suffix part,
-                             # e.g. "36m" stands for "\\033[36m". 
-                             #
-                             # It is also possible to specify a color scheme, with the 
-                             # choices being as follows (SUBJECT TO CHANGE!)
-                             #   color = "bubblegum" # red hash, cyan keywords
-                             #   color = "forest" # green hash, straw keywords
-                             #   color = "bun" # blue hash, underlined keywords
-                             #   color = "gun" # green hash, underlined keywords
-                             #   color = "run" # red hash, underlined keywords
-                             #   color = "default" # same as "bubblegum"
-                             # (see http://en.wikipedia.org/wiki/ANSI_escape_code)
-        color.hash = "36m"   # darkcyan
-        color.title = "1m"   # bold
-        color.keyword = "4m" # underline
+        pretty = \"oneline\"  # no other option
+        show_id = False       # set True to see database key (mainly for the developer)
+        debug = False         # set True (or use --debug flag) to turn on debugging
+        color = True          # set False to avoid colors (optionally customized as below)
+                              # Colours (as below) are specified with just the suffix part,
+                              # e.g. "36m" stands for "\\033[36m". 
+                              #
+                              # It is also possible to specify a color scheme, with the 
+                              # choices being as follows (SUBJECT TO CHANGE!)
+                              #   color = "bubblegum" # red hash, cyan keywords
+                              #   color = "forest" # green hash, straw keywords
+                              #   color = "bun" # blue hash, underlined keywords
+                              #   color = "gun" # green hash, underlined keywords
+                              #   color = "run" # red hash, underlined keywords
+                              #   color = "default" # same as "bubblegum"
+                              # (see http://en.wikipedia.org/wiki/ANSI_escape_code)
+        color.hash = "36m"    # darkcyan
+        color.title = "1m"    # bold
+        color.keyword = "4m"  # underline
+
+    Advanced usage:
+
+        nota --special=rehash # recreates hashes (to removes duplicate hashes)
+    
+
         '''))
     
     parser.add_argument("hash", nargs="?", default="", help="abbreviated hash to search for", metavar="hash")
@@ -131,14 +136,14 @@ def nota():
     # Process the dotfile (need for next parser call)
     defaultDatabase = get_from_dotfile("~/.notarc", "database", "~/Dropbox/nota.db")
     # Back to the parser
-    parser.add_argument("--rehash", action="store_true", dest="rehash", default=False, help="create new hashes")
+    # parser.add_argument("--rehash", action="store_true", dest="rehash", default=False, help="create new hashes")
     parser.add_argument("--trash", action="store_true", dest="trash", default=False, help="show contents of trash")
     parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database", metavar="db")
     parser.add_argument("--strict", action="store_true", default=False, help="use strict search?")
     parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
     parser.add_argument("-p", "--pretty", type=str, default="", metavar="fmt", help="format for note output")
     parser.add_argument("-v", "--version", action="store_true", dest="version", default=False, help="get version number")
-    parser.add_argument("--developer", action="store_true", default=False, help="flag for the developer *only*")
+    parser.add_argument("--special", type=str, default="", help="special actions", metavar="action")
     args = parser.parse_args()
     
     args.keywordsoriginal = args.keywords
@@ -232,8 +237,13 @@ def nota():
     if not args.pretty:
         args.pretty = get_from_dotfile("~/.notarc", "pretty", "oneline")
     
-    if args.developer:
-        nota.warning("--developer does nothing at the present time")
+    if args.special:
+        if args.special == "rehash":
+            nota.fyi("should rehash now")
+            nota.rehash()
+            sys.exit(0)
+        else:
+            nota.error("unknown action '%s'" % args.special)
     
     if args.file:
         file = args.file
@@ -269,10 +279,10 @@ def nota():
         idnew = nota.edit(args.edit)
         sys.exit(0)
     
-    if args.rehash:
-        nota.fyi("should rehash now")
-        nota.rehash()
-        sys.exit(0)
+    #if args.rehash:
+    #    nota.fyi("should rehash now")
+    #    nota.rehash()
+    #    sys.exit(0)
 
     if args.do_import: # need do_ in name to avoid language conflict
         try:
