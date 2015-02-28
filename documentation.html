@@ -22,7 +22,11 @@ perhaps. In any case, the database will be populated with tables that will store
 <pre>
 nota -a
 </pre>
-which will launch an editor (as defined in your <code>EDITOR</code> shell variable) that invites you to fill in some content. The file contains comments that explain where you should enter a title, keywords, and content; you can also enter a due date, if you like.
+which will launch an editor (as defined in your <code>EDITOR</code> shell variable) that invites you to fill in some content. The file contains comments that explain where you should enter a title, keywords, and content; you can also enter a due date, if you like. If you prefer to add the note entirely from the commandline, use e.g.
+<pre>
+nota -a -t="a title here" -c="content here" -k="comma-separated keywords here"
+</pre>
+where the <code>-k</code> is optional.
 </p>
 
 <h2>Listing notes</h2>
