@@ -13,21 +13,22 @@ from time import strptime
 import subprocess
 
 def nota():
-
     hints = [
-            'add a note: "nota -a" (opens an editor)', 
-            'list all notes: "nota"',
-            'read notes from a JSON file: "nota -a -m json < notes.json"',
-            'store notes into a JSON file: "nota -m json > notes.json"',
-            'list notes in markdown format: "nota -m markdown"',
-            'list notes in json format: "nota -m json"',
-            'edit note with hash \'ab...\': "nota -e ab" (opens an editor)',
+            'add a note: "nota -a" (opens EDITOR)', 
+            'add a note: "nota -a -t=title -c=content" (no EDITOR)', 
+            'create new note hashes: "nota --developer=rehash"',
             'delete note with hash \'ab...\': "nota -d ab"',
-            'list notes with keyword \'foo\': "nota -k foo"',
-            'list note with hash \'ab...\': "nota ab"',
+            'edit note with hash \'ab...\': "nota -e ab" (opens EDITOR)',
+            'export all notes: "nota --export -" (output handled by \'--import\')',
+            'export notes with hash \'ab...\': "nota --export ab" (output handled by "--import")',
+            'import notes in file \'file.json\': "nota --import file.json" (file made by "--export")',
+            'list all notes: "nota"',
             'list notes in the trash: "nota --trash"',
+            'list note with hash \'ab...\': "nota ab"',
+            'list notes with keyword \'foo\': "nota -k foo"',
+            'list notes with markdown format: "nota -m markdown"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
-            'recreate note hashes: "nota --rehash" (a RARE need)']
+            'visit http://dankelley.github.io/nota/documentation.html to learn more']
     
     def random_hint():
         return hints[randint(0, len(hints)-1)]
@@ -73,36 +74,43 @@ def nota():
             epilog=textwrap.dedent('''\
     There are several ways to use nota.  Try 'nota -h' for some hints.  The most common uses are
     
-        nota         # list notes, with first column being hash code
-        nota -k key  # list notes with indicated keyword
-        nota ab      # list notes with hash starting 'ab' (in detail, if only one note)
-        nota -a      # add a note (opens a text editor)
-        nota -e ab   # edit note with hash starting with 'ab' (opens a text editor)
-        nota -d ab   # delete note with hash starting with 'ab'
-    
+        nota                  # list notes, with first column being hash code
+        nota -k key           # list notes with indicated keyword
+        nota ab               # list notes with hash starting 'ab' (in detail, if only one note)
+        nota -a               # add a note (opens a text editor)
+        nota -a -t=... -c=... # add a note (without a text editor)
+        nota -e ab            # edit note with hash starting with 'ab' (opens a text editor)
+        nota -d ab            # delete note with hash starting with 'ab'
+
     The ~/.notarc file may be used for customization, and may contain e.g. the
     following:
     
         db = \"~/Dropbox/nota.db\" # this permits the use of different files
-        pretty = \"oneline\" # no other option
-        show_id = False      # (only for developer) show database key in listings
-        debug = False        # set True (or use --debug flag) to turn on debugging
-        color = True         # set False to avoid colors (optionally customized as below)
-                             # Colours (as below) are specified with just the suffix part,
-                             # e.g. "36m" stands for "\\033[36m". 
-                             #
-                             # It is also possible to specify a color scheme, with the 
-                             # choices being as follows (SUBJECT TO CHANGE!)
-                             #   color = "bubblegum" # red hash, cyan keywords
-                             #   color = "forest" # green hash, straw keywords
-                             #   color = "bun" # blue hash, underlined keywords
-                             #   color = "gun" # green hash, underlined keywords
-                             #   color = "run" # red hash, underlined keywords
-                             #   color = "default" # same as "bubblegum"
-                             # (see http://en.wikipedia.org/wiki/ANSI_escape_code)
-        color.hash = "36m"   # darkcyan
-        color.title = "1m"   # bold
-        color.keyword = "4m" # underline
+        pretty = \"oneline\"  # no other option
+        show_id = False       # set True to see database key (mainly for the developer)
+        debug = False         # set True (or use --debug flag) to turn on debugging
+        color = True          # set False to avoid colors (optionally customized as below)
+                              # Colours (as below) are specified with just the suffix part,
+                              # e.g. "36m" stands for "\\033[36m". 
+                              #
+                              # It is also possible to specify a color scheme, with the 
+                              # choices being as follows (SUBJECT TO CHANGE!)
+                              #   color = "bubblegum" # red hash, cyan keywords
+                              #   color = "forest" # green hash, straw keywords
+                              #   color = "bun" # blue hash, underlined keywords
+                              #   color = "gun" # green hash, underlined keywords
+                              #   color = "run" # red hash, underlined keywords
+                              #   color = "default" # same as "bubblegum"
+                              # (see http://en.wikipedia.org/wiki/ANSI_escape_code)
+        color.hash = "36m"    # darkcyan
+        color.title = "1m"    # bold
+        color.keyword = "4m"  # underline
+
+    Advanced usage:
+
+        nota --special=rehash # recreates hashes (to removes duplicate hashes)
+    
+
         '''))
     
     parser.add_argument("hash", nargs="?", default="", help="abbreviated hash to search for", metavar="hash")
@@ -112,28 +120,30 @@ def nota():
     parser.add_argument("--color", type=str, default=None, help="specify named scheme or True/False", metavar="c")
     parser.add_argument("--undelete", type=str, default=None, help="remove note abbreviated hash 'h' from trash", metavar="h")
     parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty the trash, permanently deleting notes therein")
-    parser.add_argument("-i", "--id", type=int, help="ID number of note to work with (MAY BE REMOVED)")
+    #parser.add_argument("-i", "--id", type=int, help="ID number of note to work with (MAY BE REMOVED)")
     parser.add_argument("-H", "--Hints", action="store_true", dest="hints", default=False, help="get hints")
-    parser.add_argument("-m", "--mode", type=str, default="interactive", choices=['interactive', 'plain', 'json', 'markdown'],
-            metavar="m", help="i/o mode: 'interactive', 'plain', 'json' or 'markdown'")
+    parser.add_argument("-m", "--mode", type=str, default="interactive", choices=['interactive', 'plain', 'markdown'],
+            metavar="m", help="i/o mode: 'interactive', 'plain', or 'markdown'")
     parser.add_argument("-t", "--title", type=str, default="", help="a short title", metavar="t")
     parser.add_argument("-k", "--keywords", type=str, default="", help="string containing comma-separated keywords", metavar="k")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
     parser.add_argument("--count", action="store_true", dest="count", default=False, help="report only count of found results")
     parser.add_argument("--debug", action="store_true", dest="debug", default=False, help="set debugging on")
+    parser.add_argument("--export", type=str, default=None, help="export notes matching hash (use has '-' for all notes)", metavar="hash")
+    parser.add_argument("--import", type=str, default=None, dest="do_import", help="import notes from file created by --export", metavar="file")
     parser.add_argument("--privacy", type=int, default=0, help="set privacy level (0=open, 1=closed)", metavar="level")
     parser.add_argument("--file", type=str, help="filename for i/o", metavar="name")
     # Process the dotfile (need for next parser call)
     defaultDatabase = get_from_dotfile("~/.notarc", "database", "~/Dropbox/nota.db")
     # Back to the parser
-    parser.add_argument("--rehash", action="store_true", dest="rehash", default=False, help="create new hashes")
+    # parser.add_argument("--rehash", action="store_true", dest="rehash", default=False, help="create new hashes")
     parser.add_argument("--trash", action="store_true", dest="trash", default=False, help="show contents of trash")
     parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database", metavar="db")
     parser.add_argument("--strict", action="store_true", default=False, help="use strict search?")
-    parser.add_argument("--due", type=str, default="", help="time when item is due [not used yet]", metavar="when")
+    parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
     parser.add_argument("-p", "--pretty", type=str, default="", metavar="fmt", help="format for note output")
     parser.add_argument("-v", "--version", action="store_true", dest="version", default=False, help="get version number")
-    parser.add_argument("--developer", action="store_true", default=False, help="flag for the developer *only*")
+    parser.add_argument("--special", type=str, default="", help="special actions", metavar="action")
     args = parser.parse_args()
     
     args.keywordsoriginal = args.keywords
@@ -227,8 +237,13 @@ def nota():
     if not args.pretty:
         args.pretty = get_from_dotfile("~/.notarc", "pretty", "oneline")
     
-    if args.developer:
-        nota.warning("--developer does nothing at the present time")
+    if args.special:
+        if args.special == "rehash":
+            nota.fyi("should rehash now")
+            nota.rehash()
+            sys.exit(0)
+        else:
+            nota.error("unknown action '%s'" % args.special)
     
     if args.file:
         file = args.file
@@ -264,11 +279,40 @@ def nota():
         idnew = nota.edit(args.edit)
         sys.exit(0)
     
-    if args.rehash:
-        nota.fyi("should rehash now")
-        nota.rehash()
+    #if args.rehash:
+    #    nota.fyi("should rehash now")
+    #    nota.rehash()
+    #    sys.exit(0)
+
+    if args.do_import: # need do_ in name to avoid language conflict
+        try:
+            f = open(args.do_import, "r")
+        except:
+            nota.error("cannot read file '%s'" % args.do_import)
+        notes = []
+        i = 0
+        for line in f:
+            try:
+                notes.append(json.loads(line))
+            except:
+                nota.error("cannot read line %d of file '%s'" % (line, args.do_import))
+            i = i + 1
+        for n in notes:
+            # date will get set to now, which means also a new hash will be made
+            try:
+                id = nota.add(title=n["title"], keywords=n['keywords'], content=n["content"], due=n['due'])
+            except:
+                nota.error("cannot create note with title '%s'" % n["title"])
+
+    if args.export:
+        nota.fyi("should export now; hash=%s" % args.export)
+        if args.export == '-':
+            args.export = None
+        noteIds = nota.find(args.export)
+        for n in noteIds:
+            print(json.dumps(n))
         sys.exit(0)
-    
+     
     if args.trash:
         nota.fyi("should show trash contents now")
         trashed = nota.find(trash=True)
@@ -283,39 +327,39 @@ def nota():
     if args.add:
         if args.hash:
             nota.error("cannot specify a hash-code if the -a argument is given")
-        if args.mode == 'json':
-            if not args.file:
-                nota.error("Must use --file to name an input file")
-            for line in open(args.file, "r"):
-                line = line.rstrip()
-                if args.debug:
-                    print(line, '\n')
-                if (len(line)) > 1:
-                    try:
-                        j = json.loads(line)
-                        if args.debug:
-                            print(j)
-                    except:
-                        nota.error("JSON file is not in proper format on line: %s" % line)
-                    if 'title' not in j:
-                        sys.exit(1)
-                    if 'content' not in j:
-                        j['content'] = ""
-                    ## FIXME keywords (chop whitespace)
-                    if 'keywords' in j:
-                        keyword = j['keywords'].split(',')
-                    else:
-                        keyword = ''
-                    if 'privacy' not in j:
-                        j['privacy'] = 0
-                    ## FIXME keywords (next does nothing?)
-                    j['keywords'].split(',')
-                    id = nota.add(title=j['title'], keywords=keyword, content=j['content'], privacy=j['privacy'])
-            sys.exit(0)
-        elif args.mode== 'plain' and (args.title == "" and args.content == ""):
+        #if args.mode == 'json':
+        #    if not args.file:
+        #        nota.error("Must use --file to name an input file")
+        #    for line in open(args.file, "r"):
+        #        line = line.rstrip()
+        #        if args.debug:
+        #            print(line, '\n')
+        #        if (len(line)) > 1:
+        #            try:
+        #                j = json.loads(line)
+        #                if args.debug:
+        #                    print(j)
+        #            except:
+        #                nota.error("JSON file is not in proper format on line: %s" % line)
+        #            if 'title' not in j:
+        #                sys.exit(1)
+        #            if 'content' not in j:
+        #                j['content'] = ""
+        #            ## FIXME keywords (chop whitespace)
+        #            if 'keywords' in j:
+        #                keyword = j['keywords'].split(',')
+        #            else:
+        #                keyword = ''
+        #            if 'privacy' not in j:
+        #                j['privacy'] = 0
+        #            ## FIXME keywords (next does nothing?)
+        #            j['keywords'].split(',')
+        #            id = nota.add(title=j['title'], keywords=keyword, content=j['content'], privacy=j['privacy'])
+        #    sys.exit(0)
+        #elif args.mode== 'plain' and (args.title == "" and args.content == ""):
+        if args.mode== 'plain' and (args.title == "" and args.content == ""):
             lines = sys.stdin.readlines()
-            if nota.debug:
-                print('reading from stdin')
+            nota.fyi('reading from stdin')
             # trim newlines, plus any blank lines at start and end [FIXME: inelegant in the extreme]
             trim = 0
             nlines = len(lines)
@@ -408,9 +452,9 @@ def nota():
                 found = nota.find(id=id_desired, mode=args.mode, strict=args.strict, trash=False)
         elif args.keywords[0] != '':
             found = nota.find(keywords=args.keywords, mode=args.mode, strict=args.strict)
-        elif args.id:
-            print("FIXME: args.id case ... broken, I think (id=%s)" % args.id)
-            found = nota.find(id=args.id, mode=args.mode, strict=args.strict)
+        #elif args.id:
+        #    print("FIXME: args.id case ... broken, I think (id=%s)" % args.id)
+        #    found = nota.find(id=args.id, mode=args.mode, strict=args.strict)
         else:
             found = nota.find(keywords='?'.split(','), mode=args.mode, strict=args.strict)
         count = 0
@@ -450,8 +494,8 @@ def nota():
             count += 1
             if args.count:
                 continue
-            elif args.mode == "json":
-                print(f['json'])
+            #elif args.mode == "json":
+            #    print(f['json'])
             elif args.mode== 'markdown':
                 ## FIXME: redo this as the interactive UI firms up
                 print("**%s**\n" %f ['title'])
@@ -519,7 +563,8 @@ def nota():
                         print('')
         if args.count:
             print(count)
-        if args.mode != "json" and not args.count:
+        #if args.mode != "json" and not args.count:
+        if not args.count:
             t = nota.trash_length()[0]
             if t == 0:
                 print("The trash is empty.")
