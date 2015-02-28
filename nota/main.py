@@ -108,7 +108,6 @@ def nota():
     following:
     
         db = \"~/Dropbox/nota.db\" # this permits the use of different files
-        pretty = \"oneline\"  # no other option
         show_id = False       # set True to see database key (mainly for the developer)
         debug = False         # set True (or use --debug flag) to turn on debugging
         color = True          # set False to avoid colors (optionally customized as below)
@@ -164,7 +163,7 @@ def nota():
     parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database", metavar="db")
     parser.add_argument("--strict", action="store_true", default=False, help="use strict search?")
     parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
-    parser.add_argument("-p", "--pretty", type=str, default="", metavar="fmt", help="format for note output")
+    #parser.add_argument("-p", "--pretty", type=str, default="", metavar="fmt", help="format for note output")
     parser.add_argument("--version", action="store_true", dest="version", default=False, help="get version number")
     parser.add_argument("--special", type=str, default="", help="special actions", metavar="action")
     args = parser.parse_args()
@@ -257,8 +256,8 @@ def nota():
         sys.exit(0)
     
     # look in ~/.notarc to see if a database is named there
-    if not args.pretty:
-        args.pretty = get_from_dotfile("~/.notarc", "pretty", "oneline")
+    #if not args.pretty:
+    #    args.pretty = get_from_dotfile("~/.notarc", "pretty", "oneline")
     
     if args.special:
         if args.special == "rehash":
@@ -525,7 +524,7 @@ def nota():
             #    print("{%s / %s}\n" % (f['date'], f['modified']))
             #    print(f['content'].lstrip())
             else:
-                if args.pretty == "oneline" and nfound > 1:
+                if nfound > 1:
                     if args.markdown:
                         print("%s: " % f['hash'][0:hal], end="")
                         if show_id:
