@@ -86,6 +86,24 @@ need again, you can empty it with
 nota --emptytrash
 </pre>
 
+<h2>Sharing notes</h2>
+
+<p>Notes may be shared by a combination of <code>--export</code> and
+<code>--import</code> operations.  To share a note with hash <code>ab</code>,
+use
+<pre>
+nota --export ab > ab.json
+</pre>
+and email or otherwise provide the new (textual) file named
+<code>nb.json</code> to another person. That second person then does
+<pre>
+nota --import ab.json
+</pre>
+to insert the note into his/her database. Naturally, this can be done by a
+single user, to copy notes from one database to another. Note that the
+newly-created note has a new date of creation and a new hash code.</p>
+
+
 <h2>Customizing nota</h2>
 
 <p>When <code>nota</code> starts, it looks for a resource file named
