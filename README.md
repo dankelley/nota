@@ -209,21 +209,10 @@ nota --delete a
 deletes the note with hash code uniquely defined by first letter ``a`` (use
 more letters to make unique).
 
+## Sharing notes
 
-## Importing notes
-
-An individual note (e.g. a chunk of information from the ``note_1.txt`` file
-created immediately above) can be imported by e.g.
-```
-nota -a --mode plain < note_1.txt
-```
-
-This, combined with the export mechanism, provides an easy way to email notes
-to colleagues, so they can import them into their own databases.
-
-Bug: this only works for *single* notes, at the present time.
-
-**FIXME: this probably does not work at the moment.**
+See the <a href="http://dankelley.github.io/nota/documentation.html">nota
+website</a>.
 
 
 
