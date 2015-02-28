@@ -18,6 +18,7 @@ def nota():
             'list all notes: "nota"',
             # 'read notes from a JSON file: "nota -a -m json < notes.json"',
             # 'store notes into a JSON file: "nota -m json > notes.json"',
+            'visit http://dankelley.github.io/nota/documentation.html to learn more about nota',
             'export notes with hash \'ab...\': "nota --export ab" (output handled by \'--import\')',
             'export all notes: "nota --export -" (output handled by \'--import\')',
             'import notes in file \'file.json\': "nota --import file.json" (file made by \'--export\')',
