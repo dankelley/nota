@@ -1,6 +1,13 @@
 **Abstract.** ``nota`` is an open-source application for recording textual
 notes and associated meta-information that may be used for later retrieval.
 
+# See also
+
+This README file is a bit of an artificat. The intention is to migrate material
+from here to the <a
+href="http://dankelley.github.io/nota/documentation.html">nota website</a>,
+which is easier to navigate than a README file.
+
 # Caution
 
 ``nota`` is in a phase of active development. That means that many of its
