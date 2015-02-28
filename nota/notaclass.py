@@ -153,9 +153,15 @@ class Nota:
         in style to others in the database.  The content may be of any length.
         Notes with privacy > 0 are increasingly hidden (or will be, when the
         application is more complete). '''
+        self.fyi("add with title='%s'" % title)
+        self.fyi("add with keywords='%s'" % keywords)
+        self.fyi("add with due='%s'" % due)
         # title = title.decode('utf-8')
         # content = content.decode('utf-8')
+        if not isinstance(due, str):
+            due = ""
         due = self.interpret_time(due)[0]
+        self.fyi("due: %s" % due)
         now = datetime.datetime.now()
         if date == "":
             date = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -442,12 +448,10 @@ class Nota:
                 noteIds2.append(n)
         if len(noteIds2):
             noteIds = noteIds2
-        if self.debug:
-            print("  LATER    noteIds: %s" % noteIds)
+        self.fyi("  LATER    noteIds: %s" % noteIds)
         rval = []
         for n in noteIds:
-            if self.debug:
-                print("  processing noteID %s" % n)
+            self.fyi("  processing noteID %s" % n)
             try:
                 note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash FROM note WHERE noteId=?;", n).fetchone()
             except:
@@ -467,7 +471,8 @@ class Nota:
                     keywordsStr = ','.join(keywords[i] for i in range(len(keywords)))
                     c = {"authorId":note[1], "date":date,"due":due,"title":note[3],"content":content,"privacy":privacy}
                     c["keywords"] = keywordsStr
-                    rval.append({"json":json.dumps(c)})
+                    #rval.append({"json":json.dumps(c)})
+                    rval.append(json.dumps(c))
                 else:
                     rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
                         "content":note[4], "due":note[5], "privacy":note[6],

@@ -1,6 +1,21 @@
 **Abstract.** ``nota`` is an open-source application for recording textual
 notes and associated meta-information that may be used for later retrieval.
 
+# Caution
+
+``nota`` is in a phase of active development. That means that many of its
+offerings are subject to change. Alterations may be made in its command-line
+arguments and in its output format.  There may also be changes in the schema of
+the database that ``nota`` uses, although these should typically not affect
+users because the first thing ``nota`` does when it launches is to check
+whether the database needs updating.
+
+The hope is for ``nota`` to settle into a stable version by the middle of 2015,
+following a period of alpha/beta testing in the first quarter of the year.
+
+Those who wish to test ``nota`` are asked to report bugs on the github website,
+and advised to make frequent backups of their database.
+
 # Overview
 
 Most people find it helpful to store notes on a computer.  Some use specialized

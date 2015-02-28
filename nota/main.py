@@ -13,14 +13,16 @@ from time import strptime
 import subprocess
 
 def nota():
-
     hints = [
             'add a note: "nota -a" (opens an editor)', 
             'list all notes: "nota"',
-            'read notes from a JSON file: "nota -a -m json < notes.json"',
-            'store notes into a JSON file: "nota -m json > notes.json"',
+            # 'read notes from a JSON file: "nota -a -m json < notes.json"',
+            # 'store notes into a JSON file: "nota -m json > notes.json"',
+            'export notes with hash \'ab...\': "nota --export ab" (output handled by \'--import\')',
+            'export all notes: "nota --export -" (output handled by \'--import\')',
+            'import notes in file \'file.json\': "nota --import file.json" (file made by \'--export\')',
             'list notes in markdown format: "nota -m markdown"',
-            'list notes in json format: "nota -m json"',
+            #'list notes in json format: "nota -m json"',
             'edit note with hash \'ab...\': "nota -e ab" (opens an editor)',
             'delete note with hash \'ab...\': "nota -d ab"',
             'list notes with keyword \'foo\': "nota -k foo"',
@@ -112,15 +114,17 @@ def nota():
     parser.add_argument("--color", type=str, default=None, help="specify named scheme or True/False", metavar="c")
     parser.add_argument("--undelete", type=str, default=None, help="remove note abbreviated hash 'h' from trash", metavar="h")
     parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty the trash, permanently deleting notes therein")
-    parser.add_argument("-i", "--id", type=int, help="ID number of note to work with (MAY BE REMOVED)")
+    #parser.add_argument("-i", "--id", type=int, help="ID number of note to work with (MAY BE REMOVED)")
     parser.add_argument("-H", "--Hints", action="store_true", dest="hints", default=False, help="get hints")
-    parser.add_argument("-m", "--mode", type=str, default="interactive", choices=['interactive', 'plain', 'json', 'markdown'],
-            metavar="m", help="i/o mode: 'interactive', 'plain', 'json' or 'markdown'")
+    parser.add_argument("-m", "--mode", type=str, default="interactive", choices=['interactive', 'plain', 'markdown'],
+            metavar="m", help="i/o mode: 'interactive', 'plain', or 'markdown'")
     parser.add_argument("-t", "--title", type=str, default="", help="a short title", metavar="t")
     parser.add_argument("-k", "--keywords", type=str, default="", help="string containing comma-separated keywords", metavar="k")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
     parser.add_argument("--count", action="store_true", dest="count", default=False, help="report only count of found results")
     parser.add_argument("--debug", action="store_true", dest="debug", default=False, help="set debugging on")
+    parser.add_argument("--export", type=str, default=None, help="export notes matching hash (use has '-' for all notes)", metavar="hash")
+    parser.add_argument("--import", type=str, default=None, dest="do_import", help="import notes from file created by --export", metavar="file")
     parser.add_argument("--privacy", type=int, default=0, help="set privacy level (0=open, 1=closed)", metavar="level")
     parser.add_argument("--file", type=str, help="filename for i/o", metavar="name")
     # Process the dotfile (need for next parser call)
@@ -130,7 +134,7 @@ def nota():
     parser.add_argument("--trash", action="store_true", dest="trash", default=False, help="show contents of trash")
     parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database", metavar="db")
     parser.add_argument("--strict", action="store_true", default=False, help="use strict search?")
-    parser.add_argument("--due", type=str, default="", help="time when item is due [not used yet]", metavar="when")
+    parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
     parser.add_argument("-p", "--pretty", type=str, default="", metavar="fmt", help="format for note output")
     parser.add_argument("-v", "--version", action="store_true", dest="version", default=False, help="get version number")
     parser.add_argument("--developer", action="store_true", default=False, help="flag for the developer *only*")
@@ -268,7 +272,36 @@ def nota():
         nota.fyi("should rehash now")
         nota.rehash()
         sys.exit(0)
-    
+
+    if args.do_import: # need do_ in name to avoid language conflict
+        try:
+            f = open(args.do_import, "r")
+        except:
+            nota.error("cannot read file '%s'" % args.do_import)
+        notes = []
+        i = 0
+        for line in f:
+            try:
+                notes.append(json.loads(line))
+            except:
+                nota.error("cannot read line %d of file '%s'" % (line, args.do_import))
+            i = i + 1
+        for n in notes:
+            # date will get set to now, which means also a new hash will be made
+            try:
+                id = nota.add(title=n["title"], keywords=n['keywords'], content=n["content"], due=n['due'])
+            except:
+                nota.error("cannot create note with title '%s'" % n["title"])
+
+    if args.export:
+        nota.fyi("should export now; hash=%s" % args.export)
+        if args.export == '-':
+            args.export = None
+        noteIds = nota.find(args.export)
+        for n in noteIds:
+            print(json.dumps(n))
+        sys.exit(0)
+     
     if args.trash:
         nota.fyi("should show trash contents now")
         trashed = nota.find(trash=True)
@@ -283,39 +316,39 @@ def nota():
     if args.add:
         if args.hash:
             nota.error("cannot specify a hash-code if the -a argument is given")
-        if args.mode == 'json':
-            if not args.file:
-                nota.error("Must use --file to name an input file")
-            for line in open(args.file, "r"):
-                line = line.rstrip()
-                if args.debug:
-                    print(line, '\n')
-                if (len(line)) > 1:
-                    try:
-                        j = json.loads(line)
-                        if args.debug:
-                            print(j)
-                    except:
-                        nota.error("JSON file is not in proper format on line: %s" % line)
-                    if 'title' not in j:
-                        sys.exit(1)
-                    if 'content' not in j:
-                        j['content'] = ""
-                    ## FIXME keywords (chop whitespace)
-                    if 'keywords' in j:
-                        keyword = j['keywords'].split(',')
-                    else:
-                        keyword = ''
-                    if 'privacy' not in j:
-                        j['privacy'] = 0
-                    ## FIXME keywords (next does nothing?)
-                    j['keywords'].split(',')
-                    id = nota.add(title=j['title'], keywords=keyword, content=j['content'], privacy=j['privacy'])
-            sys.exit(0)
-        elif args.mode== 'plain' and (args.title == "" and args.content == ""):
+        #if args.mode == 'json':
+        #    if not args.file:
+        #        nota.error("Must use --file to name an input file")
+        #    for line in open(args.file, "r"):
+        #        line = line.rstrip()
+        #        if args.debug:
+        #            print(line, '\n')
+        #        if (len(line)) > 1:
+        #            try:
+        #                j = json.loads(line)
+        #                if args.debug:
+        #                    print(j)
+        #            except:
+        #                nota.error("JSON file is not in proper format on line: %s" % line)
+        #            if 'title' not in j:
+        #                sys.exit(1)
+        #            if 'content' not in j:
+        #                j['content'] = ""
+        #            ## FIXME keywords (chop whitespace)
+        #            if 'keywords' in j:
+        #                keyword = j['keywords'].split(',')
+        #            else:
+        #                keyword = ''
+        #            if 'privacy' not in j:
+        #                j['privacy'] = 0
+        #            ## FIXME keywords (next does nothing?)
+        #            j['keywords'].split(',')
+        #            id = nota.add(title=j['title'], keywords=keyword, content=j['content'], privacy=j['privacy'])
+        #    sys.exit(0)
+        #elif args.mode== 'plain' and (args.title == "" and args.content == ""):
+        if args.mode== 'plain' and (args.title == "" and args.content == ""):
             lines = sys.stdin.readlines()
-            if nota.debug:
-                print('reading from stdin')
+            nota.fyi('reading from stdin')
             # trim newlines, plus any blank lines at start and end [FIXME: inelegant in the extreme]
             trim = 0
             nlines = len(lines)
@@ -408,9 +441,9 @@ def nota():
                 found = nota.find(id=id_desired, mode=args.mode, strict=args.strict, trash=False)
         elif args.keywords[0] != '':
             found = nota.find(keywords=args.keywords, mode=args.mode, strict=args.strict)
-        elif args.id:
-            print("FIXME: args.id case ... broken, I think (id=%s)" % args.id)
-            found = nota.find(id=args.id, mode=args.mode, strict=args.strict)
+        #elif args.id:
+        #    print("FIXME: args.id case ... broken, I think (id=%s)" % args.id)
+        #    found = nota.find(id=args.id, mode=args.mode, strict=args.strict)
         else:
             found = nota.find(keywords='?'.split(','), mode=args.mode, strict=args.strict)
         count = 0
@@ -450,8 +483,8 @@ def nota():
             count += 1
             if args.count:
                 continue
-            elif args.mode == "json":
-                print(f['json'])
+            #elif args.mode == "json":
+            #    print(f['json'])
             elif args.mode== 'markdown':
                 ## FIXME: redo this as the interactive UI firms up
                 print("**%s**\n" %f ['title'])
@@ -519,7 +552,8 @@ def nota():
                         print('')
         if args.count:
             print(count)
-        if args.mode != "json" and not args.count:
+        #if args.mode != "json" and not args.count:
+        if not args.count:
             t = nota.trash_length()[0]
             if t == 0:
                 print("The trash is empty.")
