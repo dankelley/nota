@@ -41,15 +41,12 @@ class Nota:
         if mustInitialize:
             self.initialize()
         try:
-            #v = self.cur.execute("SELECT major,minor FROM version;").fetchone()
             v = self.cur.execute("SELECT * FROM version;").fetchone()
             self.dbversion = v
         except:
             self.warning("cannot get version number in database")
             self.dbversion = [0, 0, 0] # started storing version at [0, 1]
             pass
-        #appversion = int(10*self.appversion[0] + self.appversion[1])
-        #dbversion = int(10*self.dbversion[0] + self.dbversion[1])
         appversion = "%s.%s.%s" % (self.appversion[0], self.appversion[1], self.appversion[2])
         if len(self.dbversion) == 2:
             dbversion = "%s.%s.%s" % (self.dbversion[0], self.dbversion[1], 0)
@@ -60,10 +57,6 @@ class Nota:
         self.fyi("self.dbversion:")
         if self.debug:
             print(self.dbversion)
-
-        #self.fyi("appversion: %d.%d (which translates to %d)" % (self.appversion[0], self.appversion[1], appversion))
-        #self.fyi("dbversion: %d.%d (which translates to %d)" % (self.dbversion[0], self.dbversion[1], dbversion))
-
         if StrictVersion(appversion) > StrictVersion(dbversion):
             if StrictVersion(dbversion) < StrictVersion("0.2"):
                 print("Updating database to version 0.2.x ...")
@@ -146,8 +139,6 @@ class Nota:
 
 
     def fyi(self, msg, prefix="  "):
-        #if not self.quiet:
-        #    print(prefix + msg, file=sys.stderr)
         if self.debug:
             print(prefix + msg, file=sys.stderr)
 
@@ -156,13 +147,16 @@ class Nota:
         if not self.quiet:
             print(prefix + msg, file=sys.stderr)
 
+
     def error(self, msg, level=1, prefix="Error: "):
         if not self.quiet:
             print(prefix + msg, file=sys.stderr)
         sys.exit(level)
 
+
     def version(self):
         return("Nota %d.%d.%d" % (self.appversion[0], self.appversion[1], self.appversion[2]))
+
 
     def initialize(self, author=""):
         ''' Initialize the database.  This is dangerous since it removes any
@@ -177,6 +171,7 @@ class Nota:
         self.cur.execute("CREATE TABLE notekeyword(notekeywordId integer primary key autoincrement, noteid, keywordid);")
         self.con.commit()
 
+
     def add(self, title="", keywords="", content="", due="", privacy=0, date="", modified=""):
         ''' Add a note to the database.  The title should be short (perhaps 3
         to 7 words).  The keywords are comma-separated, and should be similar
@@ -184,8 +179,6 @@ class Nota:
         self.fyi("add with title='%s'" % title)
         self.fyi("add with keywords='%s'" % keywords)
         self.fyi("add with due='%s'" % due)
-        # title = title.decode('utf-8')
-        # content = content.decode('utf-8')
         if not isinstance(due, str):
             due = ""
         due = self.interpret_time(due)[0]
@@ -206,9 +199,7 @@ class Nota:
             self.cur.execute("UPDATE note SET hash=? WHERE noteId=?;", (hash, noteId))
         except:
             self.error("error adding note hash to the database")
-        # FIXME: replace next with keyword_hookup() call?
         for keyword in keywords:
-            #keyword = keyword.decode('utf-8')
             self.fyi(" inserting keyword:", keyword)
             keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword = ?;", [keyword]).fetchone()
             if keywordId:
@@ -226,18 +217,15 @@ class Nota:
     def hash_abbreviation_length(self):
         hash = []
         try:
-            # FIXME: this does not seem elegant
             for h in self.cur.execute("SELECT hash FROM note;").fetchall():
                 hash.extend(h)
         except:
             self.error("ERROR: cannot find hashes")
         n = len(hash)
         for nc in range(1, 20): # unlikely to be > 7
-            #print("nc: %s" % nc)
             h = hash[:]
             for i in range(n):
                 h[i] = h[i][0:nc]
-                #print("hash[%d] %s %s (nc=%d)" % (i, h[i], hash[i], nc))
             hs = sorted(h)
             duplicate = False
             for i in range(n-1):
@@ -250,7 +238,9 @@ class Nota:
 
 
     def keyword_hookup(self, noteId, keywords):
-        # Unhook existing cross-linking entries.
+        '''
+        Unhook existing cross-linking entries.
+        '''
         try:
             self.cur.execute("DELETE FROM notekeyword WHERE noteid=?", [noteId])
         except:
@@ -274,6 +264,7 @@ class Nota:
             except:
                 self.error("error hooking up keyword '%s'" % keyword)
         self.con.commit()
+
 
     def undelete(self, hash): # takes out of trash
         hash = str(hash)
@@ -379,6 +370,7 @@ class Nota:
         self.con.commit()
         return noteId
 
+
     def cleanup(self):
         ''' Clean up the database, e.g. removing unused keywords.'''
         allList = []
@@ -395,11 +387,13 @@ class Nota:
                 self.error("There was a problem deleting keyword %s" % key)
         self.con.commit()
 
+
     def get_id_list(self):
         '''Return list of ID values'''
         noteIds = []
         noteIds.extend(self.con.execute("SELECT noteId FROM note;"))
         return(noteIds)
+
 
     def trash_length(self):
         try:
@@ -407,6 +401,7 @@ class Nota:
             return(n)
         except:
             self.error("cannot determine number of items in trash")
+
 
     def find(self, id=None, keywords="", trash=False):
         '''Search notes for a given id or keyword, printing the results in

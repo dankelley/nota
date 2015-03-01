@@ -356,7 +356,6 @@ def nota():
                 nota.error("cannot read line %d of file '%s'" % (line, args.do_import))
             i = i + 1
         for n in notes:
-            # date will get set to now, which means also a new hash will be made
             try:
                 id = nota.add(title=n["title"], keywords=n['keywords'], content=n["content"], date=n['date'], due=n['due'])
             except:
@@ -436,7 +435,6 @@ def nota():
                 due = f['due']
             except:
                 due = None
-            #print("len(due): %d" % len(due))
             if due_requested[0]:
                 if not due:
                     continue
