@@ -180,9 +180,7 @@ class Nota:
     def add(self, title="", keywords="", content="", due="", privacy=0, date="", modified=""):
         ''' Add a note to the database.  The title should be short (perhaps 3
         to 7 words).  The keywords are comma-separated, and should be similar
-        in style to others in the database.  The content may be of any length.
-        Notes with privacy > 0 are increasingly hidden (or will be, when the
-        application is more complete). '''
+        in style to others in the database.  The content may be of any length.'''
         self.fyi("add with title='%s'" % title)
         self.fyi("add with keywords='%s'" % keywords)
         self.fyi("add with due='%s'" % due)
@@ -197,7 +195,7 @@ class Nota:
             date = now.strftime("%Y-%m-%d %H:%M:%S")
         try:
             self.cur.execute("INSERT INTO note(authorId, date, modified, title, content, privacy, due) VALUES(?, ?, ?, ?, ?, ?, ?);",
-                (self.authorId, date, modified, title, content, privacy, due))
+                (self.authorId, date, modified, title, content, 0, due))
         except:
             self.error("error adding note to the database")
         noteId = self.cur.lastrowid
@@ -360,7 +358,8 @@ class Nota:
         old = old[0]
         keywords = []
         keywords.extend(self.get_keywords(old['noteId']))
-        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], privacy=old['privacy'], due=old['due'])
+        #ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], privacy=old['privacy'], due=old['due'])
+        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], due=old['due'])
         noteId = int(old["noteId"])
         try:
             self.cur.execute("UPDATE note SET title = (?) WHERE noteId = ?;", (ee["title"], noteId))
@@ -568,13 +567,11 @@ TITLE> %s
 
 KEYWORDS?> %s
 
-PRIVACY?> %s
-
 DUE (E.G. 'tomorrow' or '3 days')?> %s
 
 CONTENT...
 %s
-''' % (title, ",".join(k for k in keywords), privacy, due, content)
+''' % (title, ",".join(k for k in keywords), due, content)
         try:
             # FIXME: is this polluting filespace with tmp files?
             file = tempfile.NamedTemporaryFile(suffix=".tmp") #, delete=False)

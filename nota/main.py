@@ -388,13 +388,13 @@ def nota():
         # If no title is given, need to use the editor.
         if args.title == "":
             nota.fyi("should handle interactive now")
-            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content,
-                    privacy=args.privacy, due=args.due)
-            id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"],
-                    privacy=ee["privacy"], due=ee["due"])
+            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
+                    #privacy=args.privacy, due=args.due)
+            id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], due=ee["due"])
+                    #privacy=ee["privacy"], due=ee["due"])
         else:
-            id = nota.add(title=args.title, keywords=args.keywords, content=args.content,
-                    privacy=args.privacy, due=args.due)
+            id = nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
+                    #privacy=args.privacy, due=args.due)
         sys.exit(0)
     else: # By a process of elimination, we must be trying to find notes.
         due_requested = nota.interpret_time(args.due)
