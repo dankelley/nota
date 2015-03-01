@@ -4,7 +4,6 @@ import sys
 import sqlite3 as sqlite
 import datetime
 import os.path
-import json
 import difflib
 import re
 import tempfile
@@ -255,8 +254,6 @@ class Nota:
         self.fyi("trash_contents : %s" % trash_contents)
         hashlen = len(hash)
         for t in trash_contents:
-            #print(t) #['noteId'])
-            #print(t['hash'][0:hashlen])
             if t['hash'][0:hashlen] == hash:
                 print("undeleting note with hash %s" % t['hash'][0:7])
                 try:
@@ -381,7 +378,7 @@ class Nota:
         except:
             self.error("cannot determine number of items in trash")
 
-    def find(self, id=None, keywords="", mode="plain", strict=False, trash=False):
+    def find(self, id=None, keywords="", strict=False, trash=False):
         '''Search notes for a given id or keyword, printing the results in
         either 'plain' or 'JSON' format.'''
         if trash:
@@ -409,7 +406,6 @@ class Nota:
                     keywordsKnown = []
                     for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
                         keywordsKnown.extend(k)
-                    #print(keywordsKnown)
                     # FIXME: what cutoff is good??
                     keywordsFuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
                     if len(keywordsFuzzy) > 0:
@@ -466,17 +462,9 @@ class Nota:
                 keywords = []
                 for k in keywordIds:
                     keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId = ?;", k).fetchone()[0])
-                if mode == 'json':
-                    content = note[4].replace('\n', '\\n')
-                    keywordsStr = ','.join(keywords[i] for i in range(len(keywords)))
-                    c = {"authorId":note[1], "date":date,"due":due,"title":note[3],"content":content,"privacy":privacy}
-                    c["keywords"] = keywordsStr
-                    #rval.append({"json":json.dumps(c)})
-                    rval.append(json.dumps(c))
-                else:
-                    rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
-                        "content":note[4], "due":note[5], "privacy":note[6],
-                        "date":note[2], "modified":note[7], "hash":note[8]})
+                rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
+                    "content":note[4], "due":note[5], "privacy":note[6],
+                    "date":note[2], "modified":note[7], "hash":note[8]})
             else:
                 self.error("There is no note with abbreviated hash '%s'" % n[0])
         return rval
@@ -559,14 +547,13 @@ CONTENT...
 %s
 ''' % (title, ",".join(k for k in keywords), privacy, due, content)
         try:
+            # FIXME: is this polluting filespace with tmp files?
             file = tempfile.NamedTemporaryFile(suffix=".tmp") #, delete=False)
         except:
             self.error('cannot create tempfile')
         file.write(initial_message.encode('utf-8'))
         file.flush()
-        #print("tempfile.name: '%s'" % tempfile.name)
         EDITOR = os.environ.get('EDITOR','vi') 
-        #print(EDITOR)
         try:
             call([EDITOR, file.name])
         except:
@@ -592,24 +579,13 @@ CONTENT...
             elif "CONTENT" in line:
                 inContent = True
         content = content.rstrip('\n')
-        #keywords = keywords.split(',')
         keywords = [key.lstrip().rstrip() for key in keywords.split(',')]
         self.fyi("LATE keywords= %s" % keywords)
         return {"title":title, "keywords":keywords, "content":content, "privacy":privacy, "due":due}
 
-    #def find_git_repo(self):
-    #    try:
-    #        out = subprocess.check_output(["git", "remote", "-v"], stderr=subprocess.STDOUT)
-    #        if out:
-    #            o = out.split('\n')
-    #            for repo in o:
-    #                if "push" in repo:
-    #                    repo = re.compile(r'.*/(.*)\.git.*$').match(repo).group(1)
-    #                    return repo
-    #    except:
-    #        return None
-   
+
     def rename_keyword(self, old, new):
+        # FIXME: hook this up to args
         self.fyi("UPDATE keyword SET keyword=\"%s\" WHERE keyword=\"%s\";" % (new, old))
         try:
             self.cur.execute("UPDATE keyword SET keyword = ? WHERE keyword = ?;", (new, old))

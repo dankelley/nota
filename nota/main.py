@@ -19,17 +19,83 @@ def nota():
             'create new note hashes: "nota --developer=rehash"',
             'delete note with hash \'ab...\': "nota -d ab"',
             'edit note with hash \'ab...\': "nota -e ab" (opens EDITOR)',
-            'export all notes: "nota --export -" (output handled by \'--import\')',
-            'export notes with hash \'ab...\': "nota --export ab" (output handled by "--import")',
-            'import notes in file \'file.json\': "nota --import file.json" (file made by "--export")',
+            'export all notes: "nota --export -" (import with \'--import\')',
+            'export notes with hash \'ab...\': "nota --export ab" (import with "--import")',
+            'import notes: "nota --import file.json" ("file.json" created by "--export")',
             'list all notes: "nota"',
-            'list notes in the trash: "nota --trash"',
+            'list notes contained in the trash: "nota --trash"',
+            'list notes due today: "nota --due today"',
+            'list notes in markdown format: "nota --markdown"',
             'list note with hash \'ab...\': "nota ab"',
             'list notes with keyword \'foo\': "nota -k foo"',
-            'list notes with markdown format: "nota -m markdown"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
             'visit http://dankelley.github.io/nota/documentation.html to learn more']
-    
+
+    def color_code(c):
+        c = c.replace("'", "")
+        c = c.replace('"', "")
+        if c[0:1] == '\\':
+            return(c)
+        elif c == "bold":
+            return('\033[1m')
+        elif c == "dim":
+            return('\033[2m')
+        elif c == "underlined":
+            return('\033[4m')
+        elif c == "blink":
+            return('\033[5m')
+        elif c == "reverse":
+            return('\033[7m')
+        elif c == "black":
+            return('\033[0m')
+        elif c == "red":
+            return('\033[31m')
+        elif c == "green":
+            return('\033[32m')
+        elif c == "yellow":
+            return('\033[33m')
+        elif c == "blue":
+            return('\033[34m')
+        elif c == "magenta":
+            return('\033[35m')
+        elif c == "cyan":
+            return('\033[36m')
+        elif c == "lightgray":
+            return('\033[37m')
+        elif c == "darkgray":
+            return('\033[90m')
+        elif c == "lightred":
+            return('\033[91m')
+        elif c == "lightgreen":
+            return('\033[92m')
+        elif c == "lightyellow":
+            return('\033[93m')
+        elif c == "lightblue":
+            return('\033[94m')
+        elif c == "lightmagenta":
+            return('\033[95m')
+        elif c == "lightcyan":
+            return('\033[96m')
+  
+    def due_str(due):
+        due = datetime.datetime.strptime(due, '%Y-%m-%d %H:%M:%S.%f')
+        now = datetime.datetime.now()
+        when = abs(due - now).total_seconds()
+        if due > now:
+            if when < 2 * 3600:
+                return("(due in %d minutes)" % round(when / 60))
+            elif when < 86400:
+                return("(due in %d hours)" % round(when / 3600))
+            else:
+                return("(due in %d days)" % round(when / 3600 / 24))
+        else:
+            if when < 2 * 3600:
+                return("(overdue by %d minutes)" % (when / 60))
+            elif when < 86400:
+                return("(overdue by %d hours)" % (when / 3600))
+            else:
+                return("(overdue by %.1f days)" % (when / 3600 / 24))
+ 
     def random_hint():
         return hints[randint(0, len(hints)-1)]
     
@@ -81,34 +147,39 @@ def nota():
         nota -a -t=... -c=... # add a note (without a text editor)
         nota -e ab            # edit note with hash starting with 'ab' (opens a text editor)
         nota -d ab            # delete note with hash starting with 'ab'
+        nota --export ab > F  # export note to file 'F'
+        nota --import F       # import note from file 'F'
 
     The ~/.notarc file may be used for customization, and may contain e.g. the
     following:
     
-        db = \"~/Dropbox/nota.db\" # this permits the use of different files
-        pretty = \"oneline\"  # no other option
-        show_id = False       # set True to see database key (mainly for the developer)
-        debug = False         # set True (or use --debug flag) to turn on debugging
-        color = True          # set False to avoid colors (optionally customized as below)
-                              # Colours (as below) are specified with just the suffix part,
-                              # e.g. "36m" stands for "\\033[36m". 
-                              #
-                              # It is also possible to specify a color scheme, with the 
-                              # choices being as follows (SUBJECT TO CHANGE!)
-                              #   color = "bubblegum" # red hash, cyan keywords
-                              #   color = "forest" # green hash, straw keywords
-                              #   color = "bun" # blue hash, underlined keywords
-                              #   color = "gun" # green hash, underlined keywords
-                              #   color = "run" # red hash, underlined keywords
-                              #   color = "default" # same as "bubblegum"
-                              # (see http://en.wikipedia.org/wiki/ANSI_escape_code)
-        color.hash = "36m"    # darkcyan
-        color.title = "1m"    # bold
-        color.keyword = "4m"  # underline
+        Specify database name
+            db = \"~/Dropbox/nota.db\"
+        Turn on debugging mode
+            debug = True
+        Show internal database ID number for note
+            show_id = False
+        Use color in displays
+            color = True
+        or set up a color theme, using one of
+            color = "bubblegum" # red hash, cyan keywords
+            color = "forest" # green hash, straw keywords
+            color = "run" # red hash, underlined keywords
+            color = "default" # same as "bubblegum"
+        or specify hash, title, and keyword colors directly:
+            color.hash = "red"
+            color.title = "bold"
+            color.keyword = "cyan"
+        where the black variants are: "bold", "dim", "underlined", "blink",
+        "reverse" and "normal" and the available colors are: "black", "red",
+        "green", "yellow", "blue", "magenta", "cyan", "lightgray", "darkgray",
+        "lightred", "lightgreen", "lightyellow", "lightblue", "lightmagenta",
+        and "lightcyan".
 
     Advanced usage:
-
-        nota --special=rehash # recreates hashes (to removes duplicate hashes)
+        
+        Recreate hashes (to remove duplicate hashes, which are statitically unlikely)
+            nota --special=rehash
     
 
         '''))
@@ -122,8 +193,9 @@ def nota():
     parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty the trash, permanently deleting notes therein")
     #parser.add_argument("-i", "--id", type=int, help="ID number of note to work with (MAY BE REMOVED)")
     parser.add_argument("-H", "--Hints", action="store_true", dest="hints", default=False, help="get hints")
-    parser.add_argument("-m", "--mode", type=str, default="interactive", choices=['interactive', 'plain', 'markdown'],
-            metavar="m", help="i/o mode: 'interactive', 'plain', or 'markdown'")
+    #parser.add_argument("-m", "--mode", type=str, default="plain", choices=['plain', 'markdown'],
+    #        metavar="m", help="i/o mode: 'plain', or 'markdown' THIS ARG MAY BE REMOVED SOON")
+    parser.add_argument("--markdown", action="store_true", dest="markdown", default=False, help="use markdown format for output")
     parser.add_argument("-t", "--title", type=str, default="", help="a short title", metavar="t")
     parser.add_argument("-k", "--keywords", type=str, default="", help="string containing comma-separated keywords", metavar="k")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
@@ -136,13 +208,11 @@ def nota():
     # Process the dotfile (need for next parser call)
     defaultDatabase = get_from_dotfile("~/.notarc", "database", "~/Dropbox/nota.db")
     # Back to the parser
-    # parser.add_argument("--rehash", action="store_true", dest="rehash", default=False, help="create new hashes")
     parser.add_argument("--trash", action="store_true", dest="trash", default=False, help="show contents of trash")
     parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database", metavar="db")
-    parser.add_argument("--strict", action="store_true", default=False, help="use strict search?")
+    parser.add_argument("--strict", action="store_true", default=False, help="use strict search PROBABLY WILL BE DELETED!") # FIXME
     parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
-    parser.add_argument("-p", "--pretty", type=str, default="", metavar="fmt", help="format for note output")
-    parser.add_argument("-v", "--version", action="store_true", dest="version", default=False, help="get version number")
+    parser.add_argument("--version", action="store_true", dest="version", default=False, help="get version number")
     parser.add_argument("--special", type=str, default="", help="special actions", metavar="action")
     args = parser.parse_args()
     
@@ -165,48 +235,43 @@ def nota():
     else:
         color_scheme = get_from_dotfile("~/.notarc", "color", True)
     use_color = True
+
     if isinstance(color_scheme, str):
-        if color_scheme == "forest": # green-straw
-            color.hash = '\033[' + '32m' # green
-            color.title = '\033[' + '1m' # bold
-            #color.keyword = '\033[' + '4m' # underline
-            color.keyword = '\033[' + '33m' # yellow (like commit hash from git)
-        elif color_scheme == "gun": # green-underline
-            color.hash = '\033[' + '32m' # green
-            color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '4m' # underline
-        elif color_scheme == "bun": # blue-underline
-            color.hash = '\033[' + '34m' # blue
-            color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '4m' # underline
-        elif color_scheme == "run": # red-underline
-            color.hash = '\033[' + '31m' # red 
-            color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '4m' # underline
+        if color_scheme == "forest":
+            color.hash = color_code('green')
+            color.title = color_code('bold')
+            color.keyword = color_code('yellow')
+        elif color_scheme == "run":
+            color.hash = color_code('red')
+            color.title = color_code('bold')
+            color.keyword = color_code('underlined')
         elif color_scheme == "bubblegum":
-            color.hash = '\033[' + '31m' # red
-            color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '35m'
+            color.hash = color_code('red')
+            color.title = color_code('bold')
+            color.keyword = color_code('magenta')
         elif color_scheme == "default":
-            color.hash = '\033[' + '31m' # red
-            color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '35m'
+            color.hash = color_code('red')
+            color.title = color_code('bold')
+            color.keyword = color_code('magenta')
         else:
             print("Unknown color scheme '%s'; using 'default' instead." % color_scheme)
-            color.hash = '\033[' + '31m' # red
-            color.title = '\033[' + '1m' # bold
-            color.keyword = '\033[' + '35m'
+            color.hash = color_code('red')
+            color.title = color_code('bold')
+            color.keyword = color_code('magenta')
         use_color = True
     elif isinstance(color_scheme, bool):
         use_color = color_scheme
         if use_color:
-            color.hash = '\033[' + get_from_dotfile("~/.notarc", "color.hash", '31m')
-            color.title = '\033[' + get_from_dotfile("~/.notarc", "color.title", '1m')
-            color.keyword = '\033[' + get_from_dotfile("~/.notarc", "color.keyword", '35m')
+            # color.hash = '\033[' + get_from_dotfile("~/.notarc", "color.hash", '31m')
+            # color.title = '\033[' + get_from_dotfile("~/.notarc", "color.title", '1m')
+            # color.keyword = '\033[' + get_from_dotfile("~/.notarc", "color.keyword", '35m')
+            color.hash = color_code(get_from_dotfile("~/.notarc", "color.hash", 'red'))
+            color.title = color_code(get_from_dotfile("~/.notarc", "color.title", 'bold'))
+            color.keyword = color_code(get_from_dotfile("~/.notarc", "color.keyword", 'magenta'))
     else:
         print("The color scheme given in the ~/.notarc file should be a string or logical")
         exit(1)
-    
+
     if not use_color:
         color.hash = ''
         color.title = ''
@@ -234,8 +299,8 @@ def nota():
         sys.exit(0)
     
     # look in ~/.notarc to see if a database is named there
-    if not args.pretty:
-        args.pretty = get_from_dotfile("~/.notarc", "pretty", "oneline")
+    #if not args.pretty:
+    #    args.pretty = get_from_dotfile("~/.notarc", "pretty", "oneline")
     
     if args.special:
         if args.special == "rehash":
@@ -278,11 +343,6 @@ def nota():
         nota.fyi("should now edit note %s" % args.edit)
         idnew = nota.edit(args.edit)
         sys.exit(0)
-    
-    #if args.rehash:
-    #    nota.fyi("should rehash now")
-    #    nota.rehash()
-    #    sys.exit(0)
 
     if args.do_import: # need do_ in name to avoid language conflict
         try:
@@ -300,7 +360,7 @@ def nota():
         for n in notes:
             # date will get set to now, which means also a new hash will be made
             try:
-                id = nota.add(title=n["title"], keywords=n['keywords'], content=n["content"], due=n['due'])
+                id = nota.add(title=n["title"], keywords=n['keywords'], content=n["content"], date=n['date'], due=n['due'])
             except:
                 nota.error("cannot create note with title '%s'" % n["title"])
 
@@ -327,110 +387,17 @@ def nota():
     if args.add:
         if args.hash:
             nota.error("cannot specify a hash-code if the -a argument is given")
-        #if args.mode == 'json':
-        #    if not args.file:
-        #        nota.error("Must use --file to name an input file")
-        #    for line in open(args.file, "r"):
-        #        line = line.rstrip()
-        #        if args.debug:
-        #            print(line, '\n')
-        #        if (len(line)) > 1:
-        #            try:
-        #                j = json.loads(line)
-        #                if args.debug:
-        #                    print(j)
-        #            except:
-        #                nota.error("JSON file is not in proper format on line: %s" % line)
-        #            if 'title' not in j:
-        #                sys.exit(1)
-        #            if 'content' not in j:
-        #                j['content'] = ""
-        #            ## FIXME keywords (chop whitespace)
-        #            if 'keywords' in j:
-        #                keyword = j['keywords'].split(',')
-        #            else:
-        #                keyword = ''
-        #            if 'privacy' not in j:
-        #                j['privacy'] = 0
-        #            ## FIXME keywords (next does nothing?)
-        #            j['keywords'].split(',')
-        #            id = nota.add(title=j['title'], keywords=keyword, content=j['content'], privacy=j['privacy'])
-        #    sys.exit(0)
-        #elif args.mode== 'plain' and (args.title == "" and args.content == ""):
-        if args.mode== 'plain' and (args.title == "" and args.content == ""):
-            lines = sys.stdin.readlines()
-            nota.fyi('reading from stdin')
-            # trim newlines, plus any blank lines at start and end [FIXME: inelegant in the extreme]
-            trim = 0
-            nlines = len(lines)
-            for l in range(nlines):
-                if len(lines[l].strip()) < 1:
-                    trim += 1
-                else:
-                    break
-            lines = [lines[i].rstrip('\n') for i in range(trim, nlines)]
-            trim = 0
-            nlines = len(lines)
-            for l in reversed(list(range(nlines))):
-                if len(lines[l].strip()) < 1:
-                    trim += 1
-                else:
-                    break
-            lines = [lines[i].rstrip('\n') for i in range(0, nlines-trim)]
-            # finally (after all that bad code!) we can parse for content
-            title = ""
-            content = ""
-            keywords = []
-            for line in lines:
-                if nota.debug:
-                    print("analysing line \"%s\"" % line)
-                if title == "":
-                    if line == "":
-                        next # FIXME: should this be 'continue'?
-                    title = line.strip()
-                elif '<' in line:
-                    keywords = re.sub(r'<.*>', '', line).strip()
-                    keywords = re.sub(r' *\] *\[ *', ',', keywords).strip()
-                    keywords = re.sub(r' *\[ *', '', keywords).strip()
-                    keywords = re.sub(r' *\] *', '', keywords).strip()
-                    #keywords = keywords.split(',')
-                    keywords = [key.lstrip().rstrip() for key in keywords.split(',')]
-                else:
-                    if content == "" and line == "":
-                        next # FIXME: should this be 'continue'?
-                    content = content.lstrip() + line + '\n'
-            if nota.debug:
-                print("title:", title)
-                print("keywords:", keywords)
-                print("content: (%s)" % content)
-            id = nota.add(title=title, keywords=keywords, content=content, privacy=args.privacy)
-        elif args.mode == 'interactive' and (args.title == "" or args.content == "" or args.keywords == ""):
-            if args.debug:
-                print("should handle interactive now")
-            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, privacy=args.privacy, due=args.due)
-            id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], privacy=ee["privacy"], due=ee["due"])
+        # If no title is given, need to use the editor.
+        if args.title == "":
+            nota.fyi("should handle interactive now")
+            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content,
+                    privacy=args.privacy, due=args.due)
+            id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"],
+                    privacy=ee["privacy"], due=ee["due"])
         else:
-            id = nota.add(title=args.title, keywords=args.keywords, content=args.content, privacy=args.privacy, due=args.due)
+            id = nota.add(title=args.title, keywords=args.keywords, content=args.content,
+                    privacy=args.privacy, due=args.due)
         sys.exit(0)
-    
-    #elif args.edit:
-    #    if args.keywords[0] != "":
-    #        if args.debug:
-    #            print("KEYWORD \"%s\"" % args.keywordsoriginal)
-    #        try:
-    #            k = args.keywordsoriginal.split('=')
-    #        except:
-    #            nota.error("must specify e.g. 'nb edit --keyword OLD=NEW'")
-    #        if args.debug:
-    #            nota.fyi("renaming '%s' to '%s'" % (k[0], k[1]))
-    #        nota.rename_keyword(k[0], k[1])
-    #    else:
-    #        if not id_desired:
-    #            nota.error("must provide an ID, e.g. 'nb 1 -e' to edit note with ID=1")
-    #        idnew = nota.edit(id_desired)
-    #    sys.exit(0)
-    
-    
     else: # By a process of elimination, we must be trying to find notes.
         due_requested = nota.interpret_time(args.due)
         if id_desired is not None:
@@ -447,16 +414,13 @@ def nota():
                 #print(nids)
                 id = ids[nids + id_desired - 1][0]
                 #print("id:", id)
-                found = nota.find(id=int(id), mode=args.mode, strict=args.strict, trash=False)
+                found = nota.find(id=int(id), strict=args.strict, trash=False)
             else:
-                found = nota.find(id=id_desired, mode=args.mode, strict=args.strict, trash=False)
+                found = nota.find(id=id_desired, strict=args.strict, trash=False)
         elif args.keywords[0] != '':
-            found = nota.find(keywords=args.keywords, mode=args.mode, strict=args.strict)
-        #elif args.id:
-        #    print("FIXME: args.id case ... broken, I think (id=%s)" % args.id)
-        #    found = nota.find(id=args.id, mode=args.mode, strict=args.strict)
+            found = nota.find(keywords=args.keywords, strict=args.strict)
         else:
-            found = nota.find(keywords='?'.split(','), mode=args.mode, strict=args.strict)
+            found = nota.find(keywords='?'.split(','), strict=args.strict)
         count = 0
         nfound = len(found)
         i = -1
@@ -494,68 +458,75 @@ def nota():
             count += 1
             if args.count:
                 continue
-            #elif args.mode == "json":
-            #    print(f['json'])
-            elif args.mode== 'markdown':
-                ## FIXME: redo this as the interactive UI firms up
-                print("**%s**\n" %f ['title'])
-                print("%s " %f ['hash'], end='')
-                for k in f['keywords']:
-                    print("[%s] " % k, end='')
-                print("{%s / %s}\n" % (f['date'], f['modified']))
-                print(f['content'].lstrip())
             else:
-                if args.pretty == "oneline" and nfound > 1:
-                    print(color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print(color.keyword + f['keywords'][i] + color.normal, end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n")
-                else:
-                    print(color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print(color.keyword + f['keywords'][i] + color.normal, end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n")
-                    #this commented-out block shows how to e.g. show just hour of day.
-                    #created = f['date']
-                    #dan = datetime.datetime.strptime(created, "%Y-%m-%d %H:%M:%S")
-                    #print(datetime.datetime.strftime(dan, "%Y-%m-%d %Hh"))
-                    print("  created %s" % f['date'], end=" ")
-                    if f['due'] and len(f['due']) > 0:
-                        due = datetime.datetime.strptime(f['due'], '%Y-%m-%d %H:%M:%S.%f') # FIXME: make this 'due' DRY (+-20 lines)
-                        now = datetime.datetime.now()
-                        when = abs(due - now).total_seconds()
-                        if due > now:
-                            if when < 2 * 3600:
-                                print("(due in %d minutes)" % round(when / 60))
-                            elif when < 86400:
-                                print("(due in %d hours)" % round(when / 3600))
-                            else:
-                                print("(due in %d days)" % round(when / 3600 / 24))
-                        else:
-                            if when < 2 * 3600:
-                                print("(overdue by %d minutes)" % (when / 60))
-                            elif when < 86400:
-                                print("(overdue by %d hours)" % (when / 3600))
-                            else:
-                                print("(overdue by %.1f days)" % (when / 3600 / 24))
+                if nfound > 1:
+                    if args.markdown:
+                        print("%s: " % f['hash'][0:hal], end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print("**%s** " % f['title'], end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print("*%s*" % f['keywords'][i], end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n\n")
                     else:
+                        print(color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print(color.keyword + f['keywords'][i] + color.normal, end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n")
+                else:
+                    if args.markdown:
+                        print("%s: " % f['hash'][0:7], end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print("**%s** " % f['title'], end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print(f['keywords'][i], end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n\n")
+                        print("  created %s" % f['date'], end=" ")
+                        if f['due'] and len(f['due']) > 0:
+                            print(due_str(f['due']))
+                        else:
+                            print('')
                         print('')
-                    content = f['content'].replace('\\n', '\n')
-                    if not args.pretty == "twoline":
+                        content = f['content'].replace('\\n', '\n')
+                        for contentLine in content.split('\n'):
+                            c = contentLine.rstrip('\n')
+                            if len(c):
+                                print(" ", contentLine.rstrip('\n'), '\n')
+                        print('')
+                    else:
+                        print(color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print(color.keyword + f['keywords'][i] + color.normal, end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n")
+                        print("  created %s" % f['date'], end=" ")
+                        if f['due'] and len(f['due']) > 0:
+                            print(due_str(f['due']))
+                        else:
+                            print('')
+                        content = f['content'].replace('\\n', '\n')
                         for contentLine in content.split('\n'):
                             c = contentLine.rstrip('\n')
                             if len(c):
@@ -563,18 +534,21 @@ def nota():
                         print('')
         if args.count:
             print(count)
-        #if args.mode != "json" and not args.count:
         if not args.count:
-            t = nota.trash_length()[0]
+            t = nota.trash_length()[0] # FIXME: should just return the [0]
             if t == 0:
                 print("The trash is empty.")
             elif t == 1:
                 print("The trash contains 1 note.")
             else:
                 print("The trash contains %s notes." % t)
+            if args.markdown:
+                print("\n")
             print("Hint:", end=" ")
             hint = random_hint()
-            if use_color:
+            if args.markdown:
+                print(hint.replace(' "', ' `').replace('"', '`'))
+            elif use_color:
                 print(hint.replace(' "',' \'\033[1m').replace('"', '\033[0m\''))
             else:
                 print(hint)
