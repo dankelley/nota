@@ -126,11 +126,12 @@ is done unless ``--add`` and ``--title`` are both given
 
     nota --add # opens editor
 
-or
+or (using abbreviated args)
 
 ::
 
-    nota --add --title "a new note" # no editor
+    nota -a -t "title"                            # no editor
+    nota -a -t "title" -c "content" -k "keywords" # no editor
 
 
 Listing notes
