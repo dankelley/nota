@@ -5,9 +5,10 @@ retrieval.
 See also
 ========
 
-This README file is a bit of an artificat. The intention is to migrate
-material from here to the nota website, which is easier to navigate than
-a README file.
+This README file is a bit of an artifact, and much of its material belongs
+instead on the nota website http://dankelley.github.io/nota/documentation.html.
+The other weakness of this document is that it combines notes for the user and
+notes for developers.
 
 Caution
 =======
@@ -146,7 +147,7 @@ To list all notes, use
 
     nota
 
-Note that the first few characters (preceeding the ``:`` character) are
+Note that the first few characters (preceding the ``:`` character) are
 a "hash" that can be used to specify particular notes.
 
 To find notes with a given keyword, use e.g.
