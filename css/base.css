@@ -72,7 +72,7 @@
 	h4 { font-size: 14px; line-height: 21px; }
 	.subheader { color: #777; }
 
-	p { margin: 0 0 0.2em 0; text-indent 1em; }
+	p { margin: 0 0 0.2em 0; text-indent 10px; }
 	p img { margin: 0; }
 	p.lead { font-size: 21px; line-height: 27px; color: #777;  }
 
