@@ -23,19 +23,19 @@ the commandline, use e.g.</p>
 nota -a -t="First note" -c="Say something wise." -k="test,silly"
 </pre>
 
-<p style="margin-top:1em">Here, <code>-t</code> indicates a title, <code>-c</code> some content, and
+<p>Here, <code>-t</code> indicates a title, <code>-c</code> some content, and
 <code>-k</code> a comma-separated list of keywords.</p>
 
-<p>It is also possible to add notes interactively (with <code>nota</code>
+<p style="margin-top:1em">It is also possible to add notes interactively (with <code>nota</code>
 opening the text editor specified by the <code>EDITOR</code> shell variable),
 but this is more difficult to illustrate here.</p>
 
-<p>With either entry method, <code>nota</code> will tell you the name of the
+<p style="margin-top:1em">With either entry method, <code>nota</code> will tell you the name of the
 database it created for you.  This file will be used in future calls, unless
 you tell <code>nota</code> to use another file with the <code>--database</code>
 argument (or in the configuration file <code>~/.notarc</code>).</p>
 
-<p>If we add a second note</p>
+<p style="margin-top:1em">If we add a second note</p>
 <pre>
 nota -a -t="Second note" -c="Something wiser." -k="test,wiser"
 </pre>
@@ -107,6 +107,8 @@ will open up a text editor, in which you will be able to change the note title,
 contents, keywords, etc. There is also a <code>DUE</code> item that you can
 set, for notes that are plans.</p>
 
+<h2>Deleting notes</h2>
+
 <p>A note may be deleted by e.g.</p>
 <pre>
 nota -d d
@@ -121,20 +123,14 @@ nota --trash
 nota --undelete d
 </pre>
 
-<p>This should be enough to get you going. Try practicing with a few silly
-notes before you use <code>nota</code> seriously. There is no harm in retaining
-the database that was set up in your tests, but you can always delete (or,
-better, rename) it to start afresh. The following sections discuss
-<code>nota</code> a bit more systematically.</p>
-
-<h2>Advanced topics</h2>
-
-<p>The trash may be emptied with</p>
+<p style="margin-top:1em">The trash may be emptied with</p>
 <pre>
 nota --emptytrash
 </pre>
 <p>although this is not to be done lightly, because this is a permanent operation.
 </p>
+
+<h2>Sharing notes</h2>
 
 <p>Notes may be shared by a combination of <code>--export</code> and
 <code>--import</code> operations.  To share a note with hash <code>ab</code>,
@@ -150,6 +146,8 @@ nota --import ab.json
 <p>to insert the note into his/her database. Naturally, this can be done by a
 single user, to copy notes from one database to another. Note that the
 newly-created note has a new date of creation and a new hash code.</p>
+
+<h2>Customizing nota</h2>
 
 <p><code>nota</code> may be customized with commandline arguments, and also
 with entries in a resource file named <code>~/.notarc</code>, which can contain
