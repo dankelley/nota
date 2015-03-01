@@ -10,6 +10,8 @@ submenu: documentation
 <p>A good way to learn how to use <code>nota</code> is to follow along in the
 steps given below.</p>
 
+<h3>Adding notes</h3>
+
 <p>The first thing you should do is to save a note.  This may be done with e.g.
 <pre>
 nota -a
@@ -30,11 +32,34 @@ database it created for you.  This file will be used in future calls, unless
 you tell <code>nota</code> to use another file with the <code>--database</code>
 argument (or in the configuration file <code>~/.notarc</code>).</p>
 
+<p>If we add a second note
+<pre>
+nota -a -t="Second note" -c="Something wiser." -k="test,wiser"
+</pre>
+we have enough to move on to listing and editing notes.</p>
+
+<h3>Listing notes</h3>
+
 <p>Typing
 <pre>
 nota
 </pre>
-will display the note that was just added. It will look something like
+displays the notes we just added. It will look similar to
+<pre>
+d: First note [test, silly]
+6: Second note [test, wiser]
+The trash contains 1 note.
+Hint: add a note: 'nota -a' (opens EDITOR)
+</pre>
+At the start of the display is an abbreviation for a  ``hash'' code that
+identifies each note. This hash will be different for notes you provide.  At
+this stage, your display will be show either 1 or 2 characters in the hash,
+since <code>nota</code> presents hash abbreviations when listing multiple
+notes. These abbreviations may be used to look at individual notes, e.g.
+<pre>
+nota d
+</pre>
+displays something like
 <pre>
 d93e188: First note [test, silly]
   created 2015-03-01 13:35:34 
@@ -43,39 +68,17 @@ d93e188: First note [test, silly]
 The trash is empty.
 Hint: list note with hash 'ab...': 'nota ab'
 </pre>
-At the start of the display is a ``hash'' code that identifies the note. The
-hash will be 7 characters long, as is always the case when a single note is
-being displayed. The hash you see will differ from that shown here, because
-it depends on the creation date.</p>
 
-<p>Now, add a second note
+<p>Notice in all these displays that a hint is given at the end; these are
+randomly chosen, and so yours will not likely be the same as shown here. These
+hints are a reasonably good way to learn how to use <code>nota</code>, or to be
+reminded on the syntax, but you can always use
 <pre>
-nota -a -t="Second note" -c="Something wiser." -k="test,wiser"
+nota -h
 </pre>
-and check the listing:
-<pre>
-nota
-</pre>
-yields
-<pre>
-d: First note [test, silly]
-6: Second note [test, wiser]
-The trash contains 1 note.
-Hint: add a note: 'nota -a' (opens EDITOR)
-</pre>
-where, again, your hash will differ and probably the hint, also. Notice that
-the hashes have been abbreviated in this display. The letter <code>d</code> is
-sufficient to indicate the first note in this context, so only that is
-displayed. (As more notes are entered, <code>nota</code> will start displaying
-two characters in the hash, and even more as time goes on.)</p>
+to get more help.</p>
 
-<p>We can examine the first note in detail with this abbreviated hash:
-<pre>
-nota d
-</pre>
-yields the initial display of that note. If, as more notes are added,
-<code>d</code> indicates more than one note, then <code>nota</code> returns to
-the summary format.</p>
+<h3>Listing notes by keyword</h3>
 
 <p>Notes can be listed by keyword, e.g.
 <pre>
@@ -85,7 +88,11 @@ displays both notes (in summary format), while
 <pre>
 nota -k silly
 </pre>
-details just the first note, in detail format.</p>
+details just the first note. It is important to think about the keywords you
+use, since they may end up being important to you, as you sift through hundreds
+of notes you've taken.</p>
+
+<h3>Editing notes</h3>
 
 <p>Of course, your notes won't be perfect, and you may want to edit them to fix
 errors or add new material. This is done with e.g.
