@@ -350,11 +350,11 @@ then do:
 Suggested aliases for nota
 --------------------------
 
-I have the following, so that ``n`` runs the packaged version and ``N``
-runs the source-code version.
+The developer uses the following, so that ``n`` runs the packaged version and
+``nn`` runs the new (source-code) version.
 
 ::
 
     alias n=nota
-    alias N='PYTHONPATH=~/src/nota python -m nota'
+    alias nn='PYTHONPATH=~/src/nota python -m nota'
 
