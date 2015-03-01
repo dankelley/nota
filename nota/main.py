@@ -189,12 +189,9 @@ def nota():
     parser.add_argument("-e", "--edit", type=str, default=None, help="edit note with abbreviated hash 'h'", metavar="h")
     parser.add_argument("-d", "--delete", type=str, default=None, help="move note abbreviated hash 'h' to trash", metavar="h")
     parser.add_argument("--color", type=str, default=None, help="specify named scheme or True/False", metavar="c")
-    parser.add_argument("--undelete", type=str, default=None, help="remove note abbreviated hash 'h' from trash", metavar="h")
-    parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty the trash, permanently deleting notes therein")
-    #parser.add_argument("-i", "--id", type=int, help="ID number of note to work with (MAY BE REMOVED)")
+    parser.add_argument("--undelete", type=str, default=None, help="remove note with abbreviated hash 'h' from trash", metavar="h")
+    parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty trash, permanently deleting notes therein")
     parser.add_argument("-H", "--Hints", action="store_true", dest="hints", default=False, help="get hints")
-    #parser.add_argument("-m", "--mode", type=str, default="plain", choices=['plain', 'markdown'],
-    #        metavar="m", help="i/o mode: 'plain', or 'markdown' THIS ARG MAY BE REMOVED SOON")
     parser.add_argument("--markdown", action="store_true", dest="markdown", default=False, help="use markdown format for output")
     parser.add_argument("-t", "--title", type=str, default="", help="a short title", metavar="t")
     parser.add_argument("-k", "--keywords", type=str, default="", help="string containing comma-separated keywords", metavar="k")
@@ -210,7 +207,6 @@ def nota():
     # Back to the parser
     parser.add_argument("--trash", action="store_true", dest="trash", default=False, help="show contents of trash")
     parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database", metavar="db")
-    parser.add_argument("--strict", action="store_true", default=False, help="use strict search PROBABLY WILL BE DELETED!") # FIXME
     parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
     parser.add_argument("--version", action="store_true", dest="version", default=False, help="get version number")
     parser.add_argument("--special", type=str, default="", help="special actions", metavar="action")
@@ -414,13 +410,13 @@ def nota():
                 #print(nids)
                 id = ids[nids + id_desired - 1][0]
                 #print("id:", id)
-                found = nota.find(id=int(id), strict=args.strict, trash=False)
+                found = nota.find(id=int(id), trash=False)
             else:
-                found = nota.find(id=id_desired, strict=args.strict, trash=False)
+                found = nota.find(id=id_desired, trash=False)
         elif args.keywords[0] != '':
-            found = nota.find(keywords=args.keywords, strict=args.strict)
+            found = nota.find(keywords=args.keywords)
         else:
-            found = nota.find(keywords='?'.split(','), strict=args.strict)
+            found = nota.find(keywords='?'.split(','))
         count = 0
         nfound = len(found)
         i = -1

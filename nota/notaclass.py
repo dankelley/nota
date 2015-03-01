@@ -409,7 +409,7 @@ class Nota:
         except:
             self.error("cannot determine number of items in trash")
 
-    def find(self, id=None, keywords="", strict=False, trash=False):
+    def find(self, id=None, keywords="", trash=False):
         '''Search notes for a given id or keyword, printing the results in
         either 'plain' or 'JSON' format.'''
         if trash:
@@ -432,15 +432,13 @@ class Nota:
                 noteIds.extend(self.con.execute("SELECT noteId FROM note WHERE in_trash=0;"))
             else:
                 self.fyi("looking up keyword...")
-                if not strict:
-                    self.fyi("not strict match")
-                    keywordsKnown = []
-                    for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
-                        keywordsKnown.extend(k)
-                    # FIXME: what cutoff is good??
-                    keywordsFuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
-                    if len(keywordsFuzzy) > 0:
-                        keywords = [keywordsFuzzy[0]]
+                keywordsKnown = []
+                for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
+                    keywordsKnown.extend(k)
+                # FIXME: what cutoff is good??
+                keywordsFuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
+                if len(keywordsFuzzy) > 0:
+                    keywords = [keywordsFuzzy[0]]
                 for keyword in keywords:
                     if self.debug:
                         print("keyword:", keyword, "...")
