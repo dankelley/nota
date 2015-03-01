@@ -61,13 +61,14 @@
 
 /* #Typography
 ================================================== */
+/* over-ridden by layout.css */
 	h1, h2, h3, h4, h5, h6 {
 		color: #181818;
 		font-family: "Georgia", "Times New Roman", serif;
 		font-weight: normal; }
 	h1 a, h2 a, h3 a, h4 a, h5 a, h6 a { font-weight: inherit; }
-	h1 { font-size: 35px; line-height: 40px; margin-bottom: 10px; }
-	h2 { font-size: 20px; line-height: 30px; margin-bottom: 8px; }
+	h1 { font-size: 35px; line-height: 40px; margin-top: 10px; margin-bottom: 5px; }
+	h2 { font-size: 20px; line-height: 30px; margin-top: 8px;  margin-bottom: 3px; }
 	h3 { font-size: 17px; line-height: 20px; font-style: italic; }
 	h4 { font-size: 14px; line-height: 21px; }
 	.subheader { color: #777; }
