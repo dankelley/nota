@@ -139,13 +139,13 @@ use</p>
 nota --export ab > ab.json
 </pre>
 <p>and email or otherwise provide the new (textual) file named
-<code>nb.json</code> to another person. That second person then does</p>
+<code>nb.json</code> to another person, who may then execute</p>
 <pre>
 nota --import ab.json
 </pre>
-<p>to insert the note into his/her database. Naturally, this can be done by a
-single user, to copy notes from one database to another. Note that the
-newly-created note has a new date of creation and a new hash code.</p>
+<p>to insert the note into his/her database. A similar procedure permits a
+single user to copy notes between databases.  Note that the newly-created note
+will have a new hash code.</p>
 
 <h2>Customizing nota</h2>
 
@@ -157,5 +157,26 @@ file changes the default color theme</p>
 color = "forest"
 </pre>
 <p>although if <code>nota</code> is invoked with the <code>--color</code>
-argument, then the latter will be used.  </p>
+argument, then the latter will be used.</p>
 
+<p style="margin-top:1em">Many users will find it convenient to alias
+<code>nota</code> to a shorter name, e.g. the author uses</p>
+<pre>
+alias n='nota'
+</pre>
+<p>so he can type just <code>n</code> to use the program. Other users might
+find it helpful to use separate databases, perhaps one for work and another for
+personal notes, and so might define e.g.</p>
+<pre>
+alias nw='nota --database=~/Dropbox/nota-work.db'
+alias np='nota --database=~/Dropbox/nota-personal.db'
+</pre>
+
+<h2>Learning more</h2>
+
+<p>Use</p>
+<pre>
+nota -h
+</pre>
+<p>to get more help on <code>nota</code>. The hints given in <code>nota</code>
+output can also be quite helpful.</p>
