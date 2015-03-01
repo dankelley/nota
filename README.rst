@@ -120,26 +120,18 @@ This may be done one at a time, with commandline arguments, e.g.
     nota --add --keywords 'lecture,physics,MIT' --title="Walter Lewin physics lectures" --content="http://ocw.mit.edu/courses/physics/8-01-physics-i-classical-mechanics-fall-1999/index.htm"
 
 Another method is with an editor-based supply of the information, which
-is done unless ``--keywords``, ``--title``, and ``--content`` are all
-given, e.g.
+is done unless ``--add`` and ``--title`` are both given
 
 ::
 
-    nota --add
+    nota --add # opens editor
 
 or
 
 ::
 
-    nota --add --title "a new note"
+    nota --add --title "a new note" # no editor
 
-One or more notes can also be added through input of a JSON file, e.g.
-
-::
-
-    nota --add --mode json --file note.json
-
-Note that ``-a`` is an abbreviation for ``--add``.
 
 Listing notes
 -------------
@@ -197,14 +189,6 @@ yields an HTML file that can be reasonably well-formatted in a browser.
 (For more on Markdown, see e.g.
 `here <http://daringfireball.net/projects/markdown>`__.)
 
-Listing notes in JSON format
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Continuing with the example, use
-
-::
-
-    nota a -m json
 
 Editing notes
 -------------
