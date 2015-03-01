@@ -5,92 +5,125 @@ title: Documentation
 submenu: documentation
 ---
 
-<h2>Getting started</h1>
+<h2>A sample session</h1>
 
-<p>When you first use <code>nota</code>, it will create a (sqlite) database for
-you.  By default this will be in a the file <code>~/Dropbox/nota.db</code>,
-although it's possible to set the file name with the <code>--database</code>
-option or, better, as named in a <code>~/.notarc</code> file, in a line like
-<pre>
-database = "~/nota.db"
-</pre>
-perhaps. In any case, the database will be populated with tables that will store note items and keywords. 
+<p>A good way to learn how to use <code>nota</code> is to follow along in the
+steps given below.</p>
 
-<h2>Adding notes</h2>
-
-<p>To add a note, try using
+<p>The first thing you should do is to save a note.  This may be done with e.g.
 <pre>
 nota -a
 </pre>
 which will launch an editor (as defined in your <code>EDITOR</code> shell variable) that invites you to fill in some content. The file contains comments that explain where you should enter a title, keywords, and content; you can also enter a due date, if you like. If you prefer to add the note entirely from the commandline, use e.g.
 <pre>
-nota -a -t="a title here" -c="content here" -k="comma-separated keywords here"
+nota -a -t="First note" -c="Say something wise." -k="test,silly"
 </pre>
-where the <code>-k</code> is optional.
-</p>
+Here, <code>-t</code> indicates a title, <code>-c</code> some content, and
+<code>-k</code> a comma-separated list of keywords.</p>
 
-<h2>Listing notes</h2>
-Typing
+<p>It is also possible to add notes interactively (with <code>nota</code>
+opening the text editor specified by the <code>EDITOR</code> shell variable),
+but this is more difficult to illustrate here.</p>
+
+<p>With either entry method, <code>nota</code> will tell you the name of the
+database it created for you.  This file will be used in future calls, unless
+you tell <code>nota</code> to use another file with the <code>--database</code>
+argument (or in the configuration file <code>~/.notarc</code>).</p>
+
+<p>Typing
 <pre>
 nota
 </pre>
-will display the note we just added. At the start of the display is a ``hash'' code that
-identifies the note. The hash will be 7 characters long, as is always the case
-when a single note is being displayed. However, if you add a second note and list
-the notes, you'll get an abbreviated form that gives a shortened hash, plus the title,
-plus the keywords (the last within square brackets).</p>
-
-<p>To display a single note, give its hash code in the call, e.g. if the hash
-is <code>ab</code>, type
+will display the note that was just added. It will look something like
 <pre>
-nota ab
-</pre>
-You can get the same results with just a leading part of the hash code, so long
-as it is sufficient to identify the note.</p>
+d93e188: First note [test, silly]
+  created 2015-03-01 13:35:34 
+  Say something wise.
 
-<p>It is also possible to get a list of notes containing a given keyword, e.g. to get 
-notes with the keyword <code>ocean</code>, try
+The trash is empty.
+Hint: list note with hash 'ab...': 'nota ab'
+</pre>
+At the start of the display is a ``hash'' code that identifies the note. The
+hash will be 7 characters long, as is always the case when a single note is
+being displayed. The hash you see will differ from that shown here, because
+it depends on the creation date.</p>
+
+<p>Now, add a second note
 <pre>
-nota -k ocean
+nota -a -t="Second note" -c="Something wiser." -k="test,wiser"
 </pre>
-Note that keywords are matched using a ``fuzzy'' algorithm, so partial words often also work.
-</p>
-
-<h2>Editing notes</h2>
-
-<p>To edit a note, use the <code>-e</code> argument, e.g.
+and check the listing:
 <pre>
-nota -e ab
+nota
 </pre>
-will open an editor to let you alter the note specified by the hash
-<code>ab</code>. If the hash code matches several notes, an error message will
-be provided to tell you to use more characters in the hash code.  </p>
-
-<h2>Deleting notes</h2>
-
-<p>The <code>-d</code> is used to delete notes, e.g.
+yields
 <pre>
-nota -d ab
+d: First note [test, silly]
+6: Second note [test, wiser]
+The trash contains 1 note.
+Hint: add a note: 'nota -a' (opens EDITOR)
+</pre>
+where, again, your hash will differ and probably the hint, also. Notice that
+the hashes have been abbreviated in this display. The letter <code>d</code> is
+sufficient to indicate the first note in this context, so only that is
+displayed. (As more notes are entered, <code>nota</code> will start displaying
+two characters in the hash, and even more as time goes on.)</p>
+
+<p>We can examine the first note in detail with this abbreviated hash:
+<pre>
+nota d
+</pre>
+yields the initial display of that note. If, as more notes are added,
+<code>d</code> indicates more than one note, then <code>nota</code> returns to
+the summary format.</p>
+
+<p>Notes can be listed by keyword, e.g.
+<pre>
+nota -k test
+</pre>
+displays both notes (in summary format), while
+<pre>
+nota -k silly
+</pre>
+details just the first note, in detail format.</p>
+
+<p>Of course, your notes won't be perfect, and you may want to edit them to fix
+errors or add new material. This is done with e.g.
+<pre>
+nota -e d
+</pre>
+to revise the first note. If the hash code corresponds to just one note, this
+will open up a text editor, in which you will be able to change the note title,
+contents, keywords, etc. There is also a <code>DUE</code> item that you can
+set, for notes that are plans.</p>
+
+<p>A note may be deleted by e.g.
+<pre>
+nota -d d
 </pre>
 
-will delete the note.  Actually, what it does is to move it to a trash bin. If
-you relist the notes, you'll see that the trash now has contents. You can see
-what's in the trash with
+and, again, this works only if the hash identifies only one note. If so, the
+note is moved to the trash, where it may be seen with 
 <pre>
 nota --trash
 </pre>
-
-<p>If you wish to undelete a note in the trash, use e.g.
+and possibly undeleted with
 <pre>
-nota --undelete ab
+nota --undelete d
 </pre>
-but, on the other hand, if you're sure the trash contains nothing you'll ever
-need again, you can empty it with
+
+<p>This should be enough to get you going. Try practicing with a few silly
+notes before you use <code>nota</code> seriously. There is no harm in retaining
+the database that was set up in your tests, but you can always delete (or,
+better, rename) it to start afresh. The following sections discuss
+<code>nota</code> a bit more systematically.</p>
+
+<h2>Advanced topics<h2>
+
+The trash may be emptied with
 <pre>
 nota --emptytrash
 </pre>
-
-<h2>Sharing notes</h2>
 
 <p>Notes may be shared by a combination of <code>--export</code> and
 <code>--import</code> operations.  To share a note with hash <code>ab</code>,
@@ -107,30 +140,13 @@ to insert the note into his/her database. Naturally, this can be done by a
 single user, to copy notes from one database to another. Note that the
 newly-created note has a new date of creation and a new hash code.</p>
 
-
-<h2>Customizing nota</h2>
-
-<p>When <code>nota</code> starts, it looks for a resource file named
-<code>~/.notarc</code>, which can contain various customization features. For
-example, including the following in that file changes the default color 
-theme
+<p><code>nota</code> may be customized with commandline arguments, and also
+with entries in a resource file named <code>~/.notarc</code>, which can contain
+various customization features. For example, including the following in that
+file changes the default color theme
 <pre>
 color = "forest"
 </pre>
 although if <code>nota</code> is invoked with the <code>--color</code>
 argument, then the latter will be used.
-
-
-<h2>Learning more</h2>
-
-<p>You may use
-<pre>
-nota -h
-</pre>
-to learn about the options that can be used with <code>nota</code>. It can also be helpful to use
-<pre>
-nota -H
-</pre>
-to get a list of hints.  (These hints are randomly sampled and one is displayed at the end of every listing
-provided by <code>nota</code>.)</p>
 
