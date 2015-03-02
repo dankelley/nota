@@ -112,7 +112,7 @@ def nota():
     
     show_id = get_from_dotfile("~/.notarc", "show_id", False)
     debug = get_from_dotfile("~/.notarc", "debug", None)
-    
+    verbose = int(get_from_dotfile("~/.notarc", "verbose", -999))
    
     parser = argparse.ArgumentParser(prog="nota", description="Nota: an organizer for textual notes",
             formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -137,7 +137,9 @@ def nota():
             db = \"~/Dropbox/nota.db\"
         Turn on debugging mode
             debug = True
-        Show internal database ID number for note
+        Set verbose level to 0 to turn off trash/hint reports
+            verbose = 0
+        Show internal database ID numbers for development tests
             show_id = False
         Use color in displays
             color = True
@@ -190,6 +192,7 @@ def nota():
     parser.add_argument("--markdown", action="store_true", dest="markdown", default=False, help="use markdown format for output")
     parser.add_argument("--special", type=str, default="", help="special actions", metavar="action")
     parser.add_argument("--trash", action="store_true", dest="trash", default=False, help="show contents of trash")
+    parser.add_argument("--verbose", type=int, default=None, help="set level of verbosity (0=quiet, 1=default)", metavar="level")
     parser.add_argument("--version", action="store_true", dest="version", default=False, help="get version number")
     args = parser.parse_args()
     
@@ -261,6 +264,12 @@ def nota():
         args.debug = debug
     if not args.database:
         args.database = defaultDatabase
+    if args.verbose is None:
+        if verbose < 0:
+            args.verbose = 1
+        else:
+            args.verbose = verbose
+    #print("args.verbose: %s" % args.verbose)
     
     nota = Nota(debug=args.debug, db=args.database, quiet=args.count)
     
@@ -510,7 +519,7 @@ def nota():
                         print('')
         if args.count:
             print(count)
-        if not args.count:
+        if not args.count and args.verbose > 0:
             t = nota.trash_length()[0] # FIXME: should just return the [0]
             if t == 0:
                 print("The trash is empty.")
