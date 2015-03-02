@@ -51,14 +51,15 @@ nota
 <pre>
 d: First note [test, silly]
 6: Second note [test, wiser]
-The trash contains 1 note.
+The trash contains 0 notes.
 Hint: add a note: 'nota -a' (opens EDITOR)
 </pre>
-<p>At the start of the display is an abbreviation for a  ``hash'' code that
-identifies each note. This hash will be different for notes you provide.  At
-this stage, your display will be show either 1 or 2 characters in the hash,
-since <code>nota</code> presents hash abbreviations when listing multiple
-notes. These abbreviations may be used to look at individual notes, e.g.</p>
+<p>At the start of the display is an abbreviation for a 64-character ``hash''
+code that identifies each note. This hash will be different for notes you
+provide.  At this stage, your display will be show either 1 or 2 characters in
+the hash, since <code>nota</code> presents hash abbreviations when listing
+multiple notes. These abbreviations may be used to look at individual notes,
+e.g.</p>
 <pre>
 nota d
 </pre>
@@ -142,8 +143,9 @@ nota --export ab > ab.json
 nota --import ab.json
 </pre>
 <p>to insert the note into his/her database. A similar procedure permits a
-single user to copy notes between databases.  Note that the newly-created note
-will have a new hash code.</p>
+single user to copy notes between databases. Using <code>-</code> for the note
+hash means to use all notes (except those in the trash). In any case, the
+newly-created note will have new hashes.</p>
 
 <h2>Customizing nota</h2>
 
@@ -154,21 +156,28 @@ file changes the default color theme</p>
 <pre>
 color = "forest"
 </pre>
-<p>although if <code>nota</code> is invoked with the <code>--color</code>
-argument, then the latter will be used.</p>
+<p>and writing</p>
+<pre>
+database = ~/nota.db
+</pre>
+<p>indicates to use a database in the top directory, instead of the Dropbox one.</p>
+
+<h2>Running nota</h2>
 
 <p style="margin-top:1em">Many users will find it convenient to alias
 <code>nota</code> to a shorter name, e.g. the author uses</p>
 <pre>
 alias n='nota'
 </pre>
-<p>so he can type just <code>n</code> to use the program. Other users might
-find it helpful to use separate databases, perhaps one for work and another for
-personal notes, and so might define e.g.</p>
+
+<p>so he can type just <code>n</code> to use the program. This sort of scheme
+can help in working with separate databases, too, e.g.</p>
 <pre>
 alias nw='nota --database=~/Dropbox/nota-work.db'
 alias np='nota --database=~/Dropbox/nota-personal.db'
 </pre>
+<p>means that <code>nw</code> uses a work-oriented database, while
+<code>np</code> uses a personal one.</p>
 
 <h2>Learning more</h2>
 
