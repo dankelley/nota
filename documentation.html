@@ -10,7 +10,7 @@ steps given below.</p>
 
 <h2>Adding notes</h2>
 
-<p>The first thing you should do is to save a note.  This may be done with e.g.</p>
+<p>The first thing you should do is to save a note.  This may be done interactively with e.g.</p>
 <pre>
 nota -a
 </pre>
@@ -25,10 +25,6 @@ nota -a -t="First note" -c="Say something wise." -k="test,silly"
 
 <p>Here, <code>-t</code> indicates a title, <code>-c</code> some content, and
 <code>-k</code> a comma-separated list of keywords.</p>
-
-<p style="margin-top:1em">It is also possible to add notes interactively (with <code>nota</code>
-opening the text editor specified by the <code>EDITOR</code> shell variable),
-but this is more difficult to illustrate here.</p>
 
 <p style="margin-top:1em">With either entry method, <code>nota</code> will tell you the name of the
 database it created for you.  This file will be used in future calls, unless
@@ -138,7 +134,7 @@ use</p>
 nota --export ab > ab.json
 </pre>
 <p>and email or otherwise provide the new (textual) file named
-<code>nb.json</code> to another person, who may then execute</p>
+<code>ab.json</code> to another person, who may then execute</p>
 <pre>
 nota --import ab.json
 </pre>
