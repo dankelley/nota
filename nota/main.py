@@ -16,6 +16,7 @@ def nota():
     hints = [
             'add a note: "nota -a" (opens EDITOR)', 
             'add a note: "nota -a -t=title -c=content" (no EDITOR)', 
+            'add a note: "nota -a -t=title -c=content" -k=keywords"(no EDITOR)', 
             'back up database by e.g. "cp ~/Dropbox/nota.db ~/nota-backup.db"',
             'create new note hashes: "nota --developer=rehash"',
             'delete note with hash \'ab...\': "nota -d ab"',
