@@ -32,52 +32,30 @@ def nota():
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
             'visit http://dankelley.github.io/nota/documentation.html to learn more']
 
-    def color_code(c):
-        c = c.replace("'", "")
-        c = c.replace('"', "")
-        if c[0:1] == '\\':
-            return(c)
-        elif c == "bold":
-            return('\033[1m')
-        elif c == "dim":
-            return('\033[2m')
-        elif c == "underlined":
-            return('\033[4m')
-        elif c == "blink":
-            return('\033[5m')
-        elif c == "reverse":
-            return('\033[7m')
-        elif c == "black":
-            return('\033[0m')
-        elif c == "red":
-            return('\033[31m')
-        elif c == "green":
-            return('\033[32m')
-        elif c == "yellow":
-            return('\033[33m')
-        elif c == "blue":
-            return('\033[34m')
-        elif c == "magenta":
-            return('\033[35m')
-        elif c == "cyan":
-            return('\033[36m')
-        elif c == "lightgray":
-            return('\033[37m')
-        elif c == "darkgray":
-            return('\033[90m')
-        elif c == "lightred":
-            return('\033[91m')
-        elif c == "lightgreen":
-            return('\033[92m')
-        elif c == "lightyellow":
-            return('\033[93m')
-        elif c == "lightblue":
-            return('\033[94m')
-        elif c == "lightmagenta":
-            return('\033[95m')
-        elif c == "lightcyan":
-            return('\033[96m')
-  
+    def color_code(c, default="\033[0m"):
+        '''
+        Look up a color by name, returning the escape code for that color. Only
+        certain colors are recognized, and black (\033[0m) is returned if 'c'
+        is not recognized.
+        '''
+        c = c.replace("'", "").replace('"', "")
+        #if c[0:1] == '\\':
+        #    return(c)
+        lookup = {"bold":'\033[1m', "dim":'\033[2m', "underlined":'\033[4m',
+                "blink":'\033[5m', "reverse":'\033[7m', "black":'\033[0m',
+                "red":'\033[31m', "green":'\033[32m', "yellow":'\033[33m',
+                "blue":'\033[34m', "magenta":'\033[35m', "cyan":'\033[36m',
+                "lightgray":'\033[37m', "darkgray":'\033[90m',
+                "lightred":'\033[91m', "lightgreen":'\033[92m',
+                "lightyellow":'\033[93m', "lightblue":'\033[94m',
+                "lightmagenta":'\033[95m', "lightcyan":'\033[96m'}
+        try:
+            rval = lookup[c]
+        except:
+            rval = default
+        return(rval)
+
+ 
     def due_str(due):
         due = datetime.datetime.strptime(due, '%Y-%m-%d %H:%M:%S.%f')
         now = datetime.datetime.now()
@@ -234,6 +212,7 @@ def nota():
     else:
         color_scheme = get_from_dotfile("~/.notarc", "color", True)
     use_color = True
+
 
     if isinstance(color_scheme, str):
         if color_scheme == "forest":

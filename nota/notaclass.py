@@ -59,7 +59,7 @@ class Nota:
             print(self.dbversion)
         if StrictVersion(appversion) > StrictVersion(dbversion):
             if StrictVersion(dbversion) < StrictVersion("0.2"):
-                print("Updating database to version 0.2.x ...")
+                print("Updating database %s to version 0.2.x ..." % db)
                 try:
                     self.cur.execute('ALTER TABLE note ADD due DEFAULT "";')
                     self.con.commit()
@@ -67,7 +67,7 @@ class Nota:
                 except:
                     self.error("  Problem adding a column named 'due' to the table 'note'")
             if StrictVersion(dbversion) < StrictVersion("0.3"):
-                print("Updating database to version 0.3.x ...")
+                print("Updating database %s to version 0.3.x ..." % db)
                 try:
                     self.cur.execute('ALTER TABLE note ADD modified DEFAULT "";')
                     self.cur.execute('UPDATE note SET modified = date;')
@@ -76,7 +76,7 @@ class Nota:
                 except:
                     self.error("  Problem adding a column named 'modified' to the table named 'note'")
             if StrictVersion(dbversion) < StrictVersion("0.4"):
-                print("Updating database to version 0.4.x ...")
+                print("Updating database %s to version 0.4.x ..." % db)
                 try:
                     cmd = 'ALTER TABLE note ADD hash DEFAULT "";'
                     self.cur.execute(cmd)
@@ -105,7 +105,7 @@ class Nota:
                     self.error("Problem adding a column named 'hash' to the table named 'note'")
                     self.error("Problem saving data to the newly-formed 'hash' column in the 'note' table")
             if StrictVersion(dbversion) < StrictVersion("0.5"):
-                print("Updating database to version 0.5.x ...")
+                print("Updating database %s to version 0.5.x ..." % db)
                 try:
                     cmd = 'ALTER TABLE note ADD in_trash DEFAULT 0;'
                     self.cur.execute(cmd)
@@ -114,7 +114,7 @@ class Nota:
                 except:
                     self.error("Problem adding a column named 'in_trash' to the table named 'note'")
             if StrictVersion(dbversion) < StrictVersion("0.6"):
-                print("Updating database to version 0.6.x ...")
+                print("Updating database %s to version 0.6.x ..." % db)
                 try:
                     self.cur.execute("DROP TABLE version;")
                     self.cur.execute("CREATE TABLE version(major, middle, minor);")
@@ -134,8 +134,9 @@ class Nota:
             except:
                 self.error("  Problem updating database version to %d.%d.%d" %
                         (self.appversion[0], self.appversion[1], self.appversion[2]))
+            print("Database %s is now up-to-date with this version of 'nota'." % db)
         else:
-            self.fyi("Database is up-to-date")
+            self.fyi("Database %s is up-to-date" % db)
 
 
     def fyi(self, msg, prefix="  "):
