@@ -16,6 +16,7 @@ def nota():
     hints = [
             'add a note: "nota -a" (opens EDITOR)', 
             'add a note: "nota -a -t=title -c=content" (no EDITOR)', 
+            'back up database by e.g. "cp ~/Dropbox/nota.db ~/nota-backup.db"',
             'create new note hashes: "nota --developer=rehash"',
             'delete note with hash \'ab...\': "nota -d ab"',
             'edit note with hash \'ab...\': "nota -e ab" (opens EDITOR)',
@@ -138,15 +139,16 @@ def nota():
     parser = argparse.ArgumentParser(prog="nota", description="Nota: an organizer for textual notes",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=textwrap.dedent('''\
-    There are several ways to use nota.  Try 'nota -h' for some hints.  The most common uses are
+    There are several ways to use nota.  Try 'nota -h' for some hints.  The most
+    common uses are as follows.
     
         nota                  # list notes, with first column being hash code
         nota -k key           # list notes with indicated keyword
-        nota ab               # list notes with hash starting 'ab' (in detail, if only one note)
+        nota ab               # list notes with hash starting 'ab'
         nota -a               # add a note (opens a text editor)
         nota -a -t=... -c=... # add a note (without a text editor)
-        nota -e ab            # edit note with hash starting with 'ab' (opens a text editor)
-        nota -d ab            # delete note with hash starting with 'ab'
+        nota -e ab            # edit note with hash starting 'ab' (opens editor)
+        nota -d ab            # delete note with hash starting 'ab'
         nota --export ab > F  # export note to file 'F'
         nota --import F       # import note from file 'F'
 
@@ -178,7 +180,7 @@ def nota():
 
     Advanced usage:
         
-        Recreate hashes (to remove duplicate hashes, which are statitically unlikely)
+        Recreate hashes (to remove duplicate hashes, which are unlikely)
             nota --special=rehash
     
 
@@ -188,32 +190,29 @@ def nota():
     parser.add_argument("-a", "--add", action="store_true", dest="add", default=False, help="add a note")
     parser.add_argument("-e", "--edit", type=str, default=None, help="edit note with abbreviated hash 'h'", metavar="h")
     parser.add_argument("-d", "--delete", type=str, default=None, help="move note abbreviated hash 'h' to trash", metavar="h")
-    parser.add_argument("--color", type=str, default=None, help="specify named scheme or True/False", metavar="c")
-    parser.add_argument("--undelete", type=str, default=None, help="remove note abbreviated hash 'h' from trash", metavar="h")
-    parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty the trash, permanently deleting notes therein")
-    #parser.add_argument("-i", "--id", type=int, help="ID number of note to work with (MAY BE REMOVED)")
-    parser.add_argument("-H", "--Hints", action="store_true", dest="hints", default=False, help="get hints")
-    #parser.add_argument("-m", "--mode", type=str, default="plain", choices=['plain', 'markdown'],
-    #        metavar="m", help="i/o mode: 'plain', or 'markdown' THIS ARG MAY BE REMOVED SOON")
-    parser.add_argument("--markdown", action="store_true", dest="markdown", default=False, help="use markdown format for output")
+    parser.add_argument("-u", "--undelete", type=str, default=None, help="remove note with abbreviated hash 'h' from trash", metavar="h")
     parser.add_argument("-t", "--title", type=str, default="", help="a short title", metavar="t")
-    parser.add_argument("-k", "--keywords", type=str, default="", help="string containing comma-separated keywords", metavar="k")
+    parser.add_argument("-k", "--keywords", type=str, default="", help="string of comma-separated keywords", metavar="k")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
     parser.add_argument("--count", action="store_true", dest="count", default=False, help="report only count of found results")
     parser.add_argument("--debug", action="store_true", dest="debug", default=False, help="set debugging on")
     parser.add_argument("--export", type=str, default=None, help="export notes matching hash (use has '-' for all notes)", metavar="hash")
     parser.add_argument("--import", type=str, default=None, dest="do_import", help="import notes from file created by --export", metavar="file")
-    parser.add_argument("--privacy", type=int, default=0, help="set privacy level (0=open, 1=closed)", metavar="level")
+    if False: # may add later but don't tell users so
+        parser.add_argument("--privacy", type=int, default=0, help="set privacy level (0=open, 1=closed)", metavar="level")
     parser.add_argument("--file", type=str, help="filename for i/o", metavar="name")
     # Process the dotfile (need for next parser call)
     defaultDatabase = get_from_dotfile("~/.notarc", "database", "~/Dropbox/nota.db")
     # Back to the parser
-    parser.add_argument("--trash", action="store_true", dest="trash", default=False, help="show contents of trash")
+    parser.add_argument("--color", type=str, default=None, help="specify named scheme or True/False", metavar="c")
     parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database", metavar="db")
-    parser.add_argument("--strict", action="store_true", default=False, help="use strict search PROBABLY WILL BE DELETED!") # FIXME
     parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
-    parser.add_argument("--version", action="store_true", dest="version", default=False, help="get version number")
+    parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty trash, permanently deleting notes therein")
+    parser.add_argument("--hints", action="store_true", dest="hints", default=False, help="get hints")
+    parser.add_argument("--markdown", action="store_true", dest="markdown", default=False, help="use markdown format for output")
     parser.add_argument("--special", type=str, default="", help="special actions", metavar="action")
+    parser.add_argument("--trash", action="store_true", dest="trash", default=False, help="show contents of trash")
+    parser.add_argument("--version", action="store_true", dest="version", default=False, help="get version number")
     args = parser.parse_args()
     
     args.keywordsoriginal = args.keywords
@@ -358,7 +357,6 @@ def nota():
                 nota.error("cannot read line %d of file '%s'" % (line, args.do_import))
             i = i + 1
         for n in notes:
-            # date will get set to now, which means also a new hash will be made
             try:
                 id = nota.add(title=n["title"], keywords=n['keywords'], content=n["content"], date=n['date'], due=n['due'])
             except:
@@ -390,13 +388,13 @@ def nota():
         # If no title is given, need to use the editor.
         if args.title == "":
             nota.fyi("should handle interactive now")
-            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content,
-                    privacy=args.privacy, due=args.due)
-            id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"],
-                    privacy=ee["privacy"], due=ee["due"])
+            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
+                    #privacy=args.privacy, due=args.due)
+            id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], due=ee["due"])
+                    #privacy=ee["privacy"], due=ee["due"])
         else:
-            id = nota.add(title=args.title, keywords=args.keywords, content=args.content,
-                    privacy=args.privacy, due=args.due)
+            id = nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
+                    #privacy=args.privacy, due=args.due)
         sys.exit(0)
     else: # By a process of elimination, we must be trying to find notes.
         due_requested = nota.interpret_time(args.due)
@@ -414,13 +412,13 @@ def nota():
                 #print(nids)
                 id = ids[nids + id_desired - 1][0]
                 #print("id:", id)
-                found = nota.find(id=int(id), strict=args.strict, trash=False)
+                found = nota.find(id=int(id), trash=False)
             else:
-                found = nota.find(id=id_desired, strict=args.strict, trash=False)
+                found = nota.find(id=id_desired, trash=False)
         elif args.keywords[0] != '':
-            found = nota.find(keywords=args.keywords, strict=args.strict)
+            found = nota.find(keywords=args.keywords)
         else:
-            found = nota.find(keywords='?'.split(','), strict=args.strict)
+            found = nota.find(keywords='?'.split(','))
         count = 0
         nfound = len(found)
         i = -1
@@ -438,7 +436,6 @@ def nota():
                 due = f['due']
             except:
                 due = None
-            #print("len(due): %d" % len(due))
             if due_requested[0]:
                 if not due:
                     continue

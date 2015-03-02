@@ -5,6 +5,7 @@ import sqlite3 as sqlite
 import datetime
 import os.path
 import difflib
+from distutils.version import StrictVersion
 import re
 import tempfile
 import subprocess
@@ -35,88 +36,109 @@ class Nota:
         self.cur = con.cursor()
         self.authorId = authorId
         ## 0.3: add note.modified column
-        self.appversion = [0, 5]
+        self.appversion = [0, 6, 0] # db changes on first two only
         self.dbversion = self.appversion
         if mustInitialize:
             self.initialize()
         try:
-            v = self.cur.execute("SELECT major,minor FROM version;").fetchone()
+            v = self.cur.execute("SELECT * FROM version;").fetchone()
             self.dbversion = v
         except:
             self.warning("cannot get version number in database")
-            self.dbversion = [0, 0] # started storing version at [0, 1]
+            self.dbversion = [0, 0, 0] # started storing version at [0, 1]
             pass
-        appversion = int(10*self.appversion[0] + self.appversion[1])
-        dbversion = int(10*self.dbversion[0] + self.dbversion[1])
-        self.fyi("appversion: %d.%d (which translates to %d)" % (self.appversion[0], self.appversion[1], appversion))
-        self.fyi("dbversion: %d.%d (which translates to %d)" % (self.dbversion[0], self.dbversion[1], dbversion))
-        if appversion > dbversion:
-            if dbversion < 2:
-                print("Updating the database from version %d.%d to 0.2 ..." % (self.dbversion[0], self.dbversion[1]))
+        appversion = "%s.%s.%s" % (self.appversion[0], self.appversion[1], self.appversion[2])
+        if len(self.dbversion) == 2:
+            dbversion = "%s.%s.%s" % (self.dbversion[0], self.dbversion[1], 0)
+        else:
+            dbversion = "%s.%s.%s" % (self.dbversion[0], self.dbversion[1], self.dbversion[2])
+        self.fyi("appversion: %s" % appversion)
+        self.fyi("dbversion: %s" % dbversion)
+        self.fyi("self.dbversion:")
+        if self.debug:
+            print(self.dbversion)
+        if StrictVersion(appversion) > StrictVersion(dbversion):
+            if StrictVersion(dbversion) < StrictVersion("0.2"):
+                print("Updating database to version 0.2.x ...")
                 try:
                     self.cur.execute('ALTER TABLE note ADD due DEFAULT "";')
+                    self.con.commit()
                     print("  Added column 'due' to database table 'note'.")
                 except:
                     self.error("  Problem adding a column named 'due' to the table 'note'")
-                self.con.commit()
-            if dbversion < 3:
-                print("Updating the database from version %d.%d to 0.3 ..." % (self.dbversion[0], self.dbversion[1]))
+            if StrictVersion(dbversion) < StrictVersion("0.3"):
+                print("Updating database to version 0.3.x ...")
                 try:
                     self.cur.execute('ALTER TABLE note ADD modified DEFAULT "";')
                     self.cur.execute('UPDATE note SET modified = date;')
-                    print("  Added column 'modified' to database table 'note'.")
+                    self.con.commit()
+                    print("  Added 'modified' column to 'note' table.")
                 except:
                     self.error("  Problem adding a column named 'modified' to the table named 'note'")
-                self.con.commit()
-            if dbversion < 4:
-                print("Updating the database from version %d.%d to 0.4 ..." % (self.dbversion[0], self.dbversion[1]))
+            if StrictVersion(dbversion) < StrictVersion("0.4"):
+                print("Updating database to version 0.4.x ...")
                 try:
                     cmd = 'ALTER TABLE note ADD hash DEFAULT "";'
                     self.cur.execute(cmd)
                     self.con.commit()
+                except:
+                    self.error("Problem creating a 'hash' column in the 'note' table")
+                try:
                     cmd = "SELECT noteId,date,title FROM note;"
-                    self.cur.execute(cmd)
-                    id = []
+                    rows = []
+                    rows.extend(self.cur.execute(cmd))
                     hash = []
-                    while True:
-                        row = self.cur.fetchone()
-                        if row == None:
-                            break
-                        id.append(row[0])
-                        h = hashlib.sha256((row[0]+row[1]+row[2]).encode('utf8')).hexdigest()
+                    noteIds = []
+                    for row in rows:
+                        noteIds.extend([row[0]])
+                        h = hashlib.sha256((str(row[0])+row[1]+row[2]).encode('utf8')).hexdigest()
                         hash.append(h)
-                    if self.debug:
-                        print(id)
-                        print(hash)
-                    for i in range(len(id)):
-                        self.fyi("UPDATE note SET hash = \"%s\" WHERE noteId=%s;" % (hash[i], id[i]))
-                        self.cur.execute("UPDATE note SET hash = ? WHERE noteId=?;", (hash[i], id[i]))
+                except:
+                    self.error("Problem computing hashes of existing notes")
+                try:
+                    for i in range(len(rows)):
+                        self.fyi("UPDATE note SET hash = \"%s\" WHERE noteId=%s;" % (str(hash[i]), noteIds[i]))
+                        self.cur.execute("UPDATE note SET hash = ? WHERE noteId=?;", (str(hash[i]), noteIds[i]))
                     self.con.commit()
-                    print("  Added column 'hash' to database table 'note'.")
+                    print("  Added 'hash' column to 'note' table.")
                 except:
                     self.error("Problem adding a column named 'hash' to the table named 'note'")
-            if dbversion < 5:
-                print("Updating the database from version %d.%d to 0.5 ..." % (self.dbversion[0], self.dbversion[1]))
+                    self.error("Problem saving data to the newly-formed 'hash' column in the 'note' table")
+            if StrictVersion(dbversion) < StrictVersion("0.5"):
+                print("Updating database to version 0.5.x ...")
                 try:
                     cmd = 'ALTER TABLE note ADD in_trash DEFAULT 0;'
                     self.cur.execute(cmd)
                     self.con.commit()
-                    print("  Added column 'in_trash' to database table 'note'.")
+                    print("  Added 'in_trash' column to 'note' table.")
                 except:
                     self.error("Problem adding a column named 'in_trash' to the table named 'note'")
+            if StrictVersion(dbversion) < StrictVersion("0.6"):
+                print("Updating database to version 0.6.x ...")
+                try:
+                    self.cur.execute("DROP TABLE version;")
+                    self.cur.execute("CREATE TABLE version(major, middle, minor);")
+                    self.cur.execute("INSERT INTO version(major, middle, minor) VALUES (?,?,?);",
+                            (self.appversion[0], self.appversion[1], self.appversion[2]))
+                    self.con.commit()
+                    print("  Added 'middle' column to 'version' table.")
+                except:
+                    self.error("Problem adding a 'middle' column to the 'version' table.")
+            # OK, done with the updates, so we now update the actual version number.
             try:
-                self.cur.execute("DELETE FROM version;")
-                self.cur.execute("INSERT INTO version(major, minor) VALUES (?,?);",
-                        (self.appversion[0], self.appversion[1]))
+                self.cur.execute("DROP TABLE version;")
+                self.cur.execute("CREATE TABLE version(major, middle, minor);")
+                self.cur.execute("INSERT INTO version(major, middle, minor) VALUES (?,?,?);",
+                        (self.appversion[0], self.appversion[1], self.appversion[2]))
                 self.con.commit()
-                print("... updated the database to version %d.%d" % (self.appversion[0], self.appversion[1]))
             except:
-                self.error("  Problem updating database version to %d.%d" % (self.appversion[0], self.appversion[1]))
+                self.error("  Problem updating database version to %d.%d.%d" %
+                        (self.appversion[0], self.appversion[1], self.appversion[2]))
+        else:
+            self.fyi("Database is up-to-date")
 
 
     def fyi(self, msg, prefix="  "):
-        #if not self.quiet:
-        #    print(prefix + msg, file=sys.stderr)
         if self.debug:
             print(prefix + msg, file=sys.stderr)
 
@@ -125,13 +147,16 @@ class Nota:
         if not self.quiet:
             print(prefix + msg, file=sys.stderr)
 
+
     def error(self, msg, level=1, prefix="Error: "):
         if not self.quiet:
             print(prefix + msg, file=sys.stderr)
         sys.exit(level)
 
+
     def version(self):
-        return("Application version %d.%d; database version %d.%d" % (self.appversion[0], self.appversion[1], self.dbversion[0], self.dbversion[1]))
+        return("Nota %d.%d.%d" % (self.appversion[0], self.appversion[1], self.appversion[2]))
+
 
     def initialize(self, author=""):
         ''' Initialize the database.  This is dangerous since it removes any
@@ -146,17 +171,14 @@ class Nota:
         self.cur.execute("CREATE TABLE notekeyword(notekeywordId integer primary key autoincrement, noteid, keywordid);")
         self.con.commit()
 
+
     def add(self, title="", keywords="", content="", due="", privacy=0, date="", modified=""):
         ''' Add a note to the database.  The title should be short (perhaps 3
         to 7 words).  The keywords are comma-separated, and should be similar
-        in style to others in the database.  The content may be of any length.
-        Notes with privacy > 0 are increasingly hidden (or will be, when the
-        application is more complete). '''
+        in style to others in the database.  The content may be of any length.'''
         self.fyi("add with title='%s'" % title)
         self.fyi("add with keywords='%s'" % keywords)
         self.fyi("add with due='%s'" % due)
-        # title = title.decode('utf-8')
-        # content = content.decode('utf-8')
         if not isinstance(due, str):
             due = ""
         due = self.interpret_time(due)[0]
@@ -166,7 +188,7 @@ class Nota:
             date = now.strftime("%Y-%m-%d %H:%M:%S")
         try:
             self.cur.execute("INSERT INTO note(authorId, date, modified, title, content, privacy, due) VALUES(?, ?, ?, ?, ?, ?, ?);",
-                (self.authorId, date, modified, title, content, privacy, due))
+                (self.authorId, date, modified, title, content, 0, due))
         except:
             self.error("error adding note to the database")
         noteId = self.cur.lastrowid
@@ -177,9 +199,7 @@ class Nota:
             self.cur.execute("UPDATE note SET hash=? WHERE noteId=?;", (hash, noteId))
         except:
             self.error("error adding note hash to the database")
-        # FIXME: replace next with keyword_hookup() call?
         for keyword in keywords:
-            #keyword = keyword.decode('utf-8')
             self.fyi(" inserting keyword:", keyword)
             keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword = ?;", [keyword]).fetchone()
             if keywordId:
@@ -197,18 +217,15 @@ class Nota:
     def hash_abbreviation_length(self):
         hash = []
         try:
-            # FIXME: this does not seem elegant
             for h in self.cur.execute("SELECT hash FROM note;").fetchall():
                 hash.extend(h)
         except:
             self.error("ERROR: cannot find hashes")
         n = len(hash)
         for nc in range(1, 20): # unlikely to be > 7
-            #print("nc: %s" % nc)
             h = hash[:]
             for i in range(n):
                 h[i] = h[i][0:nc]
-                #print("hash[%d] %s %s (nc=%d)" % (i, h[i], hash[i], nc))
             hs = sorted(h)
             duplicate = False
             for i in range(n-1):
@@ -221,7 +238,9 @@ class Nota:
 
 
     def keyword_hookup(self, noteId, keywords):
-        # Unhook existing cross-linking entries.
+        '''
+        Unhook existing cross-linking entries.
+        '''
         try:
             self.cur.execute("DELETE FROM notekeyword WHERE noteid=?", [noteId])
         except:
@@ -245,6 +264,7 @@ class Nota:
             except:
                 self.error("error hooking up keyword '%s'" % keyword)
         self.con.commit()
+
 
     def undelete(self, hash): # takes out of trash
         hash = str(hash)
@@ -329,7 +349,8 @@ class Nota:
         old = old[0]
         keywords = []
         keywords.extend(self.get_keywords(old['noteId']))
-        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], privacy=old['privacy'], due=old['due'])
+        #ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], privacy=old['privacy'], due=old['due'])
+        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], due=old['due'])
         noteId = int(old["noteId"])
         try:
             self.cur.execute("UPDATE note SET title = (?) WHERE noteId = ?;", (ee["title"], noteId))
@@ -349,6 +370,7 @@ class Nota:
         self.con.commit()
         return noteId
 
+
     def cleanup(self):
         ''' Clean up the database, e.g. removing unused keywords.'''
         allList = []
@@ -365,11 +387,13 @@ class Nota:
                 self.error("There was a problem deleting keyword %s" % key)
         self.con.commit()
 
+
     def get_id_list(self):
         '''Return list of ID values'''
         noteIds = []
         noteIds.extend(self.con.execute("SELECT noteId FROM note;"))
         return(noteIds)
+
 
     def trash_length(self):
         try:
@@ -378,7 +402,8 @@ class Nota:
         except:
             self.error("cannot determine number of items in trash")
 
-    def find(self, id=None, keywords="", strict=False, trash=False):
+
+    def find(self, id=None, keywords="", trash=False):
         '''Search notes for a given id or keyword, printing the results in
         either 'plain' or 'JSON' format.'''
         if trash:
@@ -401,15 +426,13 @@ class Nota:
                 noteIds.extend(self.con.execute("SELECT noteId FROM note WHERE in_trash=0;"))
             else:
                 self.fyi("looking up keyword...")
-                if not strict:
-                    self.fyi("not strict match")
-                    keywordsKnown = []
-                    for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
-                        keywordsKnown.extend(k)
-                    # FIXME: what cutoff is good??
-                    keywordsFuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
-                    if len(keywordsFuzzy) > 0:
-                        keywords = [keywordsFuzzy[0]]
+                keywordsKnown = []
+                for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
+                    keywordsKnown.extend(k)
+                # FIXME: what cutoff is good??
+                keywordsFuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
+                if len(keywordsFuzzy) > 0:
+                    keywords = [keywordsFuzzy[0]]
                 for keyword in keywords:
                     if self.debug:
                         print("keyword:", keyword, "...")
@@ -530,22 +553,20 @@ class Nota:
                 remaining = "%d days" % round(remaining / 86400)
             #print("remaining: %s" % remaining)
             due = remaining
-        initial_message = '''Instructions: fill in material following the ">" symbol.  (Items following the
-"?>" symbol are optional.  The title and keywords must each fit on one line.
-Use commas to separate keywords.  The content must start *below* the line
-with that title.
+        initial_message = '''Instructions: fill in material following the ">" symbol.  (Items following
+the "?>" symbol are optional.  The title and keywords must each fit on one
+line. Use commas to separate keywords.  The content must start *below*
+the line with the dots.
 
 TITLE> %s
 
-KEYWORDS> %s
+KEYWORDS?> %s
 
-PRIVACY> %s
-
-DUE (E.G. 'tomorrow' or '3 days')> %s
+DUE (E.G. 'tomorrow' or '3 days')?> %s
 
 CONTENT...
 %s
-''' % (title, ",".join(k for k in keywords), privacy, due, content)
+''' % (title, ",".join(k for k in keywords), due, content)
         try:
             # FIXME: is this polluting filespace with tmp files?
             file = tempfile.NamedTemporaryFile(suffix=".tmp") #, delete=False)
@@ -578,6 +599,8 @@ CONTENT...
                 keywords = re.sub(r'.*>', '', line).strip()
             elif "CONTENT" in line:
                 inContent = True
+        if not title:
+            self.error("no title given, so no note stored.")
         content = content.rstrip('\n')
         keywords = [key.lstrip().rstrip() for key in keywords.split(',')]
         self.fyi("LATE keywords= %s" % keywords)
