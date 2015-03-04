@@ -30,6 +30,7 @@ class Nota:
             print("Creating new database named \"%s\"." % db)
         try:
             con = sqlite.connect(db)
+            con.text_factory = str # permits accented characters in notes
         except:
             self.error("Error opening connection to database named '%s'" % db)
         self.con = con
