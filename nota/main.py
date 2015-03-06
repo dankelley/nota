@@ -517,7 +517,7 @@ def nota():
                             c = contentLine.rstrip('\n')
                             if len(c):
                                 print(" ", contentLine.rstrip('\n'))
-                        print('')
+                        #print('')
         if args.count:
             print(count)
         if not args.count and args.verbose > 0:
