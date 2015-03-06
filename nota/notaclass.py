@@ -409,6 +409,7 @@ class Nota:
         '''Search notes for a given id or keyword, printing the results in
         either 'plain' or 'JSON' format.'''
         if trash:
+            print("returning all trash notes (FIXME)")
             noteIds = []
             ## fixme why is next con. instead of cur.
             noteIds.extend(self.con.execute("SELECT noteId FROM note WHERE in_trash = 1;"))
@@ -421,10 +422,13 @@ class Nota:
         if id:
             self.fyi("self.find() with id=%s" % id)
         if id and isinstance(id, str) and "-" != id[0:1]:
+            self.fyi("hash given: %s" % id)
             noteIds.append([id])
         else:
+            print("FIXME: d")
             self.fyi("len(keywords) %s" % len(keywords))
             if 0 == len(keywords) or keywords[0] == "?":
+                self.fyi("no keywords given")
                 noteIds.extend(self.con.execute("SELECT noteId FROM note WHERE in_trash=0;"))
             else:
                 self.fyi("looking up keyword...")
@@ -451,6 +455,7 @@ class Nota:
                         self.error("problem finding keyword or note in database")
                         pass
         ## convert from hash to ids. Note that one hash may create several ids.
+        self.fyi("notids:", noteIds)
         noteIds2 = []
         self.fyi("ORIGINAL noteIds: %s" % noteIds)
         for n in noteIds:
@@ -459,7 +464,7 @@ class Nota:
             if isinstance(n[0], str):
                 if self.debug:
                     print("  STR %s" % n)
-                rows = self.cur.execute("SELECT noteId, hash FROM note;").fetchall()
+                rows = self.cur.execute("SELECT noteId, hash FROM note WHERE in_trash=0;").fetchall()
                 #print(rows)
                 l = len(n[0])
                 for r in rows:
