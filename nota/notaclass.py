@@ -290,13 +290,13 @@ class Nota:
         noteIds = []
         noteIds.extend(self.cur.execute("SELECT noteId,date,title,hash FROM note;"))
         for n in noteIds:
-            print("")
-            print("noteID:   %s" % n[0])
-            print("time:     %s" % n[1])
-            print("title:    %s" % n[2])
-            print("old hash: %s" % n[3])
-            hash = hashlib.sha256((n[2]+n[1]+str(n[0])).encode('utf8')).hexdigest()
-            print("new hash: %s" % hash)
+            # print("noteID:   %s" % n[0])
+            # print("time:     %s" % n[1])
+            # print("title:    %s" % n[2])
+            print("%s" % n[2]+" "+n[1]+" "+str(n[0]))
+            print("  old: %s" % n[3])
+            hash = hashlib.sha256((n[2]+" "+n[1]+" "+str(n[0])).encode('utf8')).hexdigest()
+            print("  new: %s" % hash)
             try:
                 self.cur.execute("UPDATE note SET hash=? WHERE noteId=?;", (hash, n[0]))
             except:
