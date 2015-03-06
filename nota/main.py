@@ -22,8 +22,8 @@ def nota():
             'delete note with hash \'ab...\': "nota -d ab"',
             'edit note with hash \'ab...\': "nota -e ab" (opens EDITOR)',
             'export all notes: "nota --export -" (import with \'--import\')',
-            'export notes with hash \'ab...\': "nota --export ab" (import with "--import")',
-            'import notes: "nota --import file.json" ("file.json" created by "--export")',
+            'export notes with hash \'ab...\': "nota --export ab"',
+            'import notes: "nota --import file.json" ("file.json" from "--export")',
             'list all notes: "nota"',
             'list notes contained in the trash: "nota --trash"',
             'list notes due today: "nota --due today"',
@@ -122,14 +122,14 @@ def nota():
     common uses are as follows.
     
         nota                  # list notes, with first column being hash code
-        nota -k key           # list notes with indicated keyword
         nota ab               # list notes with hash starting 'ab'
+        nota -k key           # list notes with indicated keyword
         nota -a               # add a note (opens a text editor)
         nota -a -t=... -c=... # add a note (without a text editor)
         nota -e ab            # edit note with hash starting 'ab' (opens editor)
         nota -d ab            # delete note with hash starting 'ab'
-        nota --export ab > F  # export note to file 'F'
-        nota --import F       # import note from file 'F'
+        nota --export ab > F  # export note(s) to file 'F'
+        nota --import F       # import note(s) from file 'F'
 
     The ~/.notarc file may be used for customization, and may contain e.g. the
     following:
