@@ -408,16 +408,17 @@ class Nota:
     def find(self, id=None, keywords="", trash=False):
         '''Search notes for a given id or keyword, printing the results in
         either 'plain' or 'JSON' format.'''
-        if trash:
-            print("returning all trash notes (FIXME)")
-            noteIds = []
-            ## fixme why is next con. instead of cur.
-            noteIds.extend(self.con.execute("SELECT noteId FROM note WHERE in_trash = 1;"))
-            rval = []
-            for n in noteIds:
-                note = self.cur.execute("SELECT noteId, hash, title FROM note WHERE noteId=?;", n).fetchone()
-                rval.append({"noteId":note[0], "hash":note[1], "title":note[2]})
-            return(rval)
+        trash = [int(trash)]
+        #if trash:
+        #    print("returning all trash notes (FIXME)")
+        #    noteIds = []
+        #    ## fixme why is next con. instead of cur.
+        #    noteIds.extend(self.con.execute("SELECT noteId FROM note WHERE in_trash = 1;"))
+        #    rval = []
+        #    for n in noteIds:
+        #        note = self.cur.execute("SELECT noteId, hash, title FROM note WHERE noteId=?;", n).fetchone()
+        #        rval.append({"noteId":note[0], "hash":note[1], "title":note[2]})
+        #    return(rval)
         noteIds = []
         if id:
             self.fyi("self.find() with id=%s" % id)
@@ -425,11 +426,13 @@ class Nota:
             self.fyi("hash given: %s" % id)
             noteIds.append([id])
         else:
-            print("FIXME: d")
+            print("FIXME/find: d")
             self.fyi("len(keywords) %s" % len(keywords))
             if 0 == len(keywords) or keywords[0] == "?":
                 self.fyi("no keywords given")
-                noteIds.extend(self.con.execute("SELECT noteId FROM note WHERE in_trash=0;"))
+                print("FIXME/find: e")
+                noteIds.extend(self.con.execute("SELECT noteId FROM note WHERE in_trash=?;", trash))
+                print("FIXME/find: f")
             else:
                 self.fyi("looking up keyword...")
                 keywordsKnown = []
@@ -442,11 +445,11 @@ class Nota:
                 for keyword in keywords:
                     if self.debug:
                         print("keyword:", keyword, "...")
-                    keywordId = self.cur.execute("SELECT keywordId FROM keyword WHERE keyword = ?;", [keyword])
+                    keywordId = self.cur.execute("SELECT keywordId FROM keyword WHERE keyword=?;", [keyword])
                     try:
-                        keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword = ?;", [keyword]).fetchone()
+                        keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword=?;", [keyword]).fetchone()
                         if keywordId:
-                            for noteId in self.cur.execute("SELECT noteId FROM notekeyword WHERE keywordId = ?;", keywordId):
+                            for noteId in self.cur.execute("SELECT noteId FROM notekeyword WHERE keywordId=?;", keywordId):
                                 if self.debug:
                                     print('  noteId:', noteId)
                                 if noteId not in noteIds:
@@ -455,7 +458,8 @@ class Nota:
                         self.error("problem finding keyword or note in database")
                         pass
         ## convert from hash to ids. Note that one hash may create several ids.
-        self.fyi("notids:", noteIds)
+        print(noteIds)
+        self.fyi("noteIds: %s" % noteIds)
         noteIds2 = []
         self.fyi("ORIGINAL noteIds: %s" % noteIds)
         for n in noteIds:
@@ -464,7 +468,7 @@ class Nota:
             if isinstance(n[0], str):
                 if self.debug:
                     print("  STR %s" % n)
-                rows = self.cur.execute("SELECT noteId, hash FROM note WHERE in_trash=0;").fetchall()
+                rows = self.cur.execute("SELECT noteId, hash FROM note WHERE in_trash=?;", trash).fetchall()
                 #print(rows)
                 l = len(n[0])
                 for r in rows:
@@ -479,19 +483,21 @@ class Nota:
         for n in noteIds:
             self.fyi("  processing noteID %s" % n)
             try:
+                print("  before lookup")
                 note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash FROM note WHERE noteId=?;", n).fetchone()
+                print("  after (successful) lookup")
             except:
-                self.warning("Problem extracting note from database")
+                self.warning("Problem extracting note %s from database" % n)
                 next
             if note:
                 date = note[2]
                 due = note[5]
                 privacy = note[6]
                 keywordIds = []
-                keywordIds.extend(self.con.execute("SELECT keywordid FROM notekeyword WHERE notekeyword.noteid = ?;", n))
+                keywordIds.extend(self.con.execute("SELECT keywordid FROM notekeyword WHERE notekeyword.noteid=?;", n))
                 keywords = []
                 for k in keywordIds:
-                    keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId = ?;", k).fetchone()[0])
+                    keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId=?;", k).fetchone()[0])
                 rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
                     "content":note[4], "due":note[5], "privacy":note[6],
                     "date":note[2], "modified":note[7], "hash":note[8]})

@@ -370,6 +370,7 @@ def nota():
                 print("(%s) " % t['noteId'], end="")
             print(color.title + "%s" % t['title'] + color.normal + " ", end="\n")
         sys.exit(0)
+
     
     if args.add:
         if args.hash:
@@ -385,157 +386,171 @@ def nota():
             id = nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
                     #privacy=args.privacy, due=args.due)
         sys.exit(0)
-    else: # By a process of elimination, we must be trying to find notes.
-        due_requested = nota.interpret_time(args.due)
-        if id_desired is not None:
-            if id_desired[0:1] == '-': # don't get confused by arg flags
-                id_desired = None
-        if id_desired is not None:
-            if isinstance(id_desired, int) and id_desired <= 0:
-                ids = nota.get_id_list()
-                nids = len(ids)
-                if (id_desired + nids - 1) < 0:
-                    print("list only contains %d notes" % nids, end="\n")
-                    sys.exit(1)
-                #print(ids)
-                #print(nids)
-                id = ids[nids + id_desired - 1][0]
-                #print("id:", id)
-                found = nota.find(id=int(id), trash=False)
-            else:
-                found = nota.find(id=id_desired, trash=False)
-        elif args.keywords[0] != '':
-            found = nota.find(keywords=args.keywords)
-        else:
-            found = nota.find(keywords='?'.split(','))
-        count = 0
-        nfound = len(found)
-        i = -1
-        # Single hashes are printed to 7 chars (like on github), but multiple ones are shortened.
-        hal = nota.hash_abbreviation_length()
-        hash = []
-        if nfound < 1:
-            print("No notes match this request")
-        if args.debug:
-            print(hash)
-        for f in found:
-            i = i + 1
-            #print(f)
-            try:
-                due = f['due']
-            except:
-                due = None
-            if due_requested[0]:
-                if not due:
-                    continue
-                if args.debug:
-                    print("due_requested: %s" % due_requested[0])
-                due = datetime.datetime.strptime(due, '%Y-%m-%d %H:%M:%S.%f')
-                if args.debug:
-                    print("due value stored in note:", due)
-                if due > due_requested[0]:
-                    when = (due - due_requested[0]).total_seconds()
-                else:
-                    when = (due_requested[0]- due).total_seconds()
-                if args.debug:
-                    print('when:', when)
-                if when < 0:
-                    continue
-            count += 1
-            if args.count:
+
+    # By a process of elimination, we must be trying to find notes.
+    print("args.hash '%s'" % args.hash)
+    due_requested = nota.interpret_time(args.due)
+    if id_desired is not None:
+        if id_desired[0:1] == '-': # don't get confused by arg flags
+            id_desired = None
+    trash_count = None
+    if id_desired is not None:
+        print("FIXME a")
+        found = nota.find(id=[id_desired], trash=False)
+        print("len(found) %s" % len(found))
+        print("FIXME b")
+        trash_count = len(nota.find(id=id_desired, trash=True))
+        print("trash_count %s"% trash_count)        
+        #20150306 # I think the stuff below is a remnant; keeping a while
+        #20150306 # in case it might be useful for something.
+        #20150306 if isinstance(id_desired, int) and id_desired <= 0:
+        #20150306     print("FIXME b")
+        #20150306     ids = nota.get_id_list()
+        #20150306     nids = len(ids)
+        #20150306     if (id_desired + nids - 1) < 0:
+        #20150306         print("list only contains %d notes" % nids, end="\n")
+        #20150306         sys.exit(1)
+        #20150306     #print(ids)
+        #20150306     #print(nids)
+        #20150306     id = ids[nids + id_desired - 1][0]
+        #20150306     #print("id:", id)
+        #20150306     found = nota.find(id=int(id), trash=False)
+        #20150306 else:
+        #20150306     print("FIXME c")
+        #20150306     found = nota.find(id=id_desired, trash=False)
+    elif args.keywords[0] != '':
+        found = nota.find(keywords=args.keywords)
+    else:
+        found = nota.find(keywords='?'.split(','))
+    count = 0
+    nfound = len(found)
+    print("FIXME nfound %s" % nfound)
+    i = -1
+    # Single hashes are printed to 7 chars (like on github), but multiple ones are shortened.
+    hal = nota.hash_abbreviation_length()
+    hash = []
+    if nfound < 1:
+        print("No notes match this request")
+    if args.debug:
+        print(hash)
+    for f in found:
+        i = i + 1
+        #print(f)
+        try:
+            due = f['due']
+        except:
+            due = None
+        if due_requested[0]:
+            if not due:
                 continue
+            if args.debug:
+                print("due_requested: %s" % due_requested[0])
+            due = datetime.datetime.strptime(due, '%Y-%m-%d %H:%M:%S.%f')
+            if args.debug:
+                print("due value stored in note:", due)
+            if due > due_requested[0]:
+                when = (due - due_requested[0]).total_seconds()
             else:
-                if nfound > 1:
-                    if args.markdown:
-                        print("%s: " % f['hash'][0:hal], end="")
-                        if show_id:
-                            print("(%s) " % f['noteId'], end="")
-                        print("**%s** " % f['title'], end="")
-                        print("[", end="")
-                        nk = len(f['keywords'])
-                        for i in range(nk):
-                            print("*%s*" % f['keywords'][i], end="")
-                            if (i < nk-1):
-                                print(", ", end="")
-                        print("]", end="\n\n")
-                    else:
-                        print(color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
-                        if show_id:
-                            print("(%s) " % f['noteId'], end="")
-                        print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                        print("[", end="")
-                        nk = len(f['keywords'])
-                        for i in range(nk):
-                            print(color.keyword + f['keywords'][i] + color.normal, end="")
-                            if (i < nk-1):
-                                print(", ", end="")
-                        print("]", end="\n")
-                else:
-                    if args.markdown:
-                        print("%s: " % f['hash'][0:7], end="")
-                        if show_id:
-                            print("(%s) " % f['noteId'], end="")
-                        print("**%s** " % f['title'], end="")
-                        print("[", end="")
-                        nk = len(f['keywords'])
-                        for i in range(nk):
-                            print(f['keywords'][i], end="")
-                            if (i < nk-1):
-                                print(", ", end="")
-                        print("]", end="\n\n")
-                        print("  created %s" % f['date'], end=" ")
-                        if f['due'] and len(f['due']) > 0:
-                            print(due_str(f['due']))
-                        else:
-                            print('')
-                        print('')
-                        content = f['content'].replace('\\n', '\n')
-                        for contentLine in content.split('\n'):
-                            c = contentLine.rstrip('\n')
-                            if len(c):
-                                print(" ", contentLine.rstrip('\n'), '\n')
-                        print('')
-                    else:
-                        print(color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
-                        if show_id:
-                            print("(%s) " % f['noteId'], end="")
-                        print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                        print("[", end="")
-                        nk = len(f['keywords'])
-                        for i in range(nk):
-                            print(color.keyword + f['keywords'][i] + color.normal, end="")
-                            if (i < nk-1):
-                                print(", ", end="")
-                        print("]", end="\n")
-                        print("  created %s" % f['date'], end=" ")
-                        if f['due'] and len(f['due']) > 0:
-                            print(due_str(f['due']))
-                        else:
-                            print('')
-                        content = f['content'].replace('\\n', '\n')
-                        for contentLine in content.split('\n'):
-                            c = contentLine.rstrip('\n')
-                            if len(c):
-                                print(" ", contentLine.rstrip('\n'))
-                        #print('')
+                when = (due_requested[0]- due).total_seconds()
+            if args.debug:
+                print('when:', when)
+            if when < 0:
+                continue
+        count += 1
         if args.count:
-            print(count)
-        if not args.count and args.verbose > 0:
-            t = nota.trash_length()[0] # FIXME: should just return the [0]
-            if t == 0:
-                print("The trash is empty.")
-            elif t == 1:
-                print("The trash contains 1 note.")
+            continue
+        else:
+            if nfound > 1:
+                if args.markdown:
+                    print("%s: " % f['hash'][0:hal], end="")
+                    if show_id:
+                        print("(%s) " % f['noteId'], end="")
+                    print("**%s** " % f['title'], end="")
+                    print("[", end="")
+                    nk = len(f['keywords'])
+                    for i in range(nk):
+                        print("*%s*" % f['keywords'][i], end="")
+                        if (i < nk-1):
+                            print(", ", end="")
+                    print("]", end="\n\n")
+                else:
+                    print(color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
+                    if show_id:
+                        print("(%s) " % f['noteId'], end="")
+                    print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                    print("[", end="")
+                    nk = len(f['keywords'])
+                    for i in range(nk):
+                        print(color.keyword + f['keywords'][i] + color.normal, end="")
+                        if (i < nk-1):
+                            print(", ", end="")
+                    print("]", end="\n")
             else:
-                print("The trash contains %s notes." % t)
-            if args.markdown:
-                print("\n")
-            print("Hint:", end=" ")
-            hint = random_hint()
-            if args.markdown:
-                print(hint.replace(' "', ' `').replace('"', '`'))
-            elif use_color:
-                print(hint.replace(' "',' \'\033[1m').replace('"', '\033[0m\''))
-            else:
-                print(hint)
+                if args.markdown:
+                    print("%s: " % f['hash'][0:7], end="")
+                    if show_id:
+                        print("(%s) " % f['noteId'], end="")
+                    print("**%s** " % f['title'], end="")
+                    print("[", end="")
+                    nk = len(f['keywords'])
+                    for i in range(nk):
+                        print(f['keywords'][i], end="")
+                        if (i < nk-1):
+                            print(", ", end="")
+                    print("]", end="\n\n")
+                    print("  created %s" % f['date'], end=" ")
+                    if f['due'] and len(f['due']) > 0:
+                        print(due_str(f['due']))
+                    else:
+                        print('')
+                    print('')
+                    content = f['content'].replace('\\n', '\n')
+                    for contentLine in content.split('\n'):
+                        c = contentLine.rstrip('\n')
+                        if len(c):
+                            print(" ", contentLine.rstrip('\n'), '\n')
+                    print('')
+                else:
+                    print(color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
+                    if show_id:
+                        print("(%s) " % f['noteId'], end="")
+                    print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                    print("[", end="")
+                    nk = len(f['keywords'])
+                    for i in range(nk):
+                        print(color.keyword + f['keywords'][i] + color.normal, end="")
+                        if (i < nk-1):
+                            print(", ", end="")
+                    print("]", end="\n")
+                    print("  created %s" % f['date'], end=" ")
+                    if f['due'] and len(f['due']) > 0:
+                        print(due_str(f['due']))
+                    else:
+                        print('')
+                    content = f['content'].replace('\\n', '\n')
+                    for contentLine in content.split('\n'):
+                        c = contentLine.rstrip('\n')
+                        if len(c):
+                            print(" ", contentLine.rstrip('\n'))
+                    #print('')
+    if args.count:
+        print(count)
+    if not args.count and args.verbose > 0:
+        t = nota.trash_length()[0] # FIXME: should just return the [0]
+        if t == 0:
+            print("The trash is empty.")
+        elif t == 1:
+            print("The trash contains 1 note.")
+        else:
+            print("The trash contains %s notes." % t)
+        if args.markdown:
+            print("\n")
+        print("Hint:", end=" ")
+        hint = random_hint()
+        if args.markdown:
+            print(hint.replace(' "', ' `').replace('"', '`'))
+        elif use_color:
+            print(hint.replace(' "',' \'\033[1m').replace('"', '\033[0m\''))
+        else:
+            print(hint)
     
