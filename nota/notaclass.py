@@ -55,9 +55,7 @@ class Nota:
             dbversion = "%s.%s.%s" % (self.dbversion[0], self.dbversion[1], self.dbversion[2])
         self.fyi("appversion: %s" % appversion)
         self.fyi("dbversion: %s" % dbversion)
-        self.fyi("self.dbversion:")
-        if self.debug:
-            print(self.dbversion)
+        self.fyi("self.dbversion: %s" % [self.dbversion])
         if StrictVersion(appversion) > StrictVersion(dbversion):
             if StrictVersion(dbversion) < StrictVersion("0.2"):
                 print("Updating database %s to version 0.2.x ..." % db)
@@ -272,7 +270,7 @@ class Nota:
         hash = str(hash)
         if not hash:
             self.error("must give the hash of the note that is to be undeleted")
-        trash_contents = self.find(id, trash=True)
+        trash_contents = self.find_by_hash(hash, trash=True)
         self.fyi("trash_contents : %s" % trash_contents)
         hashlen = len(hash)
         for t in trash_contents:
@@ -304,10 +302,11 @@ class Nota:
         self.con.commit()
 
 
-    def delete(self, id=-1): # moves to trash
-        if id < 0:
-            self.error("cannot delete a note with a negative id number (%s)" % id)
-        old = self.find(id)
+    def delete(self, hash=""): # moves to trash
+        hash = str(hash)
+        if 0 == len(hash):
+            exit(0)
+        old = self.find_by_hash(hash)
         self.fyi("old: %s" % old)
         if (len(old) != 1):
             self.error("cannot delete %d notes at once; try adding more letters to the hash code" % len(old))
@@ -318,7 +317,7 @@ class Nota:
             self.cur.execute("UPDATE note SET in_trash = 1 WHERE noteId = ?;", [id])
             self.con.commit()
         except:
-            self.error("there is no note numbered %s" % id)
+            self.error("there is no note with unique hash %s" % hash)
             return False
         self.con.commit()
         return True
@@ -340,12 +339,29 @@ class Nota:
             self.error("problem encountered when emptying the trash")
 
 
-    def edit(self, id=-1):
-        # Edit a note, avoiding code repetition by making a new one and then renumbering it
-        if id < 0:
-            self.warning("cannot delete a note with a negative id number (%s)" % id)
-        self.fyi("edit() has id: %s" % id)
-        old = self.find(id)
+    def edit(self, hash=""):
+        '''
+        Edit a note, given its abbreviated hash, which must be unique
+        across both visible and trashed notes. (It is permitted to edit
+        notes in the trash.)
+        '''
+        if not len(hash):
+            exit(0)
+        self.fyi("nota.edit() has hash: %s" % hash)
+        ## do not use find_by_hash() because can be in hash or not.
+        rows = self.cur.execute("SELECT noteId, hash FROM note;").fetchall()
+        hash_len = len(hash)
+        noteIds = []
+        for r in rows:
+            if r[1][0:hash_len] == hash:
+                noteIds.append((r[0],))
+        if not len(noteIds):
+            self.error("no notes match abbreviated hash '%s'" % hash)
+            exit(0)
+        if 1 != len(noteIds):
+            self.error("cannot edit %d notes at once; try adding more letters to the hash code" % len(noteIds))
+            exit(0)
+        old = self.find_by_hash(hash)
         if 1 != len(old):
             self.error("cannot edit %d notes at once; try adding more letters to the hash code" % len(old))
         old = old[0]
@@ -404,100 +420,110 @@ class Nota:
         except:
             self.error("cannot determine number of items in trash")
 
-
-    def find(self, id=None, keywords="", trash=False):
-        '''Search notes for a given id or keyword, printing the results in
-        either 'plain' or 'JSON' format.'''
-        if trash:
-            print("returning all trash notes (FIXME)")
-            noteIds = []
-            ## fixme why is next con. instead of cur.
-            noteIds.extend(self.con.execute("SELECT noteId FROM note WHERE in_trash = 1;"))
-            rval = []
-            for n in noteIds:
-                note = self.cur.execute("SELECT noteId, hash, title FROM note WHERE noteId=?;", n).fetchone()
-                rval.append({"noteId":note[0], "hash":note[1], "title":note[2]})
-            return(rval)
+    def find_by_hash(self, hash=None, in_trash=False):
+        '''Search notes for a given (possibly abbreviated) hash'''
+        if hash:
+            self.fyi("nota.find_by_hash() with abbreviated hash %s" % hash)
+        try:
+            rows = self.cur.execute("SELECT noteId, hash FROM note WHERE in_trash=?;", [in_trash]).fetchall()
+        except:
+            self.error("nota.find_by_hash() cannot look up note list")
+        # Possibly save time by finding IDs first.
         noteIds = []
-        if id:
-            self.fyi("self.find() with id=%s" % id)
-        if id and isinstance(id, str) and "-" != id[0:1]:
-            self.fyi("hash given: %s" % id)
-            noteIds.append([id])
+        if hash:
+            l = len(hash)
+            for r in rows:
+                if hash == r[1][0:l]:
+                    noteIds.append((r[0],))
         else:
-            print("FIXME: d")
-            self.fyi("len(keywords) %s" % len(keywords))
-            if 0 == len(keywords) or keywords[0] == "?":
-                self.fyi("no keywords given")
-                noteIds.extend(self.con.execute("SELECT noteId FROM note WHERE in_trash=0;"))
-            else:
-                self.fyi("looking up keyword...")
-                keywordsKnown = []
-                for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
-                    keywordsKnown.extend(k)
-                # FIXME: what cutoff is good??
-                keywordsFuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
-                if len(keywordsFuzzy) > 0:
-                    keywords = [keywordsFuzzy[0]]
-                for keyword in keywords:
-                    if self.debug:
-                        print("keyword:", keyword, "...")
-                    keywordId = self.cur.execute("SELECT keywordId FROM keyword WHERE keyword = ?;", [keyword])
-                    try:
-                        keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword = ?;", [keyword]).fetchone()
-                        if keywordId:
-                            for noteId in self.cur.execute("SELECT noteId FROM notekeyword WHERE keywordId = ?;", keywordId):
-                                if self.debug:
-                                    print('  noteId:', noteId)
-                                if noteId not in noteIds:
-                                    noteIds.append(noteId)
-                    except:
-                        self.error("problem finding keyword or note in database")
-                        pass
-        ## convert from hash to ids. Note that one hash may create several ids.
-        self.fyi("notids:", noteIds)
-        noteIds2 = []
-        self.fyi("ORIGINAL noteIds: %s" % noteIds)
-        for n in noteIds:
-            #print("START n=%s" % n)
-            #print("n: %s" % n[0])
-            if isinstance(n[0], str):
-                if self.debug:
-                    print("  STR %s" % n)
-                rows = self.cur.execute("SELECT noteId, hash FROM note WHERE in_trash=0;").fetchall()
-                #print(rows)
-                l = len(n[0])
-                for r in rows:
-                    if n[0] == r[1][0:l]:
-                        noteIds2.append((r[0],))
-            else:
-                noteIds2.append(n)
-        if len(noteIds2):
-            noteIds = noteIds2
-        self.fyi("  LATER    noteIds: %s" % noteIds)
+            for r in rows:
+                noteIds.append((r[0],))
+        self.fyi("noteIds: %s" % noteIds)
         rval = []
         for n in noteIds:
-            self.fyi("  processing noteID %s" % n)
+            # No need to check for being in trash or not, of course.
+            self.fyi(" processing id=%s" % n)
+            #print(" (%s) " % n, end="")
             try:
                 note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash FROM note WHERE noteId=?;", n).fetchone()
             except:
-                self.warning("Problem extracting note from database")
+                self.warning("Problem extracting note %s from database" % n)
                 next
             if note:
                 date = note[2]
                 due = note[5]
                 privacy = note[6]
                 keywordIds = []
-                keywordIds.extend(self.con.execute("SELECT keywordid FROM notekeyword WHERE notekeyword.noteid = ?;", n))
+                keywordIds.extend(self.con.execute("SELECT keywordid FROM notekeyword WHERE notekeyword.noteid=?;", n))
                 keywords = []
                 for k in keywordIds:
-                    keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId = ?;", k).fetchone()[0])
+                    keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId=?;", k).fetchone()[0])
                 rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
                     "content":note[4], "due":note[5], "privacy":note[6],
                     "date":note[2], "modified":note[7], "hash":note[8]})
-            else:
-                self.error("There is no note with abbreviated hash '%s'" % n[0])
         return rval
+
+
+    def find_by_keyword(self, keywords="", in_trash=False):
+        '''Search notes for a given keyword'''
+        self.fyi("nota.find_by_keyword() with keywords %s" % keywords)
+        keywordsKnown = []
+        for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
+            keywordsKnown.extend(k)
+        # FIXME: what cutoff is good??
+        keywordsFuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
+        if len(keywordsFuzzy) > 0:
+            keywords = [keywordsFuzzy[0]]
+        noteIds = []
+        for keyword in keywords:
+            self.fyi("keyword: %s" % keyword)
+            try:
+                keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword=?;", [keyword]).fetchone()
+                if keywordId:
+                    for noteId in self.cur.execute("SELECT noteId FROM notekeyword WHERE keywordId=?;", keywordId):
+                        if noteId not in noteIds:
+                            noteIds.append(noteId)
+            except:
+                self.error("problem finding keyword or note in database")
+                pass
+        ## convert from hash to ids. Note that one hash may create several ids.
+        self.fyi("noteIds: %s" % noteIds)
+        ## Find IDs of just the notes with the proper in_trash value
+        noteIds2 = []
+        self.fyi("ORIGINAL noteIds: %s" % noteIds)
+        for n in noteIds:
+            self.fyi("n=%s" % n)
+            try:
+                row = self.cur.execute("SELECT noteId, in_trash FROM note WHERE noteID=?;", n).fetchone()
+            except:
+                self.error("cannot look up noteId %s" % n)
+            if row[1] == in_trash:
+                noteIds2.append((row[0],))
+        if len(noteIds2):
+            noteIds = noteIds2
+        self.fyi("  LATER    noteIds: %s" % noteIds)
+        rval = []
+        for n in noteIds:
+            self.fyi(" processing id=%s" % n)
+            try:
+                note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash FROM note WHERE noteId=?;", n).fetchone()
+            except:
+                self.warning("Problem extracting note %s from database" % n)
+                next
+            if note:
+                date = note[2]
+                due = note[5]
+                privacy = note[6]
+                keywordIds = []
+                keywordIds.extend(self.con.execute("SELECT keywordid FROM notekeyword WHERE notekeyword.noteid=?;", n))
+                keywords = []
+                for k in keywordIds:
+                    keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId=?;", k).fetchone()[0])
+                rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
+                    "content":note[4], "due":note[5], "privacy":note[6],
+                    "date":note[2], "modified":note[7], "hash":note[8]})
+        return rval
+
 
     def get_keywords(self, id):
         if id < 0:
