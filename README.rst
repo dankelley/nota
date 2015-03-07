@@ -13,62 +13,58 @@ notes for developers.
 Caution
 =======
 
-``nota`` is in a phase of active development. That means that many of
-its offerings are subject to change. Alterations may be made in its
-command-line arguments and in its output format. There may also be
-changes in the schema of the database that ``nota`` uses, although these
-should typically not affect users because the first thing ``nota`` does
-when it launches is to check whether the database needs updating.
+``nota`` is in a phase of active development. That means that many of its
+offerings are subject to change. Alterations may be made in its command-line
+arguments and in its output format. There may also be changes in the schema of
+the database that ``nota`` uses, although these should typically not affect
+users because the first thing ``nota`` does when it launches is to check
+whether the database needs updating.
 
-The hope is for ``nota`` to settle into a stable version by the middle
-of 2015, following a period of alpha/beta testing in the first quarter
-of the year.
+The hope is for ``nota`` to settle into a stable version by the middle of 2015,
+following a period of alpha/beta testing in the first quarter of the year.
 
-Those who wish to test ``nota`` are asked to report bugs on the github
-website, and advised to make frequent backups of their database.
+Those who wish to test ``nota`` are asked to report bugs on the github website,
+and advised to make frequent backups of their database.
 
 Overview
 ========
 
-Most people find it helpful to store notes on a computer. Some use
-specialized applications for this, while others prefer the simplicity of
-recording their thoughts in a plain-text file, using a familiar text
-editor. In this second option, it is common to associate the text files
-with projects or tasks. Depending on the intent, the file might be named
-"README" or perhaps something more meaningful, such as "PLANS," "TASKS,"
-"BUGS," "IDEAS," etc. Thus, for M projects and N categories, there might
-be M x N files, and the handling of all those files can grow
-complicated, whether adding new material or finding old material.
+Most people find it helpful to store notes on a computer. Some use specialized
+applications for this, while others prefer the simplicity of recording their
+thoughts in a plain-text file, using a familiar text editor. In this second
+option, it is common to associate the text files with projects or tasks.
+Depending on the intent, the file might be named "README" or perhaps something
+more meaningful, such as "PLANS," "TASKS," "BUGS," "IDEAS," etc. Thus, for M
+projects and N categories, there might be M x N files, and the handling of all
+those files can grow complicated, whether adding new material or finding old
+material.
 
-A reasonable solution is to have a single file, in which notes can be
-stored along with meta-information, such as keywords. For example, plans
-for a project named "foo" might be flagged with the keywords *foo* and
-*plans*, and retrieving those plans would be a simple matter of
-filtering on those keywords.
+A reasonable solution is to have a single file, in which notes can be stored
+along with meta-information, such as keywords. For example, plans for a project
+named "foo" might be flagged with the keywords *foo* and *plans*, and
+retrieving those plans would be a simple matter of filtering on those keywords.
 
-Storing notes along with keywords (and other meta-information, such as
-the date, the author, etc.) is somewhat complicated in a text file that
-is to be edited with a general text editor, not least because a typo
-might damage the file. Storing notes in a database is a good solution to
-this problem, and it offers the additional advantage of greatly improved
-lookup speed. The disadvantage of the database, however, is that an
-application is required to act as an interface between the user and the
-data. If the application is commercial, then users expose themselves to
-the risk of losing all their work, if the company stops supporting the
-software.
+Storing notes along with keywords (and other meta-information, such as the
+date, the author, etc.) is somewhat complicated in a text file that is to be
+edited with a general text editor, because a typo might damage the file.
+Storing notes in a database is a good solution to this problem, and it offers
+the additional advantage of greatly improved lookup speed. The disadvantage of
+the database, however, is that an application is required to act as an
+interface between the user and the data. If the application is commercial, then
+users expose themselves to the risk of losing all their work, if the company
+stops supporting the software.
 
-The ``nota`` application (named for the Latin phrase "nota bene",
-perhaps pronounced "note ah" by some and "note eh" by Canadians) is
-designed with all these things in mind. It is deliberately restricted in
-its features, focussing on the creation of textual notes and their
-retrieval. Complex formatting is not provided, nor is the ability to add
-non-textual material. In the present early version, ``nota`` functions
-entirely at the unix command line, and is most suited for power users
-who are unafraid of that environment.
+The ``nota`` application (named for the Latin phrase "nota bene", perhaps
+pronounced "note ah" by some and "note eh" by Canadians) is designed with all
+these things in mind. It is deliberately restricted in its features, focussing
+on the creation of textual notes and their retrieval. Complex formatting is not
+provided, nor is the ability to add non-textual material. In the present early
+version, ``nota`` functions entirely at the unix command line, and is most
+suited for power users who are unafraid of that environment.
 
-The development model for ``nota`` is entirely open-source, and the
-coding relies on popular tools that will be familiar to many
-programmers, mitigating against obsolescence.
+The development model for ``nota`` is entirely open-source, and the coding
+relies on popular tools that will be familiar to many programmers, mitigating
+against obsolescence.
 
 Using nota
 ==========
@@ -272,75 +268,12 @@ To get a list of notes that are due today, put the following in your
     PS1="\h:\W"
     export PS1="$PS1<\$(nota_count)> "
 
-Developer notes
-===============
-
-Setup
------
-
-Of course, you need python to be installed.
-
-Then, make sure that ``pip`` is installed; if not, do
-
-::
-
-    easy_install pip
-
-to install it. Next, install ``wheel``
-
-::
-
-    pip install wheel
-
-Note: the steps listed above need only be done once.
-
-Testing before packaging
-------------------------
-
-::
-
-    PYTHONPATH=/Users/kelley/src/nota python -m nota
-
-Packaging
----------
-
-Each time the ``nota`` source is updated, do the following to package
-it:
-
-::
-
-    python setup.py sdist
-    python setup.py bdist_wheel --universal
-
-After this, the ``dist`` directory will contain some packages.
-
-Installing package locally
---------------------------
-
-To install a local test version, do e.g. (with altered version number)
-
-::
-
-    sudo pip install dist/nota-0.6.0.tar.gz --upgrade
-
-Installing package on pypi.python
----------------------------------
-
-To submit to ``pypi.python.org`` remove old versions from ``dist`` and
-then do:
-
-::
-
-    twine upload dist/*
-
 Suggested aliases for nota
 --------------------------
 
-The developer uses the following, so that ``n`` runs the packaged version and
-``nn`` runs the new (source-code) version.
+The developer uses the following, alias to avoid typing three characters.
 
 ::
 
     alias n=nota
-    alias nn='PYTHONPATH=~/src/nota python -m nota'
 

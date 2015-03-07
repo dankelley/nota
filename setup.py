@@ -10,6 +10,8 @@ setup(name='nota',
       packages=['nota'],
       classifiers=['Development Status :: 3 - Alpha',
           'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'],
+      #test_suite="nota.tests.nota_test",
+      test_suite="tests",
       entry_points={ 'console_scripts':
           [ 'nota = nota.main:nota' ]
           },

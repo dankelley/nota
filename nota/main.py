@@ -407,12 +407,15 @@ def nota():
             id_desired = None
     trash_count = None
     if id_desired is not None:
+        nota.fyi("search notes by hash")
         found = nota.find_by_hash(hash=id_desired, in_trash=False)
         trash_count = len(nota.find_by_hash(hash=id_desired, in_trash=True))
     elif len(args.keywords[0]) and args.keywords[0] != '?':
+        nota.fyi("search notes by keyword")
         found = nota.find_by_keyword(keywords=args.keywords, in_trash=False)
         trash_count = len(nota.find_by_keyword(keywords=args.keywords, in_trash=True))
     else:
+        nota.fyi("search notes by WTF?")
         found = nota.find_by_hash(hash=None, in_trash=False)
         trash_count = len(nota.find_by_hash(hash=None, in_trash=True))
     count = 0
