@@ -355,20 +355,33 @@ def nota():
         nota.fyi("should export now; hash=%s" % args.export)
         if args.export == '-':
             args.export = None
-        noteIds = nota.find(args.export)
+        noteIds = nota.find_by_hash(args.export)
         for n in noteIds:
             print(json.dumps(n))
         sys.exit(0)
      
     if args.trash:
         nota.fyi("should show trash contents now")
-        trashed = nota.find(trash=True)
+        #print("args.keywords %s" % args.keywords)
+        #print("args.keywords[0] '%s'" % args.keywords[0])
+        #print("args.hash %s" % args.hash)
+        if not '' == args.keywords[0]:
+            trashed = nota.find_by_keyword(keywords=args.keywords, in_trash=True)
+        else:
+            trashed = nota.find_by_hash(hash=args.hash, in_trash=True)
         hal = nota.hash_abbreviation_length()
         for t in trashed:
             print(color.hash + "%s: " % t['hash'][0:hal] + color.normal, end="")
             if show_id:
                 print("(%s) " % t['noteId'], end="")
-            print(color.title + "%s" % t['title'] + color.normal + " ", end="\n")
+            print(color.title + "%s" % t['title'] + color.normal + " ", end="")
+            print("[", end="")
+            nk = len(t['keywords'])
+            for i in range(nk):
+                print(color.keyword + t['keywords'][i] + color.normal, end="")
+                if (i < nk-1):
+                    print(", ", end="")
+            print("]", end="\n")
         sys.exit(0)
 
     
@@ -388,49 +401,28 @@ def nota():
         sys.exit(0)
 
     # By a process of elimination, we must be trying to find notes.
-    print("args.hash '%s'" % args.hash)
     due_requested = nota.interpret_time(args.due)
     if id_desired is not None:
         if id_desired[0:1] == '-': # don't get confused by arg flags
             id_desired = None
     trash_count = None
     if id_desired is not None:
-        print("FIXME a")
-        found = nota.find(id=[id_desired], trash=False)
-        print("len(found) %s" % len(found))
-        print("FIXME b")
-        trash_count = len(nota.find(id=id_desired, trash=True))
-        print("trash_count %s"% trash_count)        
-        #20150306 # I think the stuff below is a remnant; keeping a while
-        #20150306 # in case it might be useful for something.
-        #20150306 if isinstance(id_desired, int) and id_desired <= 0:
-        #20150306     print("FIXME b")
-        #20150306     ids = nota.get_id_list()
-        #20150306     nids = len(ids)
-        #20150306     if (id_desired + nids - 1) < 0:
-        #20150306         print("list only contains %d notes" % nids, end="\n")
-        #20150306         sys.exit(1)
-        #20150306     #print(ids)
-        #20150306     #print(nids)
-        #20150306     id = ids[nids + id_desired - 1][0]
-        #20150306     #print("id:", id)
-        #20150306     found = nota.find(id=int(id), trash=False)
-        #20150306 else:
-        #20150306     print("FIXME c")
-        #20150306     found = nota.find(id=id_desired, trash=False)
-    elif args.keywords[0] != '':
-        found = nota.find(keywords=args.keywords)
+        found = nota.find_by_hash(hash=id_desired, in_trash=False)
+        trash_count = len(nota.find_by_hash(hash=id_desired, in_trash=True))
+    elif len(args.keywords[0]) and args.keywords[0] != '?':
+        found = nota.find_by_keyword(keywords=args.keywords, in_trash=False)
+        trash_count = len(nota.find_by_keyword(keywords=args.keywords, in_trash=True))
     else:
-        found = nota.find(keywords='?'.split(','))
+        found = nota.find_by_hash(hash=None, in_trash=False)
+        trash_count = len(nota.find_by_hash(hash=None, in_trash=True))
     count = 0
     nfound = len(found)
-    print("FIXME nfound %s" % nfound)
     i = -1
     # Single hashes are printed to 7 chars (like on github), but multiple ones are shortened.
     hal = nota.hash_abbreviation_length()
     hash = []
     if nfound < 1:
-        print("No notes match this request")
+        print("No active notes match this request.")
     if args.debug:
         print(hash)
     for f in found:
@@ -537,12 +529,13 @@ def nota():
         print(count)
     if not args.count and args.verbose > 0:
         t = nota.trash_length()[0] # FIXME: should just return the [0]
+        t = trash_count
         if t == 0:
-            print("The trash is empty.")
+            print("The trash has no notes matching this search.")
         elif t == 1:
-            print("The trash contains 1 note.")
+            print("The trash has 1 note matching ths search.")
         else:
-            print("The trash contains %s notes." % t)
+            print("The trash has %s notes matching this search." % t)
         if args.markdown:
             print("\n")
         print("Hint:", end=" ")
