@@ -270,7 +270,7 @@ class Nota:
         hash = str(hash)
         if not hash:
             self.error("must give the hash of the note that is to be undeleted")
-        trash_contents = self.find_by_hash(hash, trash=True)
+        trash_contents = self.find_by_hash(hash, in_trash=True)
         self.fyi("trash_contents : %s" % trash_contents)
         hashlen = len(hash)
         for t in trash_contents:
@@ -422,8 +422,9 @@ class Nota:
 
     def find_by_hash(self, hash=None, in_trash=False):
         '''Search notes for a given (possibly abbreviated) hash'''
+        in_trash = int(in_trash)
         if hash:
-            self.fyi("nota.find_by_hash() with abbreviated hash %s" % hash)
+            self.fyi("nota.find_by_hash() with abbreviated hash %s; in_trash=%s" % (hash, in_trash))
         try:
             rows = self.cur.execute("SELECT noteId, hash FROM note WHERE in_trash=?;", [in_trash]).fetchall()
         except:
@@ -466,7 +467,8 @@ class Nota:
 
     def find_by_keyword(self, keywords="", in_trash=False):
         '''Search notes for a given keyword'''
-        self.fyi("nota.find_by_keyword() with keywords %s" % keywords)
+        in_trash = int(in_trash)
+        self.fyi("nota.find_by_keyword() with keywords %s; in_trash=%s" % (keywords, in_trash))
         keywordsKnown = []
         for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
             keywordsKnown.extend(k)
@@ -497,10 +499,14 @@ class Nota:
                 row = self.cur.execute("SELECT noteId, in_trash FROM note WHERE noteID=?;", n).fetchone()
             except:
                 self.error("cannot look up noteId %s" % n)
+            self.fyi("row %s; in_trash=%s" % (row, in_trash))
             if row[1] == in_trash:
+                self.fyi("appending id %s" % row[0])
                 noteIds2.append((row[0],))
-        if len(noteIds2):
-            noteIds = noteIds2
+            else:
+                self.fyi("skipping id %s because in_trash is wrong" % row[0])
+        noteIds = noteIds2
+        self.fyi("  LATER    noteIds2: %s" % noteIds2)
         self.fyi("  LATER    noteIds: %s" % noteIds)
         rval = []
         for n in noteIds:
