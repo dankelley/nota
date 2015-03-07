@@ -308,7 +308,9 @@ class Nota:
             exit(0)
         old = self.find_by_hash(hash)
         self.fyi("old: %s" % old)
-        if (len(old) != 1):
+        if not len(old):
+            self.error("no active notes match abbreviated hash '%s'" % hash)
+        if 1 != len(old):
             self.error("cannot delete %d notes at once; try adding more letters to the hash code" % len(old))
         id = int(old[0]["noteId"])
         self.fyi("in delete(), id=%s" % id)
@@ -356,11 +358,9 @@ class Nota:
             if r[1][0:hash_len] == hash:
                 noteIds.append((r[0],))
         if not len(noteIds):
-            self.error("no notes match abbreviated hash '%s'" % hash)
-            exit(0)
+            self.error("no active notes match abbreviated hash '%s'" % hash)
         if 1 != len(noteIds):
             self.error("cannot edit %d notes at once; try adding more letters to the hash code" % len(noteIds))
-            exit(0)
         old = self.find_by_hash(hash)
         if 1 != len(old):
             self.error("cannot edit %d notes at once; try adding more letters to the hash code" % len(old))
