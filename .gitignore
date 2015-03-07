@@ -3,3 +3,4 @@ build
 nota.egg-info
 nota
 *.swp
+tests
