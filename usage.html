@@ -90,6 +90,12 @@ nota -k silly
 use, since they may end up being important to you, as you sift through hundreds
 of notes you've taken.</p>
 
+<p style="margin-top:1em">The keyword-search method involves two steps.  First,
+a search is done for notes that have keywords whose initial letters exactly
+match the given string. If none is found, then the second step is to do a
+``fuzzy'' string comparision with the ``difflib.get_close_matches`` function.
+This second step can yield surprising results, owing</p>
+
 <h2>Editing notes</h2>
 
 <p>Of course, your notes won't be perfect, and you may want to edit them to fix
