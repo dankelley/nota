@@ -415,7 +415,7 @@ def nota():
         found = nota.find_by_keyword(keywords=args.keywords, in_trash=False)
         trash_count = len(nota.find_by_keyword(keywords=args.keywords, in_trash=True))
     else:
-        nota.fyi("search notes by WTF?")
+        nota.fyi("Search notes by hash.")
         found = nota.find_by_hash(hash=None, in_trash=False)
         trash_count = len(nota.find_by_hash(hash=None, in_trash=True))
     count = 0

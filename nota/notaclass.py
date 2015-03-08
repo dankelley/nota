@@ -28,6 +28,13 @@ class Nota:
         mustInitialize = not os.path.exists(db)
         if mustInitialize:
             print("Creating new database named \"%s\"." % db)
+        else:
+            try:
+                dbsize = os.path.getsize(db)
+                self.fyi("Database file size %s bytes." % dbsize)
+                mustInitialize = not dbsize
+            except:
+                pass
         try:
             con = sqlite.connect(db)
             con.text_factory = str # permits accented characters in notes
@@ -40,7 +47,9 @@ class Nota:
         self.appversion = [0, 6, 0] # db changes on first two only
         self.dbversion = self.appversion
         if mustInitialize:
+            print("Initializing database; run 'nota' again to use it.")
             self.initialize()
+            return(None)
         try:
             v = self.cur.execute("SELECT * FROM version;").fetchone()
             self.dbversion = v
@@ -135,7 +144,7 @@ class Nota:
                         (self.appversion[0], self.appversion[1], self.appversion[2]))
             print("Database %s is now up-to-date with this version of 'nota'." % db)
         else:
-            self.fyi("Database %s is up-to-date" % db)
+            self.fyi("Database %s version is up-to-date." % db)
 
 
     def fyi(self, msg, prefix="  "):
@@ -465,7 +474,7 @@ class Nota:
         return rval
 
 
-    def find_by_keyword(self, keywords="", in_trash=False):
+    def find_by_keyword(self, keywords="", strict_match=False, in_trash=False):
         '''Search notes for a given keyword'''
         in_trash = int(in_trash)
         self.fyi("nota.find_by_keyword() with keywords %s; in_trash=%s" % (keywords, in_trash))
@@ -473,9 +482,10 @@ class Nota:
         for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
             keywordsKnown.extend(k)
         # FIXME: what cutoff is good??
-        keywordsFuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
-        if len(keywordsFuzzy) > 0:
-            keywords = [keywordsFuzzy[0]]
+        if not strict_match:
+            keywordsFuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
+            if len(keywordsFuzzy) > 0:
+                keywords = [keywordsFuzzy[0]]
         noteIds = []
         for keyword in keywords:
             self.fyi("keyword: %s" % keyword)
