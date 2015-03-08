@@ -491,7 +491,7 @@ class Nota:
             # Try fuzzy search only if no direct matches
             keywords_fuzzy = []
             if not len(keywords_partial):
-                keywords_fuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
+                keywords_fuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.6)
             self.fyi("  keywords_partial %s" % keywords_partial)
             self.fyi("  keywords_fuzzy %s" % keywords_fuzzy)
             keywords = list(set(keywords_partial + keywords_fuzzy))
