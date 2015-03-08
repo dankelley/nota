@@ -174,6 +174,7 @@ def nota():
     parser.add_argument("-u", "--undelete", type=str, default=None, help="remove note with abbreviated hash 'h' from trash", metavar="h")
     parser.add_argument("-t", "--title", type=str, default="", help="a short title", metavar="t")
     parser.add_argument("-k", "--keywords", type=str, default="", help="string of comma-separated keywords", metavar="k")
+    #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
     parser.add_argument("--count", action="store_true", dest="count", default=False, help="report only count of found results")
     parser.add_argument("--debug", action="store_true", dest="debug", default=False, help="set debugging on")
@@ -199,6 +200,8 @@ def nota():
     
     args.keywordsoriginal = args.keywords
     args.keywords = [key.lstrip().rstrip() for key in args.keywords.split(',')]
+    #args.Keywordsoriginal = args.Keywords
+    #args.Keywords = [Key.lstrip().rstrip() for Key in args.Keywords.split(',')]
 
     # Handle color scheme
     class color:
@@ -414,6 +417,10 @@ def nota():
         nota.fyi("search notes by keyword")
         found = nota.find_by_keyword(keywords=args.keywords, in_trash=False)
         trash_count = len(nota.find_by_keyword(keywords=args.keywords, in_trash=True))
+    # elif len(args.Keywords[0]) and args.Keywords[0] != '?':
+    #     nota.fyi("search notes by keyword (with strict match)")
+    #     found = nota.find_by_keyword(keywords=args.keywords, strict_match=True, in_trash=False)
+    #     trash_count = len(nota.find_by_keyword(keywords=args.keywords, strict_match=True, in_trash=True))
     else:
         nota.fyi("Search notes by hash.")
         found = nota.find_by_hash(hash=None, in_trash=False)
