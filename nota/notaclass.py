@@ -481,11 +481,21 @@ class Nota:
         keywordsKnown = []
         for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
             keywordsKnown.extend(k)
-        # FIXME: what cutoff is good??
+        # FIXME: only using first keyword here!
         if not strict_match:
-            keywordsFuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
-            if len(keywordsFuzzy) > 0:
-                keywords = [keywordsFuzzy[0]]
+            keywords_partial = []
+            kl = len(keywords[0])
+            for K in keywordsKnown:
+                if K[0:kl] == keywords[0]:
+                    keywords_partial.append(K)
+            # Try fuzzy search only if no direct matches
+            keywords_fuzzy = []
+            if not len(keywords_partial):
+                keywords_fuzzy = difflib.get_close_matches(keywords[0], keywordsKnown, n=1, cutoff=0.4)
+            self.fyi("  keywords_partial %s" % keywords_partial)
+            self.fyi("  keywords_fuzzy %s" % keywords_fuzzy)
+            keywords = list(set(keywords_partial + keywords_fuzzy))
+        self.fyi("nota.find_by_keyword() later, keywords: %s" % keywords)
         noteIds = []
         for keyword in keywords:
             self.fyi("keyword: %s" % keyword)
