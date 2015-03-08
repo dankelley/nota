@@ -182,6 +182,18 @@ alias np='nota --database=~/Dropbox/nota-personal.db'
 <p>means that <code>nw</code> uses a work-oriented database, while
 <code>np</code> uses a personal one.</p>
 
+<h2>Task count in bash prompt</h2>
+
+<p>To get a list of notes that are due today, put the following in your
+<code>~/.bash_profile</code> file:</p>
+<pre>
+function nota_count {
+    nota --due today --count
+}
+PS1="\h:\W"
+export PS1="$PS1<\$(nota_count)> "
+</pre>
+
 <h2>Learning more</h2>
 
 <p>Use</p>
