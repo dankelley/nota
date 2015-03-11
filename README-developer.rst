@@ -48,7 +48,7 @@ To install a local test version, do e.g. (with altered version number)
 
 ::
 
-    sudo pip install dist/nota-0.6.0.tar.gz --upgrade
+    sudo pip install dist/nota-0.6.1.tar.gz --upgrade
 
 Installing package on pypi.python
 ---------------------------------

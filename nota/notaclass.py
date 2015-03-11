@@ -452,7 +452,7 @@ class Nota:
         rval = []
         for n in noteIds:
             # No need to check for being in trash or not, of course.
-            self.fyi(" processing id=%s" % n)
+            #self.fyi(" processing id=%s" % n)
             #print(" (%s) " % n, end="")
             try:
                 note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash FROM note WHERE noteId=?;", n).fetchone()
@@ -479,15 +479,24 @@ class Nota:
         in_trash = int(in_trash)
         self.fyi("nota.find_by_keyword() with keywords %s; in_trash=%s" % (keywords, in_trash))
         keywordsKnown = []
+        if not strict_match:
+            keywords[0] = keywords[0].lower()
         for k in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
-            keywordsKnown.extend(k)
+            if strict_match:
+                keywordsKnown.extend(k)
+            else:
+                keywordsKnown.extend(k)
+                keywordsKnown.extend([str(k[0]).lower()])
+        self.fyi("keywordsKnown: %s" % keywordsKnown)
         # FIXME: only using first keyword here!
         if not strict_match:
             keywords_partial = []
             kl = len(keywords[0])
-            for K in keywordsKnown:
-                if K[0:kl] == keywords[0]:
-                    keywords_partial.append(K)
+            if kl > 3:
+                for K in keywordsKnown:
+                    if K[0:kl] == keywords[0]:
+                        if K not in keywords_partial:
+                            keywords_partial.append(K)
             # Try fuzzy search only if no direct matches
             keywords_fuzzy = []
             if not len(keywords_partial):
@@ -499,12 +508,40 @@ class Nota:
         noteIds = []
         for keyword in keywords:
             self.fyi("keyword: %s" % keyword)
+            if strict_match:
+                self.fyi("strict match on keyword '%s'" % keyword)
+                try:
+                    keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword=?;",
+                            [keyword]).fetchone()
+                except:
+                    self.error("cannot look up keyword '%s'" % [keyword])
+            else:
+                self.fyi("non-strict match on keyword '%s'" % keyword)
+                try:
+                    keywordId = []
+                    for k in self.cur.execute("SELECT keywordId FROM keyword WHERE keyword=? COLLATE NOCASE;", [keyword]).fetchall():
+                        keywordId.extend(k)
+                except:
+                    self.error("cannot look up keyword '%s'" % [keyword])
             try:
-                keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword=?;", [keyword]).fetchone()
-                if keywordId:
-                    for noteId in self.cur.execute("SELECT noteId FROM notekeyword WHERE keywordId=?;", keywordId):
-                        if noteId not in noteIds:
-                            noteIds.append(noteId)
+                if len(keywordId):
+                    self.fyi("looking for noteID matches to keywordId %s" % keywordId)
+                    for k in keywordId:
+                        self.fyi("k: %s" % k)
+                        try:
+                            if strict_match:
+                                noteIdtest = self.cur.execute("SELECT noteId FROM notekeyword WHERE keywordId=?;", [k])
+                            else:
+                                noteIdtest = self.cur.execute("SELECT noteId FROM notekeyword WHERE keywordId=? COLLATE NOCASE;", [k])
+                        except:
+                            self.error("cannot query database to find noteId corresponding to keywordId value %s" % [k])
+                        for noteId in noteIdtest:
+                            self.fyi("got match to noteID %s" % noteId)
+                            if noteId not in noteIds:
+                                noteIds.append(noteId)
+                                self.fyi("adding to list")
+                            else:
+                                self.fyi("already in list")
             except:
                 self.error("problem finding keyword or note in database")
                 pass
@@ -526,11 +563,11 @@ class Nota:
             else:
                 self.fyi("skipping id %s because in_trash is wrong" % row[0])
         noteIds = noteIds2
-        self.fyi("  LATER    noteIds2: %s" % noteIds2)
-        self.fyi("  LATER    noteIds: %s" % noteIds)
+        #self.fyi("  LATER    noteIds2: %s" % noteIds2)
+        #self.fyi("  LATER    noteIds: %s" % noteIds)
         rval = []
         for n in noteIds:
-            self.fyi(" processing id=%s" % n)
+            #self.fyi(" processing id=%s" % n)
             try:
                 note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash FROM note WHERE noteId=?;", n).fetchone()
             except:

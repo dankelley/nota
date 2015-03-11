@@ -176,6 +176,7 @@ def nota():
     parser.add_argument("-k", "--keywords", type=str, default="", help="string of comma-separated keywords", metavar="k")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
+    parser.add_argument("--pager", action="store_true", dest="pager", default=True, help="page output")
     parser.add_argument("--count", action="store_true", dest="count", default=False, help="report only count of found results")
     parser.add_argument("--debug", action="store_true", dest="debug", default=False, help="set debugging on")
     parser.add_argument("--export", type=str, default=None, help="export notes matching hash (use has '-' for all notes)", metavar="hash")
