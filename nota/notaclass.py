@@ -452,7 +452,7 @@ class Nota:
         rval = []
         for n in noteIds:
             # No need to check for being in trash or not, of course.
-            self.fyi(" processing id=%s" % n)
+            #self.fyi(" processing id=%s" % n)
             #print(" (%s) " % n, end="")
             try:
                 note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash FROM note WHERE noteId=?;", n).fetchone()
@@ -492,10 +492,11 @@ class Nota:
         if not strict_match:
             keywords_partial = []
             kl = len(keywords[0])
-            for K in keywordsKnown:
-                if K[0:kl] == keywords[0]:
-                    if K not in keywords_partial:
-                        keywords_partial.append(K)
+            if kl > 3:
+                for K in keywordsKnown:
+                    if K[0:kl] == keywords[0]:
+                        if K not in keywords_partial:
+                            keywords_partial.append(K)
             # Try fuzzy search only if no direct matches
             keywords_fuzzy = []
             if not len(keywords_partial):
@@ -562,11 +563,11 @@ class Nota:
             else:
                 self.fyi("skipping id %s because in_trash is wrong" % row[0])
         noteIds = noteIds2
-        self.fyi("  LATER    noteIds2: %s" % noteIds2)
-        self.fyi("  LATER    noteIds: %s" % noteIds)
+        #self.fyi("  LATER    noteIds2: %s" % noteIds2)
+        #self.fyi("  LATER    noteIds: %s" % noteIds)
         rval = []
         for n in noteIds:
-            self.fyi(" processing id=%s" % n)
+            #self.fyi(" processing id=%s" % n)
             try:
                 note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash FROM note WHERE noteId=?;", n).fetchone()
             except:
