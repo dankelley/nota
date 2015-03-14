@@ -370,9 +370,9 @@ def nota():
         #print("args.keywords[0] '%s'" % args.keywords[0])
         #print("args.hash %s" % args.hash)
         if not '' == args.keywords[0]:
-            trashed = nota.find_by_keyword(keywords=args.keywords, in_trash=True)
+            trashed = nota.find_by_keyword(keywords=args.keywords, book=0)
         else:
-            trashed = nota.find_by_hash(hash=args.hash, in_trash=True)
+            trashed = nota.find_by_hash(hash=args.hash, book=0)
         hal = nota.hash_abbreviation_length()
         for t in trashed:
             print(color.hash + "%s: " % t['hash'][0:hal] + color.normal, end="")
@@ -412,20 +412,16 @@ def nota():
     trash_count = None
     if id_desired is not None:
         nota.fyi("search notes by hash")
-        found = nota.find_by_hash(hash=id_desired, in_trash=False)
-        trash_count = len(nota.find_by_hash(hash=id_desired, in_trash=True))
+        found = nota.find_by_hash(hash=id_desired, book=-1) # -1 means all books but trash
+        trash_count = len(nota.find_by_hash(hash=id_desired, book=0))
     elif len(args.keywords[0]) and args.keywords[0] != '?':
         nota.fyi("search notes by keyword")
-        found = nota.find_by_keyword(keywords=args.keywords, in_trash=False)
-        trash_count = len(nota.find_by_keyword(keywords=args.keywords, in_trash=True))
-    # elif len(args.Keywords[0]) and args.Keywords[0] != '?':
-    #     nota.fyi("search notes by keyword (with strict match)")
-    #     found = nota.find_by_keyword(keywords=args.keywords, strict_match=True, in_trash=False)
-    #     trash_count = len(nota.find_by_keyword(keywords=args.keywords, strict_match=True, in_trash=True))
+        found = nota.find_by_keyword(keywords=args.keywords, book=-1)
+        trash_count = len(nota.find_by_keyword(keywords=args.keywords, book=0))
     else:
         nota.fyi("Search notes by hash.")
-        found = nota.find_by_hash(hash=None, in_trash=False)
-        trash_count = len(nota.find_by_hash(hash=None, in_trash=True))
+        found = nota.find_by_hash(hash=None, book=-1)
+        trash_count = len(nota.find_by_hash(hash=None, book=0))
     count = 0
     nfound = len(found)
     i = -1

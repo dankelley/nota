@@ -149,6 +149,7 @@ class Nota:
                     noteIds.extend(self.cur.execute("SELECT noteId,book FROM note;"))
                 except:
                     self.error("Problem with step 3 of update to version 0.7.x")
+                # convert in_trash to book
                 for n in noteIds:
                     try:
                         self.cur.execute("UPDATE note SET book=? WHERE noteId=?;", (int(1-n[1]), n[0]))
@@ -304,12 +305,12 @@ class Nota:
         hash = str(hash)
         if not hash:
             self.error("must give the hash of the note that is to be undeleted")
-        trash_contents = self.find_by_hash(hash, in_trash=True)
+        trash_contents = self.find_by_hash(hash, book=0)
         self.fyi("trash_contents : %s" % trash_contents)
         hashlen = len(hash)
         for t in trash_contents:
             if t['hash'][0:hashlen] == hash:
-                print("undeleting note with hash %s" % t['hash'][0:7])
+                self.fyi("undeleting note with hash %s" % t['hash'][0:7])
                 try:
                     # put into book 1
                     self.cur.execute("UPDATE note SET book = 1 WHERE noteId = ?;", [t['noteId']])
@@ -354,9 +355,8 @@ class Nota:
             self.cur.execute("UPDATE note SET book = 0 WHERE noteId = ?;", [id])
             self.con.commit()
         except:
-            self.error("there is no note with unique hash %s" % hash)
+            self.error("there is no note with hash %s" % hash)
             return False
-        self.con.commit()
         return True
 
 
@@ -455,13 +455,15 @@ class Nota:
         except:
             self.error("cannot determine number of items in trash")
 
-    def find_by_hash(self, hash=None, in_trash=False):
+    def find_by_hash(self, hash=None, book=-1):
         '''Search notes for a given (possibly abbreviated) hash'''
-        book = not in_trash
         if hash:
             self.fyi("nota.find_by_hash() with abbreviated hash %s; book=%s" % (hash, book))
         try:
-            rows = self.cur.execute("SELECT noteId, hash FROM note WHERE book=?;", [book]).fetchall()
+            if book < 0:
+                rows = self.cur.execute("SELECT noteId, hash FROM note WHERE book > 0;").fetchall()
+            else:
+                rows = self.cur.execute("SELECT noteId, hash FROM note WHERE book=?;", [book]).fetchall()
         except:
             self.error("nota.find_by_hash() cannot look up note list")
         # Possibly save time by finding IDs first.
@@ -481,7 +483,7 @@ class Nota:
             #self.fyi(" processing id=%s" % n)
             #print(" (%s) " % n, end="")
             try:
-                note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash FROM note WHERE noteId=?;", n).fetchone()
+                note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash, book FROM note WHERE noteId=?;", n).fetchone()
             except:
                 self.warning("Problem extracting note %s from database" % n)
                 next
@@ -496,14 +498,13 @@ class Nota:
                     keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId=?;", k).fetchone()[0])
                 rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
                     "content":note[4], "due":note[5], "privacy":note[6],
-                    "date":note[2], "modified":note[7], "hash":note[8]})
+                    "date":note[2], "modified":note[7], "hash":note[8], "book":note[9]})
         return rval
 
 
-    def find_by_keyword(self, keywords="", strict_match=False, in_trash=False):
+    def find_by_keyword(self, keywords="", strict_match=False, book=-1):
+        self.fyi("find_by_keyword, ... book=%s" % book)
         '''Search notes for a given keyword'''
-        in_trash = int(in_trash)
-        book = not in_trash
         self.fyi("nota.find_by_keyword() with keywords %s; book=%s" % (keywords, book))
         keywordsKnown = []
         if not strict_match:
@@ -588,7 +589,7 @@ class Nota:
             except:
                 self.error("cannot look up noteId %s" % n)
             self.fyi("row %s; book=%s" % (row, book))
-            if row[1] == book:
+            if book < 0 or row[1] == book:
                 self.fyi("appending id %s" % row[0])
                 noteIds2.append((row[0],))
             else:
@@ -600,7 +601,7 @@ class Nota:
         for n in noteIds:
             #self.fyi(" processing id=%s" % n)
             try:
-                note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash FROM note WHERE noteId=?;", n).fetchone()
+                note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash, book FROM note WHERE noteId=?;", n).fetchone()
             except:
                 self.warning("Problem extracting note %s from database" % n)
                 next
@@ -615,7 +616,7 @@ class Nota:
                     keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId=?;", k).fetchone()[0])
                 rval.append({"noteId":note[0], "title":note[3], "keywords":keywords,
                     "content":note[4], "due":note[5], "privacy":note[6],
-                    "date":note[2], "modified":note[7], "hash":note[8]})
+                    "date":note[2], "modified":note[7], "hash":note[8], "book":note[9]})
         return rval
 
 
@@ -731,6 +732,7 @@ CONTENT...
         content = content.rstrip('\n')
         keywords = [key.lstrip().rstrip() for key in keywords.split(',')]
         self.fyi("LATE keywords= %s" % keywords)
+        # FIXME: let user specify the book
         return {"title":title, "keywords":keywords, "content":content, "privacy":privacy, "due":due}
 
 
