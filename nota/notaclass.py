@@ -44,7 +44,7 @@ class Nota:
         self.cur = con.cursor()
         self.authorId = authorId
         ## 0.3: add note.modified column
-        self.appversion = [0, 6, 1] # db schema changes always yield first or second digit increment
+        self.appversion = [0, 7, 0] # db schema changes always yield first or second digit increment
         self.dbversion = self.appversion
         if mustInitialize:
             print("Initializing database; run 'nota' again to use it.")
@@ -113,6 +113,7 @@ class Nota:
                     self.error("Problem adding a column named 'hash' to the table named 'note'")
                     self.error("Problem saving data to the newly-formed 'hash' column in the 'note' table")
             if StrictVersion(dbversion) < StrictVersion("0.5"):
+                # Add 'in_trash' column (removed in version 0.7.x)
                 print("Updating database %s to version 0.5.x ..." % db)
                 try:
                     cmd = 'ALTER TABLE note ADD in_trash DEFAULT 0;'
@@ -132,6 +133,29 @@ class Nota:
                     print("  Added 'middle' column to 'version' table.")
                 except:
                     self.error("Problem adding a 'middle' column to the 'version' table.")
+            if StrictVersion(dbversion) < StrictVersion("0.7"):
+                # rename in_trash to book, mapping 0 to 1 and 1 to 0
+                print("Updating database %s to version 0.7.x ..." % db)
+                try:
+                    self.cur.execute('ALTER TABLE note RENAME TO note_orig;')
+                except:
+                    self.error("Problem with step 1 of update to version 0.7.x")
+                try:
+                    self.cur.execute('CREATE TABLE note AS SELECT noteId, authorId, date, modified, due, title, content, hash, privacy, in_trash AS book FROM note_orig;')
+                except:
+                    self.error("Problem with step 2 of update to version 0.7.x")
+                try:
+                    noteIds = []
+                    noteIds.extend(self.cur.execute("SELECT noteId,book FROM note;"))
+                except:
+                    self.error("Problem with step 3 of update to version 0.7.x")
+                for n in noteIds:
+                    try:
+                        self.cur.execute("UPDATE note SET book=? WHERE noteId=?;", (int(1-n[1]), n[0]))
+                    except:
+                        self.error("Problem with step 4 of update to version 0.7.x (noteId=%s)" % n[0])
+                self.con.commit()
+                print("  Replaced 'in_trash' column in 'note' with 'book' column.")
             # OK, done with the updates, so we now update the actual version number.
             try:
                 self.cur.execute("DROP TABLE version;")
@@ -173,7 +197,8 @@ class Nota:
         self.cur.execute("CREATE TABLE version(major, minor);")
         self.cur.execute("INSERT INTO version(major, minor) VALUES (?,?);",
                 (self.appversion[0], self.appversion[1]))
-        self.cur.execute("CREATE TABLE note(noteId integer primary key autoincrement, authorId, date, modified, due, title, content, hash, privacy DEFAULT 0, in_trash DEFAULT 0);")
+        #20150314 self.cur.execute("CREATE TABLE note(noteId integer primary key autoincrement, authorId, date, modified, due, title, content, hash, privacy DEFAULT 0, in_trash DEFAULT 0);")
+        self.cur.execute("CREATE TABLE note(noteId integer primary key autoincrement, authorId, date, modified, due, title, content, hash, privacy DEFAULT 0, book DEFAULT 1);")
         self.cur.execute("CREATE TABLE author(authorId integer primary key autoincrement, name, nickname);")
         self.cur.execute("CREATE TABLE alias(aliasId integer primary key autoincrement, item, alias);")
         self.cur.execute("CREATE TABLE keyword(keywordId integer primary key autoincrement, keyword);")
@@ -286,14 +311,15 @@ class Nota:
             if t['hash'][0:hashlen] == hash:
                 print("undeleting note with hash %s" % t['hash'][0:7])
                 try:
-                    self.cur.execute("UPDATE note SET in_trash = 0 WHERE noteId = ?;", [t['noteId']])
+                    # put into book 1
+                    self.cur.execute("UPDATE note SET book = 1 WHERE noteId = ?;", [t['noteId']])
                     self.con.commit()
                 except:
                     self.error("error undeleting note with hash=%s" % t['hash'][0:7])
 
 
     def rehash(self):
-        print("in rehash")
+        print("rehashing all notes")
         noteIds = []
         noteIds.extend(self.cur.execute("SELECT noteId,date,title,hash FROM note;"))
         for n in noteIds:
@@ -325,7 +351,7 @@ class Nota:
         self.fyi("in delete(), id=%s" % id)
         try:
             self.fyi("move note with noteId = %s to the trash." % id)
-            self.cur.execute("UPDATE note SET in_trash = 1 WHERE noteId = ?;", [id])
+            self.cur.execute("UPDATE note SET book = 0 WHERE noteId = ?;", [id])
             self.con.commit()
         except:
             self.error("there is no note with unique hash %s" % hash)
@@ -338,7 +364,7 @@ class Nota:
         self.fyi("about to empty the trash")
         try:
             noteIds = []
-            noteIds.extend(self.con.execute("SELECT noteId from note WHERE in_trash=1;"))
+            noteIds.extend(self.con.execute("SELECT noteId from note WHERE book=0;"))
             for n in noteIds:
                 self.fyi("  trashing note with noteId: %s" % n)
                 self.con.execute("DELETE FROM note where noteId=?", n)
@@ -424,18 +450,18 @@ class Nota:
 
     def trash_length(self):
         try:
-            n = self.con.execute("SELECT count(noteId) FROM note WHERE in_trash=1;").fetchone()
+            n = self.con.execute("SELECT count(noteId) FROM note WHERE book=0;").fetchone()
             return(n)
         except:
             self.error("cannot determine number of items in trash")
 
     def find_by_hash(self, hash=None, in_trash=False):
         '''Search notes for a given (possibly abbreviated) hash'''
-        in_trash = int(in_trash)
+        book = not in_trash
         if hash:
-            self.fyi("nota.find_by_hash() with abbreviated hash %s; in_trash=%s" % (hash, in_trash))
+            self.fyi("nota.find_by_hash() with abbreviated hash %s; book=%s" % (hash, book))
         try:
-            rows = self.cur.execute("SELECT noteId, hash FROM note WHERE in_trash=?;", [in_trash]).fetchall()
+            rows = self.cur.execute("SELECT noteId, hash FROM note WHERE book=?;", [book]).fetchall()
         except:
             self.error("nota.find_by_hash() cannot look up note list")
         # Possibly save time by finding IDs first.
@@ -477,7 +503,8 @@ class Nota:
     def find_by_keyword(self, keywords="", strict_match=False, in_trash=False):
         '''Search notes for a given keyword'''
         in_trash = int(in_trash)
-        self.fyi("nota.find_by_keyword() with keywords %s; in_trash=%s" % (keywords, in_trash))
+        book = not in_trash
+        self.fyi("nota.find_by_keyword() with keywords %s; book=%s" % (keywords, book))
         keywordsKnown = []
         if not strict_match:
             keywords[0] = keywords[0].lower()
@@ -542,26 +569,30 @@ class Nota:
                                 self.fyi("adding to list")
                             else:
                                 self.fyi("already in list")
+                        self.fyi("done with keyword %s" % k)
+                else:
+                    pass
             except:
-                self.error("problem finding keyword or note in database")
+                #20150314 self.error("problem finding keyword or note in database")
+                #20150314 shouldn't be an error to not find a note!
                 pass
         ## convert from hash to ids. Note that one hash may create several ids.
         self.fyi("noteIds: %s" % noteIds)
-        ## Find IDs of just the notes with the proper in_trash value
+        ## Find IDs of just the notes with the proper book value
         noteIds2 = []
         self.fyi("ORIGINAL noteIds: %s" % noteIds)
         for n in noteIds:
             self.fyi("n=%s" % n)
             try:
-                row = self.cur.execute("SELECT noteId, in_trash FROM note WHERE noteID=?;", n).fetchone()
+                row = self.cur.execute("SELECT noteId, book FROM note WHERE noteID=?;", n).fetchone()
             except:
                 self.error("cannot look up noteId %s" % n)
-            self.fyi("row %s; in_trash=%s" % (row, in_trash))
-            if row[1] == in_trash:
+            self.fyi("row %s; book=%s" % (row, book))
+            if row[1] == book:
                 self.fyi("appending id %s" % row[0])
                 noteIds2.append((row[0],))
             else:
-                self.fyi("skipping id %s because in_trash is wrong" % row[0])
+                self.fyi("skipping id %s because book is wrong" % row[0])
         noteIds = noteIds2
         #self.fyi("  LATER    noteIds2: %s" % noteIds2)
         #self.fyi("  LATER    noteIds: %s" % noteIds)

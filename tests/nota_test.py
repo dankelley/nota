@@ -19,15 +19,21 @@ class TestNota(unittest.TestCase):
         self.nota = Nota(db=self.database.name, debug=self.debug)
 
     def test_add(self):
+        logger.debug("Checking adding a note.")
         self.nota.add(title="foo", keywords=["test","foo"], content="")
+        logger.debug("Checking searching notes by hash.")
         self.assertEqual(1, len(self.nota.find_by_hash(hash=None, in_trash=False)))
         self.nota.add(title="bar", keywords=["test","bar"], content="")
-        logger.debug("Checking searching for notes by hash.")
+        logger.debug(" find-by-hash test 1 ok.")
         self.assertEqual(2, len(self.nota.find_by_hash(hash=None, in_trash=False)))
+        logger.debug(" find-by-hash test 2 ok.")
         logger.debug("Checking searching for notes by keywords.")
         self.assertEqual(1, len(self.nota.find_by_keyword(keywords=["foo"], strict_match=True)))
+        logger.debug(" search-by-keyword test 1 ok")
         self.assertEqual(1, len(self.nota.find_by_keyword(keywords=["bar"], strict_match=True)))
+        logger.debug(" search-by-keyword test 2 ok")
         self.assertEqual(0, len(self.nota.find_by_keyword(keywords=["foobar"], strict_match=True)))
+        logger.debug(" search-by-keyword test 3 ok")
         if self.debug:
             logger.debug("\n hashes %s" % self.nota.find_by_hash(hash=None))
         logger.debug("Checking note deletion.")

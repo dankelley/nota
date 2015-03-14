@@ -7,6 +7,7 @@ http://dankelley.github.io/nota for documentation on installing and using
 
 * 0.5.x - first releases to https://pypi.python.org/pypi/nota
 
-* 0.6.0 - improvements to command arguments, especially relating to searching
-  and the trash
+* 0.6.0 - improve command arguments, esp. relating to searching and trash
+
+* 0.7.0 - add --book
 
