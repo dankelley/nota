@@ -25,11 +25,15 @@ def nota():
             'export notes with hash \'ab...\': "nota --export ab"',
             'import notes: "nota --import file.json" ("file.json" from "--export")',
             'list all notes: "nota"',
+            'list books: "nota --book-list"',
+            'list keywords: "nota --keyword-list"',
             'list notes contained in the trash: "nota --trash"',
             'list notes due today: "nota --due today"',
             'list notes in markdown format: "nota --markdown"',
             'list note with hash \'ab...\': "nota ab"',
             'list notes with keyword \'foo\': "nota -k foo"',
+            'rename book: "nota --book-rename old new"',
+            'rename keyword: "nota --keyword-rename old new"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
             'visit http://dankelley.github.io/nota/documentation.html to learn more']
 
@@ -176,6 +180,10 @@ def nota():
     parser.add_argument("-k", "--keywords", type=str, default="", help="string of comma-separated keywords", metavar="k")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
+    parser.add_argument("--book-list", action="store_true", dest="book_list", default=False, help="list books")
+    parser.add_argument("--book-rename", type=str, nargs=2, help="rename a notebook", metavar=("old","new"))
+    parser.add_argument("--keyword-list", action="store_true", dest="keyword_list", default=False, help="list keywords")
+    parser.add_argument("--keyword-rename", type=str, nargs=2, help="rename a keyword", metavar=("old","new"))
     parser.add_argument("--pager", action="store_true", dest="pager", default=True, help="page output")
     parser.add_argument("--count", action="store_true", dest="count", default=False, help="report only count of found results")
     parser.add_argument("--debug", action="store_true", dest="debug", default=False, help="set debugging on")
@@ -198,7 +206,8 @@ def nota():
     parser.add_argument("--verbose", type=int, default=None, help="set level of verbosity (0=quiet, 1=default)", metavar="level")
     parser.add_argument("--version", action="store_true", dest="version", default=False, help="get version number")
     args = parser.parse_args()
-    
+
+   
     args.keywordsoriginal = args.keywords
     args.keywords = [key.lstrip().rstrip() for key in args.keywords.split(',')]
     #args.Keywordsoriginal = args.Keywords
@@ -289,7 +298,47 @@ def nota():
             else:
                 print(hint)
         sys.exit(0)
-    
+
+    if args.book_list:
+        ''' List books. '''
+        print("Books: ", end="")
+        books = nota.book_list()
+        nbooks = len(books)
+        for i in range(nbooks):
+            print(books[i], end="")
+            if i < nbooks - 1:
+                print(", ", end="")
+            else:
+                print("")
+        exit(0)
+
+    if args.book_rename:
+        (old, new) = args.book_rename
+        nota.book_rename(old, new)
+        exit(0)
+
+    if args.keyword_list:
+        ''' List keywords. '''
+        print("Keywords: ", end="")
+        keywords = nota.keyword_list()
+        nkeywords = len(keywords)
+        for i in range(nkeywords):
+            #print('"%s"' % keywords[i], end="")
+            print('%s' % keywords[i], end="")
+            if i < nkeywords - 1:
+                print(", ", end="")
+            else:
+                print("")
+        exit(0)
+
+    if args.keyword_rename:
+        (old, new) = args.book_rename
+        nota.keyword_rename(old, new)
+        ## FIXME write something in notaclass.py
+        #print("should rename old (%s) to new (%s)" % (old, new))
+        #print(args.keyword_rename)
+        exit(0)
+  
     # look in ~/.notarc to see if a database is named there
     #if not args.pretty:
     #    args.pretty = get_from_dotfile("~/.notarc", "pretty", "oneline")

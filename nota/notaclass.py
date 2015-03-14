@@ -157,6 +157,11 @@ class Nota:
                         self.error("Problem with step 4 of update to version 0.7.x (noteId=%s)" % n[0])
                 self.con.commit()
                 print("  Replaced 'in_trash' column in 'note' with 'book' column.")
+                # set up book names
+                self.cur.execute("CREATE TABLE book(bookId integer primary key autoincrement, number, name DEFAULT '');")
+                self.cur.execute("INSERT INTO book(number, name) VALUES (0, 'Trash');")
+                self.cur.execute("INSERT INTO book(number, name) VALUES (1, 'Default');")
+                print("  Set up book names: Trash and Default.")
             # OK, done with the updates, so we now update the actual version number.
             try:
                 self.cur.execute("DROP TABLE version;")
@@ -192,6 +197,36 @@ class Nota:
         return("Nota %d.%d.%d" % (self.appversion[0], self.appversion[1], self.appversion[2]))
 
 
+    def book_list(self):
+        ''' Return the list of book names '''
+        names = []
+        try:
+            for n in self.cur.execute("SELECT name FROM book;").fetchall():
+                names.extend(n)
+        except:
+            self.error("ERROR: cannot find database table 'book'")
+        return(names)
+
+
+    def book_rename(self, old, new):
+        existing = self.book_list()
+        #print("Books before renaming: %s" % existing)
+        if old == "Trash":
+            self.error("Cannot rename the 'Trash' book.")
+        if new == "Trash":
+            self.error("Cannot rename any book to 'Trash'.")
+        if old in existing:
+            try:
+                #print("UPDATE book SET name=(%s) WHERE name=(%s);" % (new, old))
+                self.cur.execute("UPDATE book SET name=(?) WHERE name=(?);", (new, old))
+                self.con.commit()
+            except:
+                self.fyi("Error changing book name from '%s' to '%s'" % (old, new))
+        else:
+            self.error("There is no book named '%s'." % old)
+
+
+
     def initialize(self, author=""):
         ''' Initialize the database.  This is dangerous since it removes any
         existing content.'''
@@ -204,6 +239,9 @@ class Nota:
         self.cur.execute("CREATE TABLE alias(aliasId integer primary key autoincrement, item, alias);")
         self.cur.execute("CREATE TABLE keyword(keywordId integer primary key autoincrement, keyword);")
         self.cur.execute("CREATE TABLE notekeyword(notekeywordId integer primary key autoincrement, noteid, keywordid);")
+        self.cur.execute("CREATE TABLE book(bookId integer primary key autoincrement, number, name DEFAULT '');")
+        self.cur.execute("INSERT INTO book(number, name) VALUES (0, 'Trash');")
+        self.cur.execute("INSERT INTO book(number, name) VALUES (1, 'Default');")
         self.con.commit()
 
 
@@ -299,6 +337,37 @@ class Nota:
             except:
                 self.error("error hooking up keyword '%s'" % keyword)
         self.con.commit()
+
+    
+    def keyword_list(self):
+        ''' Return the list of keywords '''
+        names = []
+        try:
+            for n in self.cur.execute("SELECT keyword FROM keyword;").fetchall():
+                # Strip out leading and trailing whitespaces (can be artifacts of old data)
+                k = n[0].strip()
+                if len(k):
+                    names.extend([k])
+        except:
+            self.error("ERROR: cannot find database table 'keyword'")
+        names = list(set(names)) # remove duplicates
+        names = sorted(names, key=lambda s: s.lower())
+        return(names)
+
+
+    def keyword_rename(self, old, new):
+        existing = self.keyword_list()
+        print(existing)
+        if old in existing:
+            self.fyi("should rename keyword '%s' to '%s'" % (old, new))
+            try:
+                self.cur.execute("UPDATE book SET name=(?) WHERE name=(?);", (new, old))
+                self.con.commit()
+            except:
+                self.error("Error changing keyword '%s' to '%s'" % (old, new))
+        else:
+            self.error("There is no keyword '%s'." % old)
+        exit(0)
 
 
     def undelete(self, hash): # takes out of trash
