@@ -381,7 +381,7 @@ def nota():
         matches = []
         for e in existing:
             if not e == "Trash":
-                if args.book == e[0:match]:
+                if args.book.lower() == e[0:match].lower():
                     matches.extend([e])
         if 1 == len(matches):
             args.book = matches[0]
@@ -504,14 +504,19 @@ def nota():
         print("No active notes match this request.")
     nota.fyi("hash: %s" % hash)
     books = nota.list_books()
-    #print("books %s ... ok?" % books)
-    # FIXME: this loops through notes, making it hard to indicate books in book_scheme=2
     books_used = []
+    have_default = False
     for f in found:
-        if f['book'] > 0 and f['book'] not in books_used:
+        if f['book'] > 0 and f['book'] != 1 and f['book'] not in books_used:
             books_used.append(f['book'])
+        if f['book'] == 1:
+            have_default = True
+    books_used = sorted(books_used, key=lambda s: books[s].lower())
+    if have_default:
+        books_used.insert(0, 1)
     for b in books_used:
-        print(color_code('bold') + "%s" % nota.book_name(b) + color.normal + " book:")
+        if not args.count:
+            print(color_code('bold') + "%s" % nota.book_name(b) + color.normal + " book:")
         for f in found:
             i = i + 1
             #print(f)
@@ -535,7 +540,7 @@ def nota():
                     print('when:', when)
                 if when < 0:
                     continue
-            count += 1
+            count += 1 # FIXME: bug: 'nota --count' gives a huge number
             if not args.count:
                 if nfound > 1:
                     if args.markdown:
