@@ -12,6 +12,8 @@ from random import randint, seed
 from time import strptime
 import subprocess
 
+indent = "  "
+
 def nota():
     hints = [
             'add a note: "nota -a" (opens EDITOR)', 
@@ -210,9 +212,15 @@ def nota():
     parser.add_argument("--version", action="store_true", dest="version", default=False, help="get version number")
     args = parser.parse_args()
 
+    # FIXME: probably this commented-out stuff can just be deleted,
+    # since I like the look of the present scheme.
+    # 1. list book in parentheses after the title
+    # 2. list book names with indented notes beneath
+    # book_scheme = get_from_dotfile("~/.notarc", "book_scheme", 1)
+    #print("book_scheme %s" % book_scheme)
    
     args.keywordsoriginal = args.keywords
-    args.keywords = [key.lstrip().rstrip() for key in args.keywords.split(',')]
+    args.keywords = [key.strip() for key in args.keywords.split(',')]
     #args.Keywordsoriginal = args.Keywords
     #args.Keywords = [Key.lstrip().rstrip() for Key in args.Keywords.split(',')]
 
@@ -320,8 +328,8 @@ def nota():
         exit(0)
 
     if args.rename_book:
-        (old, new) = args.book_rename
-        nota.book_rename(old, new)
+        (old, new) = args.rename_book
+        nota.rename_book(old, new)
         exit(0)
 
     if args.list_keywords:
@@ -489,108 +497,117 @@ def nota():
         print("No active notes match this request.")
     nota.fyi("hash: %s" % hash)
     books = nota.list_books()
+    #print("books %s ... ok?" % books)
+    # FIXME: this loops through notes, making it hard to indicate books in book_scheme=2
+    books_used = []
     for f in found:
-        i = i + 1
-        #print(f)
-        try:
-            due = f['due']
-        except:
-            due = None
-        if due_requested[0]:
-            if not due:
-                continue
-            if args.debug:
-                print("due_requested: %s" % due_requested[0])
-            due = datetime.datetime.strptime(due, '%Y-%m-%d %H:%M:%S.%f')
-            if args.debug:
-                print("due value stored in note:", due)
-            if due > due_requested[0]:
-                when = (due - due_requested[0]).total_seconds()
-            else:
-                when = (due_requested[0]- due).total_seconds()
-            if args.debug:
-                print('when:', when)
-            if when < 0:
-                continue
-        count += 1
-        if not args.count:
-            if nfound > 1:
-                if args.markdown:
-                    print("%s: " % f['hash'][0:hal], end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print("**%s** " % f['title'], end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print("*%s*" % f['keywords'][i], end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n\n")
+        if f['book'] > 0 and f['book'] not in books_used:
+            books_used.append(f['book'])
+    for b in books_used:
+        print(color_code('bold') + "%s" % nota.book_name(b) + color.normal + " book:")
+        for f in found:
+            i = i + 1
+            #print(f)
+            try:
+                due = f['due']
+            except:
+                due = None
+            if due_requested[0]:
+                if not due:
+                    continue
+                if args.debug:
+                    print("due_requested: %s" % due_requested[0])
+                due = datetime.datetime.strptime(due, '%Y-%m-%d %H:%M:%S.%f')
+                if args.debug:
+                    print("due value stored in note:", due)
+                if due > due_requested[0]:
+                    when = (due - due_requested[0]).total_seconds()
                 else:
-                    print(color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                    if len(books) > 1:
-                        print("(" + color.hash + books[f['book']] + color.normal + ") ", end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print(color.keyword + f['keywords'][i] + color.normal, end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n")
-            else:
-                if args.markdown:
-                    print("%s: " % f['hash'][0:7], end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print("**%s** " % f['title'], end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print(f['keywords'][i], end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n\n")
-                    print("  created %s" % f['date'], end=" ")
-                    if f['due'] and len(f['due']) > 0:
-                        print(due_str(f['due']))
+                    when = (due_requested[0]- due).total_seconds()
+                if args.debug:
+                    print('when:', when)
+                if when < 0:
+                    continue
+            count += 1
+            if not args.count:
+                if nfound > 1:
+                    if args.markdown:
+                        print("%s: " % f['hash'][0:hal], end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print("**%s** " % f['title'], end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print("*%s*" % f['keywords'][i], end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n\n")
                     else:
-                        print('')
-                    print('')
-                    content = f['content'].replace('\\n', '\n')
-                    for contentLine in content.split('\n'):
-                        c = contentLine.rstrip('\n')
-                        if len(c):
-                            print(" ", contentLine.rstrip('\n'), '\n')
-                    print('')
+                        if f['book'] == b:
+                            #print("{%s}" % f['book']) # a number
+                            print(indent + color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
+                            if show_id:
+                                print("(%s) " % f['noteId'], end="")
+                            print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                            #print("(" + color.hash + books[f['book']] + color.normal + ") ", end="")
+                            print("[", end="")
+                            nk = len(f['keywords'])
+                            for i in range(nk):
+                                print(color.keyword + f['keywords'][i] + color.normal, end="")
+                                if (i < nk-1):
+                                    print(", ", end="")
+                            print("]", end="\n")
                 else:
-                    print(color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                    if len(books) > 1:
-                        print("(" + color.hash + books[f['book']] + color.normal + ") ", end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print(color.keyword + f['keywords'][i] + color.normal, end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n")
-                    print("  created %s" % f['date'], end=" ")
-                    if f['due'] and len(f['due']) > 0:
-                        print(due_str(f['due']))
-                    else:
+                    if args.markdown:
+                        print("%s: " % f['hash'][0:7], end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print("**%s** " % f['title'], end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print(f['keywords'][i], end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n\n")
+                        print("  created %s" % f['date'], end=" ")
+                        if f['due'] and len(f['due']) > 0:
+                            print(due_str(f['due']))
+                        else:
+                            print('')
                         print('')
-                    content = f['content'].replace('\\n', '\n')
-                    for contentLine in content.split('\n'):
-                        c = contentLine.rstrip('\n')
-                        if len(c):
-                            print(" ", contentLine.rstrip('\n'))
-                    #print('')
+                        content = f['content'].replace('\\n', '\n')
+                        for contentLine in content.split('\n'):
+                            c = contentLine.rstrip('\n')
+                            if len(c):
+                                print(" ", contentLine.rstrip('\n'), '\n')
+                        print('')
+                    else:
+                        print(color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                        if len(books) > 1:
+                            print("(" + color.hash + books[f['book']] + color.normal + ") ", end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print(color.keyword + f['keywords'][i] + color.normal, end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n")
+                        print("  created %s" % f['date'], end=" ")
+                        if f['due'] and len(f['due']) > 0:
+                            print(due_str(f['due']))
+                        else:
+                            print('')
+                        content = f['content'].replace('\\n', '\n')
+                        for contentLine in content.split('\n'):
+                            c = contentLine.rstrip('\n')
+                            if len(c):
+                                print(" ", contentLine.rstrip('\n'))
+                        #print('')
     if args.count:
         print(count)
     if not args.count and args.verbose > 0:

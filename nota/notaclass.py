@@ -197,6 +197,24 @@ class Nota:
         return("Nota %d.%d.%d" % (self.appversion[0], self.appversion[1], self.appversion[2]))
 
 
+    def book_name(self, number):
+        '''Return name of book with given index.'''
+        try:
+            name = self.cur.execute("SELECT name FROM book WHERE number = ?;", [number]).fetchone()
+        except:
+            self.error("cannot look up name of book number %s" % number)
+        return(str(name[0]))
+
+
+    def book_number(self, name):
+        '''Return number of book with given name.'''
+        try:
+            number = self.cur.execute("SELECT number FROM book WHERE name= ?;", [name]).fetchone()
+        except:
+            self.error("cannot look up number of book with name %s" % name)
+        return(number)
+
+
     def list_books(self):
         ''' Return the list of book names '''
         names = []
