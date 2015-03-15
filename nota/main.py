@@ -376,11 +376,18 @@ def nota():
 
     book = -1 # means all books
     if args.book:
+        match = len(args.book) # permit initial-letters partial match
         existing = nota.list_books()
-        if args.book not in existing:
-            nota.error("No book named '%s' exists; try one of: %s" % (args.book, existing))
+        matches = []
+        for e in existing:
+            if not e == "Trash":
+                if args.book == e[0:match]:
+                    matches.extend([e])
+        if 1 == len(matches):
+            args.book = matches[0]
+            book = existing.index(matches[0]) # FIXME: not sure this is right; nota.book_number(matches[0])
         else:
-            book = existing.index(args.book)
+            nota.error("Book '%s' matches to %d books" % (args.book, len(matches)))
     
     if args.delete:
         nota.fyi("should now delete note %s" % args.delete)
