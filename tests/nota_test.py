@@ -32,27 +32,37 @@ class TestNota(unittest.TestCase):
 
 
     def test_books(self):
-        books = self.nota.book_list()
+        books = self.nota.list_books()
         self.assertEqual(2, len(books))
         self.assertEqual(books[0], "Trash")
         self.assertEqual(books[1], "Default")
-        self.nota.book_rename("Default", "Test")
-        books = self.nota.book_list()
+        self.nota.rename_book("Default", "Test")
+        books = self.nota.list_books()
         self.assertEqual(2, len(books))
         self.assertEqual(books[0], "Trash")
         self.assertEqual(books[1], "Test")
+        self.nota.create_book("Library")
+        books = self.nota.list_books()
+        self.assertEqual(3, len(books))
+        self.assertEqual(books[0], "Trash")
+        self.assertEqual(books[1], "Test")
+        self.assertEqual(books[2], "Library")
 
     def test_keywords(self):
         self.nota.add(title="foo", keywords=["test","foo"], content="")
         self.assertEqual(1, len(self.nota.find_by_hash(hash=None, book=-1)))
         self.nota.add(title="bar", keywords=["test","bar"], content="")
-        keywords = self.nota.keyword_list()
+        keywords = self.nota.list_keywords() # alphabetical
         self.assertEqual(3, len(keywords))
-        # the keywords are returned in alphabetical order
         self.assertEqual(keywords[0], "bar")
         self.assertEqual(keywords[1], "foo")
         self.assertEqual(keywords[2], "test")
-
+        self.nota.rename_keyword("bar", "BAR")
+        keywords = self.nota.list_keywords()
+        self.assertEqual(3, len(keywords))
+        self.assertEqual(keywords[0], "BAR")
+        self.assertEqual(keywords[1], "foo")
+        self.assertEqual(keywords[2], "test")
 
     def tearDown(self):
         logger.debug("Removing temporary database file.")

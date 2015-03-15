@@ -197,7 +197,7 @@ class Nota:
         return("Nota %d.%d.%d" % (self.appversion[0], self.appversion[1], self.appversion[2]))
 
 
-    def book_list(self):
+    def list_books(self):
         ''' Return the list of book names '''
         names = []
         try:
@@ -208,16 +208,35 @@ class Nota:
         return(names)
 
 
-    def book_rename(self, old, new):
-        existing = self.book_list()
-        #print("Books before renaming: %s" % existing)
+    def create_book(self, name):
+        """Create a new book"""
+        name = name.strip()
+        if not len(name):
+            self.error("Cannot have a blank book name")
+        # The next could be relaxed, if users want commas in book names, but
+        # I prefer to keep it, in case later there could be a syntax for multiple
+        # book names, using comma.
+        if name.find(",") >= 0:
+            self.error("Cannot have a ',' in a book name")
+        existing = self.list_books()
+        nexisting = len(existing)
+        if name in existing:
+            self.error("Already have a book named '%s'" % name)
+        try:
+            self.cur.execute("INSERT INTO book (number, name) VALUES(?, ?);", (nexisting, name))
+            self.con.commit()
+        except:
+            self.fyi("Error adding a book named '%s'" % name)
+
+
+    def rename_book(self, old, new):
+        existing = self.list_books()
         if old == "Trash":
             self.error("Cannot rename the 'Trash' book.")
         if new == "Trash":
             self.error("Cannot rename any book to 'Trash'.")
         if old in existing:
             try:
-                #print("UPDATE book SET name=(%s) WHERE name=(%s);" % (new, old))
                 self.cur.execute("UPDATE book SET name=(?) WHERE name=(?);", (new, old))
                 self.con.commit()
             except:
@@ -245,13 +264,14 @@ class Nota:
         self.con.commit()
 
 
-    def add(self, title="", keywords="", content="", due="", privacy=0, date="", modified=""):
+    def add(self, title="", keywords="", content="", due="", book=1, privacy=0, date="", modified=""):
         ''' Add a note to the database.  The title should be short (perhaps 3
         to 7 words).  The keywords are comma-separated, and should be similar
         in style to others in the database.  The content may be of any length.'''
         self.fyi("add with title='%s'" % title)
         self.fyi("add with keywords='%s'" % keywords)
         self.fyi("add with due='%s'" % due)
+        self.fyi("add with book='%s'" % book)
         if not isinstance(due, str):
             due = ""
         due = self.interpret_time(due)[0]
@@ -260,8 +280,8 @@ class Nota:
         if date == "":
             date = now.strftime("%Y-%m-%d %H:%M:%S")
         try:
-            self.cur.execute("INSERT INTO note(authorId, date, modified, title, content, privacy, due) VALUES(?, ?, ?, ?, ?, ?, ?);",
-                (self.authorId, date, modified, title, content, 0, due))
+            self.cur.execute("INSERT INTO note(authorId, date, modified, title, content, privacy, due, book) VALUES(?, ?, ?, ?, ?, ?, ?, ?);",
+                (self.authorId, date, modified, title, content, 0, due, book))
         except:
             self.error("error adding note to the database")
         noteId = self.cur.lastrowid
@@ -339,7 +359,7 @@ class Nota:
         self.con.commit()
 
     
-    def keyword_list(self):
+    def list_keywords(self):
         ''' Return the list of keywords '''
         names = []
         try:
@@ -355,9 +375,8 @@ class Nota:
         return(names)
 
 
-    def keyword_rename(self, old, new):
-        existing = self.keyword_list()
-        print(existing)
+    def rename_keyword(self, old, new):
+        existing = self.list_keywords()
         if old in existing:
             self.fyi("should rename keyword '%s' to '%s'" % (old, new))
             try:
@@ -393,9 +412,6 @@ class Nota:
         noteIds = []
         noteIds.extend(self.cur.execute("SELECT noteId,date,title,hash FROM note;"))
         for n in noteIds:
-            # print("noteID:   %s" % n[0])
-            # print("time:     %s" % n[1])
-            # print("title:    %s" % n[2])
             print("%s" % n[2]+" "+n[1]+" "+str(n[0]))
             print("  old: %s" % n[3])
             hash = hashlib.sha256((n[2]+" "+n[1]+" "+str(n[0])).encode('utf8')).hexdigest()
@@ -471,8 +487,7 @@ class Nota:
         old = old[0]
         keywords = []
         keywords.extend(self.get_keywords(old['noteId']))
-        #ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], privacy=old['privacy'], due=old['due'])
-        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], due=old['due'])
+        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], book=old['book'], due=old['due'])
         noteId = int(old["noteId"])
         try:
             self.cur.execute("UPDATE note SET title = (?) WHERE noteId = ?;", (ee["title"], noteId))
@@ -482,6 +497,10 @@ class Nota:
             self.cur.execute("UPDATE note SET content = (?) WHERE noteId = ?;", (ee["content"], noteId))
         except:
             self.error("cannot do: UPDATE note SET content = (%s) WHERE noteId = %s;" % (ee["content"], noteId))
+        try:
+            self.cur.execute("UPDATE note SET book = (?) WHERE noteId = ?;", (ee["book"], noteId))
+        except:
+            self.error("cannot do: UPDATE note SET book = (%s) WHERE noteId = %s;" % (ee["book"], noteId))
         self.keyword_hookup(noteId, ee["keywords"])
         if ee["due"] and ee["due"] != "None":
             try:
@@ -548,9 +567,6 @@ class Nota:
         self.fyi("noteIds: %s" % noteIds)
         rval = []
         for n in noteIds:
-            # No need to check for being in trash or not, of course.
-            #self.fyi(" processing id=%s" % n)
-            #print(" (%s) " % n, end="")
             try:
                 note = self.cur.execute("SELECT noteId, authorId, date, title, content, due, privacy, modified, hash, book FROM note WHERE noteId=?;", n).fetchone()
             except:
@@ -732,24 +748,25 @@ class Nota:
         return due
 
 
-    def editor_entry(self, title, keywords, content, privacy=0, due=""):
+    def editor_entry(self, title, keywords, content, book=1, privacy=0, due=""):
         remaining = None
+        books = self.list_books()
+        nbooks = len(books)
         if due:
             now = datetime.datetime.now()
-            #print("due: %s" % due)
-            #print(due)
             try:
                 DUE = datetime.datetime.strptime(due, "%Y-%m-%d %H:%M:%S.%f")
             except:
                 DUE = now
             remaining = (DUE - now).total_seconds()
-            #print("remaining: %s" % remaining)
             if (abs(remaining) < 86400):
                 remaining = "%d hours" % round(remaining / 3600)
             else:
                 remaining = "%d days" % round(remaining / 86400)
-            #print("remaining: %s" % remaining)
             due = remaining
+        booklist = ""
+        for i in range(1, nbooks):
+            booklist = booklist + str(i) + " (" + books[i] + ") "
         initial_message = '''Instructions: fill in material following the ">" symbol.  (Items following
 the "?>" symbol are optional.  The title and keywords must each fit on one
 line. Use commas to separate keywords.  The content must start *below*
@@ -759,11 +776,13 @@ TITLE> %s
 
 KEYWORDS?> %s
 
+BOOK (integer: %s) > %s
+
 DUE (E.G. 'tomorrow' or '3 days')?> %s
 
 CONTENT...
 %s
-''' % (title, ",".join(k for k in keywords), due, content)
+''' % (title, ",".join(k for k in keywords), booklist, book, due, content)
         try:
             # FIXME: is this polluting filespace with tmp files?
             file = tempfile.NamedTemporaryFile(suffix=".tmp") #, delete=False)
@@ -794,6 +813,12 @@ CONTENT...
                 PRIVACY = re.sub(r'.*>', '', line).strip()
             elif "KEYWORDS" in line:
                 keywords = re.sub(r'.*>', '', line).strip()
+            elif "BOOK" in line:
+                book = int(re.sub(r'.*>', '', line).strip())
+                if book < 1:
+                    self.error("book cannot be < 1")
+                if book > nbooks - 1:
+                    self.error("book cannot be > %s" % nbooks)
             elif "CONTENT" in line:
                 inContent = True
         if not title:
@@ -801,8 +826,7 @@ CONTENT...
         content = content.rstrip('\n')
         keywords = [key.lstrip().rstrip() for key in keywords.split(',')]
         self.fyi("LATE keywords= %s" % keywords)
-        # FIXME: let user specify the book
-        return {"title":title, "keywords":keywords, "content":content, "privacy":privacy, "due":due}
+        return {"title":title, "keywords":keywords, "content":content, "privacy":privacy, "book":book, "due":due}
 
 
     def rename_keyword(self, old, new):

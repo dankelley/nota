@@ -17,6 +17,7 @@ def nota():
             'add a note: "nota -a" (opens EDITOR)', 
             'add a note: "nota -a -t=title -c=content" (no EDITOR)', 
             'add a note: "nota -a -t=title -c=content" -k=keywords"(no EDITOR)', 
+            'add a book: "nota --add-book name"',
             'back up database by e.g. "cp ~/Dropbox/nota.db ~/nota-backup.db"',
             'create new note hashes: "nota --developer=rehash"',
             'delete note with hash \'ab...\': "nota -d ab"',
@@ -24,16 +25,16 @@ def nota():
             'export all notes: "nota --export -" (import with \'--import\')',
             'export notes with hash \'ab...\': "nota --export ab"',
             'import notes: "nota --import file.json" ("file.json" from "--export")',
-            'list all notes: "nota"',
-            'list books: "nota --book-list"',
-            'list keywords: "nota --keyword-list"',
+            'list books: "nota --list-books"',
+            'list keywords: "nota --list-keywords"',
+            'list notes: "nota"',
             'list notes contained in the trash: "nota --trash"',
             'list notes due today: "nota --due today"',
             'list notes in markdown format: "nota --markdown"',
-            'list note with hash \'ab...\': "nota ab"',
+            'list notes with hash \'ab...\': "nota ab"',
             'list notes with keyword \'foo\': "nota -k foo"',
-            'rename book: "nota --book-rename old new"',
-            'rename keyword: "nota --keyword-rename old new"',
+            'rename book: "nota --rename-book old new"',
+            'rename keyword: "nota --rename-keyword old new"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
             'visit http://dankelley.github.io/nota/documentation.html to learn more']
 
@@ -173,6 +174,7 @@ def nota():
     
     parser.add_argument("hash", nargs="?", default="", help="abbreviated hash to search for", metavar="hash")
     parser.add_argument("-a", "--add", action="store_true", dest="add", default=False, help="add a note")
+    parser.add_argument("-b", "--book", type=str, dest="book", default="", help="specify a book", metavar="book")
     parser.add_argument("-e", "--edit", type=str, default=None, help="edit note with abbreviated hash 'h'", metavar="h")
     parser.add_argument("-d", "--delete", type=str, default=None, help="move note abbreviated hash 'h' to trash", metavar="h")
     parser.add_argument("-u", "--undelete", type=str, default=None, help="remove note with abbreviated hash 'h' from trash", metavar="h")
@@ -180,16 +182,17 @@ def nota():
     parser.add_argument("-k", "--keywords", type=str, default="", help="string of comma-separated keywords", metavar="k")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
-    parser.add_argument("--book-list", action="store_true", dest="book_list", default=False, help="list books")
-    parser.add_argument("--book-rename", type=str, nargs=2, help="rename a notebook", metavar=("old","new"))
-    parser.add_argument("--keyword-list", action="store_true", dest="keyword_list", default=False, help="list keywords")
-    parser.add_argument("--keyword-rename", type=str, nargs=2, help="rename a keyword", metavar=("old","new"))
+    parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book", metavar="book")
+    parser.add_argument("--list-books", action="store_true", dest="list_books", default=False, help="list books")
+    parser.add_argument("--list-keywords", action="store_true", dest="list_keywords", default=False, help="list keywords")
+    parser.add_argument("--rename-book", type=str, nargs=2, help="rename a notebook", metavar=("old","new"))
+    parser.add_argument("--rename-keyword", type=str, nargs=2, help="rename a keyword", metavar=("old","new"))
     parser.add_argument("--pager", action="store_true", dest="pager", default=True, help="page output")
     parser.add_argument("--count", action="store_true", dest="count", default=False, help="report only count of found results")
     parser.add_argument("--debug", action="store_true", dest="debug", default=False, help="set debugging on")
     parser.add_argument("--export", type=str, default=None, help="export notes matching hash (use has '-' for all notes)", metavar="hash")
-    parser.add_argument("--import", type=str, default=None, dest="do_import", help="import notes from file created by --export", metavar="file")
-    if False: # may add later but don't tell users so
+    parser.add_argument("--import", type=str, default=None, dest="do_import", help="import notes from --export output", metavar="file")
+    if False: # may add later but don't tell users so, just yet
         parser.add_argument("--privacy", type=int, default=0, help="set privacy level (0=open, 1=closed)", metavar="level")
     parser.add_argument("--file", type=str, help="filename for i/o", metavar="name")
     # Process the dotfile (need for next parser call)
@@ -299,10 +302,14 @@ def nota():
                 print(hint)
         sys.exit(0)
 
-    if args.book_list:
+    if args.create_book:
+        nota.create_book(args.create_book)
+        exit(0)
+
+    if args.list_books:
         ''' List books. '''
         print("Books: ", end="")
-        books = nota.book_list()
+        books = nota.list_books()
         nbooks = len(books)
         for i in range(nbooks):
             print(books[i], end="")
@@ -312,15 +319,15 @@ def nota():
                 print("")
         exit(0)
 
-    if args.book_rename:
+    if args.rename_book:
         (old, new) = args.book_rename
         nota.book_rename(old, new)
         exit(0)
 
-    if args.keyword_list:
+    if args.list_keywords:
         ''' List keywords. '''
         print("Keywords: ", end="")
-        keywords = nota.keyword_list()
+        keywords = nota.list_keywords()
         nkeywords = len(keywords)
         for i in range(nkeywords):
             #print('"%s"' % keywords[i], end="")
@@ -331,18 +338,11 @@ def nota():
                 print("")
         exit(0)
 
-    if args.keyword_rename:
+    if args.rename_keyword:
         (old, new) = args.book_rename
         nota.keyword_rename(old, new)
-        ## FIXME write something in notaclass.py
-        #print("should rename old (%s) to new (%s)" % (old, new))
-        #print(args.keyword_rename)
         exit(0)
   
-    # look in ~/.notarc to see if a database is named there
-    #if not args.pretty:
-    #    args.pretty = get_from_dotfile("~/.notarc", "pretty", "oneline")
-    
     if args.special:
         if args.special == "rehash":
             nota.fyi("should rehash now")
@@ -360,10 +360,19 @@ def nota():
         title = args.title
     else:
         title = ""
+
     if args.content:
         content = args.content
     else:
         content = ""
+
+    book = -1 # means all books
+    if args.book:
+        existing = nota.list_books()
+        if args.book not in existing:
+            nota.error("No book named '%s' exists; try one of: %s" % (args.book, existing))
+        else:
+            book = existing.index(args.book)
     
     if args.delete:
         nota.fyi("should now delete note %s" % args.delete)
@@ -382,7 +391,7 @@ def nota():
     
     if args.edit:
         nota.fyi("should now edit note %s" % args.edit)
-        idnew = nota.edit(args.edit)
+        nota.edit(args.edit)
         sys.exit(0)
 
     if args.do_import: # need do_ in name to avoid language conflict
@@ -446,11 +455,10 @@ def nota():
             nota.fyi("should handle interactive now")
             ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
                     #privacy=args.privacy, due=args.due)
-            id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], due=ee["due"])
-                    #privacy=ee["privacy"], due=ee["due"])
+            id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"])
         else:
+            # FIXME: allow book below
             id = nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
-                    #privacy=args.privacy, due=args.due)
         sys.exit(0)
 
     # By a process of elimination, we must be trying to find notes.
@@ -460,17 +468,17 @@ def nota():
             id_desired = None
     trash_count = None
     if id_desired is not None:
-        nota.fyi("search notes by hash")
-        found = nota.find_by_hash(hash=id_desired, book=-1) # -1 means all books but trash
+        nota.fyi("search notes by hash (book=%s)" % book)
+        found = nota.find_by_hash(hash=id_desired, book=book) # -1 means all books but trash
         trash_count = len(nota.find_by_hash(hash=id_desired, book=0))
     elif len(args.keywords[0]) and args.keywords[0] != '?':
-        nota.fyi("search notes by keyword")
-        found = nota.find_by_keyword(keywords=args.keywords, book=-1)
+        nota.fyi("search notes by keyword (book=%s)" % book)
+        found = nota.find_by_keyword(keywords=args.keywords, book=book)
         trash_count = len(nota.find_by_keyword(keywords=args.keywords, book=0))
     else:
-        nota.fyi("Search notes by hash.")
-        found = nota.find_by_hash(hash=None, book=-1)
-        trash_count = len(nota.find_by_hash(hash=None, book=0))
+        nota.fyi("Search notes by hashless method (book=%s)" % book)
+        found = nota.find_by_hash(hash=args.hash, book=book)
+        trash_count = len(nota.find_by_hash(hash=args.hash, book=0))
     count = 0
     nfound = len(found)
     i = -1
@@ -479,8 +487,8 @@ def nota():
     hash = []
     if nfound < 1:
         print("No active notes match this request.")
-    if args.debug:
-        print(hash)
+    nota.fyi("hash: %s" % hash)
+    books = nota.list_books()
     for f in found:
         i = i + 1
         #print(f)
@@ -505,9 +513,7 @@ def nota():
             if when < 0:
                 continue
         count += 1
-        if args.count:
-            continue
-        else:
+        if not args.count:
             if nfound > 1:
                 if args.markdown:
                     print("%s: " % f['hash'][0:hal], end="")
@@ -526,6 +532,8 @@ def nota():
                     if show_id:
                         print("(%s) " % f['noteId'], end="")
                     print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                    if len(books) > 1:
+                        print("(" + color.hash + books[f['book']] + color.normal + ") ", end="")
                     print("[", end="")
                     nk = len(f['keywords'])
                     for i in range(nk):
@@ -563,6 +571,8 @@ def nota():
                     if show_id:
                         print("(%s) " % f['noteId'], end="")
                     print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                    if len(books) > 1:
+                        print("(" + color.hash + books[f['book']] + color.normal + ") ", end="")
                     print("[", end="")
                     nk = len(f['keywords'])
                     for i in range(nk):
