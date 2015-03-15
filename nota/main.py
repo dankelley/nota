@@ -434,6 +434,8 @@ def nota():
             args.export = None
         noteIds = nota.find_by_hash(args.export)
         for n in noteIds:
+            del n["book"] # not useful in any other context
+            del n["noteId"] # not useful in any other context
             print(json.dumps(n))
         sys.exit(0)
      
