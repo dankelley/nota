@@ -151,7 +151,7 @@ class Nota:
                 except:
                     self.error("Problem with step 3 of update to version 0.7.x (filling up the new note table)")
                 try:
-                    self.cur.executre("DROP TABLE note_orig;")
+                    self.cur.execute("DROP TABLE note_orig;")
                 except:
                     self.error("Problem with step 4 of update to version 0.7.x (dropping note_orig)")
                 try:
