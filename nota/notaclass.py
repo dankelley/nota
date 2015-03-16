@@ -13,6 +13,9 @@ import hashlib
 import random
 import string
 
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 class Nota:
     def __init__(self, db="nota.db", authorId=1, debug=0, quiet=False):
         '''
@@ -861,7 +864,7 @@ class Nota:
         booklist = ""
         for i in range(1, nbooks):
             booklist = booklist + str(i) + " (" + books[i] + ") "
-        initial_message = '''Instructions: fill in material following the ">" symbol.  (Items following
+        initial_message = u'''Instructions: fill in material following the ">" symbol.  (Items following
 the "?>" symbol are optional.  The title and keywords must each fit on one
 line. Use commas to separate keywords.  The content must start *below*
 the line with the dots.
