@@ -500,7 +500,9 @@ def nota():
     nfound = len(found)
     i = -1
     # Single hashes are printed to 7 chars (like on github), but multiple ones are shortened.
+    print("BEFORE")
     hal = nota.hash_abbreviation_length()
+    print("AFTER")
     hash = []
     if nfound < 1:
         print("No active notes match this request.")

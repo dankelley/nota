@@ -327,16 +327,22 @@ class Nota:
 
     def hash_abbreviation_length(self):
         hash = []
+        print("hash_abbreviation_length step 1")
         try:
             for h in self.cur.execute("SELECT hash FROM note;").fetchall():
                 hash.extend(h)
         except:
             self.error("ERROR: cannot find hashes")
+        print("hash_abbreviation_length step 2")
         n = len(hash)
+        print("hash_abbreviation_length step 3; n=%d" % n)
         for nc in range(1, 20): # unlikely to be > 7
+            print("hash_abbreviation_length step 4; nc=%d" % nc)
             h = hash[:]
             for i in range(n):
+                print("h[%d] '%s'" % (i, hash[i]))
                 h[i] = h[i][0:nc]
+            print("h %s" % h)
             hs = sorted(h)
             duplicate = False
             for i in range(n-1):
