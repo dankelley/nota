@@ -139,6 +139,11 @@ class Nota:
                 # rename in_trash to book, mapping 0 to 1 and 1 to 0
                 print("Updating database %s to version 0.7.x ..." % db)
                 try:
+                    oldIds = []
+                    oldIds.extend(self.cur.execute("SELECT noteId from note;"))
+                except:
+                    self.error("Cannot access old note Ids")
+                try:
                     self.cur.execute('ALTER TABLE note RENAME TO note_orig;')
                 except:
                     self.error("Problem with step 1 of update to version 0.7.x (renaming note table to note_orig)")
@@ -167,11 +172,25 @@ class Nota:
                         self.error("Problem with step 4 of update to version 0.7.x (noteId=%s)" % n[0])
                 self.con.commit()
                 print("  Replaced 'in_trash' column in 'note' with 'book' column.")
+                # Fix up the note-keyword connections.
+                if len(noteIds) != len(oldIds):
+                    self.error("error in number of notes")
+                #print("oldIds: %s" % oldIds)
+                #print("noteIds: %s" % noteIds)
+                for i in range(len(noteIds)):
+                    self.fyi("UPDATE notekeyword SET noteid=%s WHERE noteid=%s;" % (oldIds[i][0], noteIds[i][0]))
+                    try:
+                        self.cur.execute("UPDATE notekeyword SET noteid=? WHERE noteid=?;", (noteIds[i][0], oldIds[i][0]))
+                    except:
+                        self.error("error in: UPDATE notekeyword SET noteid=%s WHERE noteid=%s;" % (noteIds[i][0], oldIds[i][0]))
+                self.con.commit()
+                print("  Updated note-keyword linkage table.")
+
                 # set up book names
                 self.cur.execute("CREATE TABLE book(bookId integer primary key autoincrement, number, name DEFAULT '');")
                 self.cur.execute("INSERT INTO book(number, name) VALUES (0, 'Trash');")
                 self.cur.execute("INSERT INTO book(number, name) VALUES (1, 'Default');")
-                print("  Set up book names: Trash and Default.")
+                print("  Created books named Trash and Default.")
             # OK, done with the updates, so we now update the actual version number.
             try:
                 self.cur.execute("DROP TABLE version;")
