@@ -10,6 +10,8 @@ import re
 import tempfile
 import subprocess
 import hashlib
+import random
+import string
 
 class Nota:
     def __init__(self, db="nota.db", authorId=1, debug=0, quiet=False):
@@ -99,7 +101,7 @@ class Nota:
                     noteIds = []
                     for row in rows:
                         noteIds.extend([row[0]])
-                        h = hashlib.sha256((str(row[0])+row[1]+row[2]).encode('utf8')).hexdigest()
+                        h = self.compute_hash(noteId=row[0], date=row[1], title=row[2])
                         hash.append(h)
                 except:
                     self.error("Problem computing hashes of existing notes")
@@ -139,11 +141,19 @@ class Nota:
                 try:
                     self.cur.execute('ALTER TABLE note RENAME TO note_orig;')
                 except:
-                    self.error("Problem with step 1 of update to version 0.7.x")
+                    self.error("Problem with step 1 of update to version 0.7.x (renaming note table to note_orig)")
                 try:
-                    self.cur.execute('CREATE TABLE note AS SELECT noteId, authorId, date, modified, due, title, content, hash, privacy, in_trash AS book FROM note_orig;')
+                    self.cur.execute('CREATE TABLE note (noteId integer primary key autoincrement, authorId, date, modified, due, title, content, hash, privacy DEFAULT 0, book DEFAULT 1);')
                 except:
-                    self.error("Problem with step 2 of update to version 0.7.x")
+                    self.error("Problem with step 2 of update to version 0.7.x (creating new note table)")
+                try:
+                    self.cur.execute('INSERT INTO note(authorId, date, modified, due, title, content, hash, privacy, book) SELECT authorId, date, modified, due, title, content, hash, privacy, in_trash AS book FROM note_orig;')
+                except:
+                    self.error("Problem with step 3 of update to version 0.7.x (filling up the new note table)")
+                try:
+                    self.cur.executre("DROP TABLE note_orig;")
+                except:
+                    self.error("Problem with step 4 of update to version 0.7.x (dropping note_orig)")
                 try:
                     noteIds = []
                     noteIds.extend(self.cur.execute("SELECT noteId,book FROM note;"))
@@ -195,6 +205,20 @@ class Nota:
 
     def version(self):
         return("Nota %d.%d.%d" % (self.appversion[0], self.appversion[1], self.appversion[2]))
+
+
+    def compute_hash(self, noteId, date, title):
+        '''
+        Compute a hash. This is somewhat resistant to errors, e.g. if somehow the date is None,
+        this will still work.
+        '''
+        if not noteId:
+            noteId = ''.join(random.choice(string.digits) for _ in range(4))
+        if not date:
+            date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if not title:
+            title = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(100))
+        return(hashlib.sha256((str(noteId) + str(date) + str(title)).encode('utf8')).hexdigest())
 
 
     def book_name(self, number):
@@ -286,6 +310,7 @@ class Nota:
         ''' Add a note to the database.  The title should be short (perhaps 3
         to 7 words).  The keywords are comma-separated, and should be similar
         in style to others in the database.  The content may be of any length.'''
+        #self.debug = 1
         self.fyi("add with title='%s'" % title)
         self.fyi("add with keywords='%s'" % keywords)
         self.fyi("add with due='%s'" % due)
@@ -304,45 +329,46 @@ class Nota:
             self.error("error adding note to the database")
         noteId = self.cur.lastrowid
         self.fyi("noteId: %s" % noteId)
-        hash = hashlib.sha256((str(noteId)+date+title).encode('utf8')).hexdigest()
+        hash = self.compute_hash(noteId=noteId, date=date, title=title)
         self.fyi("hash: %s" % hash)
         try:
             self.cur.execute("UPDATE note SET hash=? WHERE noteId=?;", (hash, noteId))
         except:
             self.error("error adding note hash to the database")
         for keyword in keywords:
-            self.fyi(" inserting keyword:", keyword)
+            self.fyi("  inserting keyword:", keyword)
             keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword = ?;", [keyword]).fetchone()
             if keywordId:
-                self.fyi("(existing keyword with id %s)" % keywordId)
+                self.fyi("  (existing keyword with id %s)" % keywordId)
                 keywordId = keywordId[0]
             else:
-                self.fyi("(new keyword)")
+                self.fyi("  (new keyword)")
                 self.cur.execute("INSERT INTO keyword(keyword) VALUES (?);", [keyword])
                 keywordId = self.cur.lastrowid
             self.con.execute("INSERT INTO notekeyword(noteId, keywordID) VALUES(?, ?)", [noteId, keywordId])
         self.con.commit()
+        self.fyi("add() returning noteId=%d ... is all ok?" % noteId)
         return noteId
 
 
     def hash_abbreviation_length(self):
         hash = []
-        print("hash_abbreviation_length step 1")
+        #print("hash_abbreviation_length step 1")
         try:
             for h in self.cur.execute("SELECT hash FROM note;").fetchall():
                 hash.extend(h)
         except:
             self.error("ERROR: cannot find hashes")
-        print("hash_abbreviation_length step 2")
+        #print("hash_abbreviation_length step 2")
         n = len(hash)
-        print("hash_abbreviation_length step 3; n=%d" % n)
+        #print("hash_abbreviation_length step 3; n=%d" % n)
         for nc in range(1, 20): # unlikely to be > 7
-            print("hash_abbreviation_length step 4; nc=%d" % nc)
+            #print("hash_abbreviation_length step 4; nc=%d" % nc)
             h = hash[:]
             for i in range(n):
-                print("h[%d] '%s'" % (i, hash[i]))
+                #print("h[%d] '%s'" % (i, hash[i]))
                 h[i] = h[i][0:nc]
-            print("h %s" % h)
+            #print("h %s" % h)
             hs = sorted(h)
             duplicate = False
             for i in range(n-1):
@@ -434,16 +460,41 @@ class Nota:
     def rehash(self):
         print("rehashing all notes")
         noteIds = []
-        noteIds.extend(self.cur.execute("SELECT noteId,date,title,hash FROM note;"))
+        noteIds.extend(self.cur.execute("SELECT noteId,date,title,content,due,book,hash FROM note;"))
         for n in noteIds:
-            print("%s" % n[2]+" "+n[1]+" "+str(n[0]))
-            print("  old: %s" % n[3])
-            hash = hashlib.sha256((n[2]+" "+n[1]+" "+str(n[0])).encode('utf8')).hexdigest()
-            print("  new: %s" % hash)
-            try:
-                self.cur.execute("UPDATE note SET hash=? WHERE noteId=?;", (hash, n[0]))
-            except:
-                self.error("problem updating hash for noteId=%s" % n[0])
+            print("%s" % n[2] + " " + n[1] + " " + str(n[0]))
+            if not n[0]:
+                print("Database malfunction: noteId is missing. Trying to fix with following SQL:")
+                try:
+                    print(" DELETE FROM note WHERE date='%s' AND title='%s';" % (n[1], n[2]))
+                    self.cur.execute("DELETE FROM note WHERE date=? AND title=?;", (n[1], n[2]))
+                    self.con.commit()
+                except:
+                    self.error("cannot delete the faulty note")
+                print(" ... this worked; the database has been cleared of the faulty note")
+                #try:
+                #    self.cur.execute("INSERT INTO note(date,title,content,due,book) VALUES(?,?,?,?,?);",
+                #            (n[1], n[2], n[3], n[4], n[5]))
+                #    id = self.cur.lastrowid
+                #    print(" id %d" % id)
+                #    self.con.commit()
+                #    id = self.cur.lastrowid
+                #    print(" id %d" % id)
+                #except:
+                #    self.error("cannot insert a replacement for the faulty note")
+                #print(" ... done?")
+                #id = self.cur.lastrowid
+                #print("id %d" % id)
+                #n[0] = id # FIXME: fails
+                #print(" ... ok, here goes")
+            else:
+                print("  old: %s" % n[6])
+                hash = self.compute_hash(noteId=n[0], date=n[1], title=n[2])
+                print("  new: %s" % hash)
+                try:
+                    self.cur.execute("UPDATE note SET hash=? WHERE noteId=?;", (hash, n[0]))
+                except:
+                    self.error("problem updating hash for noteId=%s" % n[0])
         self.con.commit()
 
 

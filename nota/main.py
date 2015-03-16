@@ -472,10 +472,11 @@ def nota():
             nota.fyi("should handle interactive now")
             ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
                     #privacy=args.privacy, due=args.due)
-            id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"])
+            print("ee: %s" % ee)
+            nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"])
         else:
             # FIXME: allow book below
-            id = nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
+            nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
         sys.exit(0)
 
     # By a process of elimination, we must be trying to find notes.
@@ -500,9 +501,7 @@ def nota():
     nfound = len(found)
     i = -1
     # Single hashes are printed to 7 chars (like on github), but multiple ones are shortened.
-    print("BEFORE")
     hal = nota.hash_abbreviation_length()
-    print("AFTER")
     hash = []
     if nfound < 1:
         print("No active notes match this request.")
