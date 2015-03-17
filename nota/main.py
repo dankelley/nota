@@ -156,10 +156,11 @@ def nota():
             color = "forest" # green hash, straw keywords
             color = "run" # red hash, underlined keywords
             color = "default" # same as "bubblegum"
-        or specify hash, title, and keyword colors directly:
+        or specify hash, title, keyword, and book colors directly:
             color.hash = "red"
             color.title = "bold"
             color.keyword = "cyan"
+            color.book = "blue"
         where the black variants are: "bold", "dim", "underlined", "blink",
         "reverse" and "normal" and the available colors are: "black", "red",
         "green", "yellow", "blue", "magenta", "cyan", "lightgray", "darkgray",
@@ -241,7 +242,6 @@ def nota():
         color_scheme = get_from_dotfile("~/.notarc", "color", True)
     use_color = True
 
-    color.book = color_code('blue') + color_code('bold')
 
     if isinstance(color_scheme, str):
         if color_scheme == "forest":
@@ -276,6 +276,7 @@ def nota():
             color.hash = color_code(get_from_dotfile("~/.notarc", "color.hash", 'red'))
             color.title = color_code(get_from_dotfile("~/.notarc", "color.title", 'bold'))
             color.keyword = color_code(get_from_dotfile("~/.notarc", "color.keyword", 'magenta'))
+            color.book = color_code('blue') + color_code('bold')
     else:
         print("The color scheme given in the ~/.notarc file should be a string or logical")
         exit(1)
@@ -284,6 +285,7 @@ def nota():
         color.hash = ''
         color.title = ''
         color.keyword = ''
+        color.book = ''
         color.normal = ""
  
     
