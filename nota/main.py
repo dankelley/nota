@@ -523,7 +523,7 @@ def nota():
         books_used.insert(0, 1)
     for b in books_used:
         if not args.count:
-            print(color.book + "%s" % nota.book_name(b) + color.normal + " book:")
+            print(color.book + "%s" % nota.book_name(b) + color.normal + ":")
         for f in found:
             i = i + 1
             #print(f)
