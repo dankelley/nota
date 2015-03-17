@@ -139,7 +139,13 @@ class Nota:
                 except:
                     self.error("Problem adding a 'middle' column to the 'version' table.")
             if StrictVersion(dbversion) < StrictVersion("0.7"):
-                # rename in_trash to book, mapping 0 to 1 and 1 to 0
+                # Books were added in 0.7.0, so the in_book column of the note table must be 
+                # removed and a new column, 'book', added. This requires copying the whole
+                # 'note' table, because sqlite3 doesn't permit such modifications (!).
+                # The new table will have new noteId values, so we also must alter the
+                # contents of the notekeyword table. The work is chopped up into
+                # little steps, so that if errors arise, it will be easier to see what
+                # went wrong.
                 print("Updating database %s to version 0.7.x ..." % db)
                 try:
                     oldIds = []
@@ -166,15 +172,15 @@ class Nota:
                     noteIds = []
                     noteIds.extend(self.cur.execute("SELECT noteId,book FROM note;"))
                 except:
-                    self.error("Problem with step 3 of update to version 0.7.x")
+                    self.error("Problem with step 5 of update to version 0.7.x")
                 # convert in_trash to book
                 for n in noteIds:
                     try:
                         self.cur.execute("UPDATE note SET book=? WHERE noteId=?;", (int(1-n[1]), n[0]))
                     except:
-                        self.error("Problem with step 4 of update to version 0.7.x (noteId=%s)" % n[0])
+                        self.error("Problem with step 5 of update to version 0.7.x (noteId=%s)" % n[0])
                 self.con.commit()
-                print("  Replaced 'in_trash' column in 'note' with 'book' column.")
+                print("  Replaced 'in_trash' column in 'note' with 'book' column, and set up 'book' table.")
                 # Fix up the note-keyword connections.
                 if len(noteIds) != len(oldIds):
                     self.error("error in number of notes")
