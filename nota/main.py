@@ -241,6 +241,7 @@ def nota():
         color_scheme = get_from_dotfile("~/.notarc", "color", True)
     use_color = True
 
+    color.book = color_code('blue') + color_code('bold')
 
     if isinstance(color_scheme, str):
         if color_scheme == "forest":
@@ -255,6 +256,7 @@ def nota():
             color.hash = color_code('red')
             color.title = color_code('bold')
             color.keyword = color_code('magenta')
+            color.book = color_code('blue') + color_code('bold')
         elif color_scheme == "default":
             color.hash = color_code('red')
             color.title = color_code('bold')
@@ -519,7 +521,7 @@ def nota():
         books_used.insert(0, 1)
     for b in books_used:
         if not args.count:
-            print(color_code('bold') + "%s" % nota.book_name(b) + color.normal + " book:")
+            print(color.book + "%s" % nota.book_name(b) + color.normal + " book:")
         for f in found:
             i = i + 1
             #print(f)
@@ -604,7 +606,7 @@ def nota():
                             print("(%s) " % f['noteId'], end="")
                         print(color.title + "%s" % f['title'] + color.normal + " ", end="")
                         if len(books) > 1:
-                            print("(" + color.hash + books[f['book']] + color.normal + ") ", end="")
+                            print("(" + color.book + books[f['book']] + color.normal + ") ", end="")
                         print("[", end="")
                         nk = len(f['keywords'])
                         for i in range(nk):
