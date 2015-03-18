@@ -304,9 +304,8 @@ class Nota:
         existing = self.list_books()
         matches = {}
         for i in range(len(existing)):
-            if not existing[i] == "Trash":
-                if book.lower() == existing[i][0:match].lower():
-                    matches[existing[i]] = i
+            if book.lower() == existing[i][0:match].lower():
+                matches[existing[i]] = i
         return(matches)
 
 
