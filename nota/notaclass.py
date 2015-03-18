@@ -299,12 +299,40 @@ class Nota:
             self.fyi("Error adding a book named '%s'" % name)
 
 
-    def rename_book(self, old, new):
+    def book_index(self, book):
+        match = len(book) # permit initial-letters partial match
         existing = self.list_books()
+        matches = {}
+        for i in range(len(existing)):
+            if not existing[i] == "Trash":
+                if book.lower() == existing[i][0:match].lower():
+                    matches[existing[i]] = i
+        return(matches)
+
+
+    def change_book(self, hash, book):
+        b = self.book_index(book)
+        if len(b) > 1:
+            self.error("Abbreviation '%s' matches to %d books: %s" % (book, len(b), b.keys()))
+        book_number = int(b.values()[0])
+        note = self.find_by_hash(hash)
+        if len(note) > 1:
+            self.error("The hash '%s' matches more than one note; try giving more letters" % hash)
+        noteId = int(note[0]['noteId'])
+        self.fyi("UPDATE note SET book=%s WHERE noteId=%s;" % (book_number, noteId))
+        try:
+            self.cur.execute("UPDATE note SET book=? WHERE noteId=?;", [book_number, noteId])
+            self.con.commit()
+        except:
+            self.error("Cannot change book number to %s where noteId is %s" % (book_number, noteId))
+
+
+    def rename_book(self, old, new):
         if old == "Trash":
             self.error("Cannot rename the 'Trash' book.")
         if new == "Trash":
             self.error("Cannot rename any book to 'Trash'.")
+        existing = self.list_books()
         if old in existing:
             try:
                 self.cur.execute("UPDATE book SET name=(?) WHERE name=(?);", (new, old))
@@ -548,7 +576,7 @@ class Nota:
         return True
 
 
-    def emptytrash(self):
+    def empty_trash(self):
         self.fyi("about to empty the trash")
         try:
             noteIds = []
