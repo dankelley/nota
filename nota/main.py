@@ -603,12 +603,12 @@ def nota():
                                 print(" ", contentLine.rstrip('\n'), '\n')
                         print('')
                     else:
-                        print(color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
+                        print(indent + color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
                         if show_id:
                             print("(%s) " % f['noteId'], end="")
                         print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                        if len(books) > 1:
-                            print("(" + color.book + books[f['book']] + color.normal + ") ", end="")
+                        #if len(books) > 1:
+                        #    print("(" + color.book + books[f['book']] + color.normal + ") ", end="")
                         print("[", end="")
                         nk = len(f['keywords'])
                         for i in range(nk):
