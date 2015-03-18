@@ -21,13 +21,14 @@ def nota():
             'add a note: "nota -a -t=title -c=content" -k=keywords"(no EDITOR)', 
             'add a book: "nota --add-book name"',
             'back up database by e.g. "cp ~/Dropbox/nota.db ~/nota-backup.db"',
-            'create new book: "nota --create-book=Bookname"',
-            'create new note hashes: "nota --special=rehash"',
+            'create new book: "nota --create-book Bookname"',
+            'create new note hashes: "nota --special rehash"',
             'delete note with hash \'ab...\': "nota -d ab"',
             'edit note with hash \'ab...\': "nota -e ab" (opens EDITOR)',
             'export all notes: "nota --export -" (import with \'--import\')',
             'export notes with hash \'ab...\': "nota --export ab"',
             'import notes: "nota --import file.json" ("file.json" from "--export")',
+            'it is conventional to start book names with a capital letter',
             'list books: "nota --list-books"',
             'list keywords: "nota --list-keywords"',
             'list notes: "nota"',
@@ -37,8 +38,9 @@ def nota():
             'list notes with hash \'ab...\': "nota ab"',
             'list notes with keyword \'foo\': "nota -k foo"',
             'list notes within book: "nota -b Bookname"',
-            'rename book: "nota --rename-book old new"',
-            'rename keyword: "nota --rename-keyword old new"',
+            'move note to new book: "nota --change-book hash Newbook"',
+            'rename book: "nota --rename-book Old New"',
+            'rename keyword: "nota --rename-keyword Old New"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
             'visit http://dankelley.github.io/nota/documentation.html to learn more']
 
@@ -127,18 +129,20 @@ def nota():
     parser = argparse.ArgumentParser(prog="nota", description="Nota: an organizer for textual notes",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=textwrap.dedent('''\
-    There are several ways to use nota.  Try 'nota -h' for some hints.  The most
-    common uses are as follows.
+    There are several ways to use nota. Try 'nota -h' for some hints, and see
+    http://dankelley.github.io/nota/ for more. Some common uses are as follows.
     
-        nota                  # list notes, with first column being hash code
-        nota ab               # list notes with hash starting 'ab'
-        nota -k key           # list notes with indicated keyword
-        nota -a               # add a note (opens a text editor)
-        nota -a -t=... -c=... # add a note (without a text editor)
-        nota -e ab            # edit note with hash starting 'ab' (opens editor)
-        nota -d ab            # delete note with hash starting 'ab'
-        nota --export ab > F  # export note(s) to file 'F'
-        nota --import F       # import note(s) from file 'F'
+        nota                    # list notes, with first column being hash code
+        nota ab                 # list notes with hash starting 'ab'
+        nota -k key             # list notes with indicated keyword
+        nota -a                 # add a note (opens a text editor)
+        nota -a -t=... -c=...   # add a note (without a text editor)
+        nota -e ab              # edit note with hash starting 'ab' (opens editor)
+        nota -d ab              # delete note with hash starting 'ab'
+        nota --export ab > F    # export note(s) to file 'F'
+        nota --import F         # import note(s) from file 'F'
+        nota --create-book Foo  # create a new book named Foo
+        nota -b Foo             # list notes in book named Foo
 
     The ~/.notarc file may be used for customization, and may contain e.g. the
     following:
@@ -188,6 +192,7 @@ def nota():
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
     parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book", metavar="book")
+    parser.add_argument("--change-book", nargs=2, type=str, default="", dest="change_book", help="move note with given hash to another book", metavar=("hash", "Book"))
     parser.add_argument("--list-books", action="store_true", dest="list_books", default=False, help="list books")
     parser.add_argument("--list-keywords", action="store_true", dest="list_keywords", default=False, help="list keywords")
     parser.add_argument("--rename-book", type=str, nargs=2, help="rename a notebook", metavar=("old","new"))
@@ -206,7 +211,7 @@ def nota():
     parser.add_argument("--color", type=str, default=None, help="specify named scheme or True/False", metavar="c")
     parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database", metavar="db")
     parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
-    parser.add_argument("--emptytrash", action="store_true", dest="emptytrash", default=False, help="empty trash, permanently deleting notes therein")
+    parser.add_argument("--empty-trash", action="store_true", dest="empty_trash", default=False, help="empty trash, permanently deleting notes therein")
     parser.add_argument("--hints", action="store_true", dest="hints", default=False, help="get hints")
     parser.add_argument("--markdown", action="store_true", dest="markdown", default=False, help="use markdown format for output")
     parser.add_argument("--special", type=str, default="", help="special actions", metavar="action")
@@ -333,6 +338,11 @@ def nota():
                 print("")
         exit(0)
 
+    if args.change_book:
+        (hash, book) = args.change_book
+        nota.change_book(hash, book)
+        exit(0)
+
     if args.rename_book:
         (old, new) = args.rename_book
         nota.rename_book(old, new)
@@ -382,18 +392,24 @@ def nota():
 
     book = -1 # means all books
     if args.book:
-        match = len(args.book) # permit initial-letters partial match
-        existing = nota.list_books()
-        matches = []
-        for e in existing:
-            if not e == "Trash":
-                if args.book.lower() == e[0:match].lower():
-                    matches.extend([e])
-        if 1 == len(matches):
-            args.book = matches[0]
-            book = existing.index(matches[0]) # FIXME: not sure this is right; nota.book_number(matches[0])
-        else:
-            nota.error("Book '%s' matches to %d books" % (args.book, len(matches)))
+        b = nota.book_index(args.book)
+        if len(b) > 1:
+            nota.error("Abbreviation '%s' matches to %d books: %s" % (args.book, len(b), b.keys()))
+        book = b.values()[0]
+        nota.fyi("--book yields book index %s" % book)
+        #exit(0)
+        #match = len(args.book) # permit initial-letters partial match
+        #existing = nota.list_books()
+        #matches = []
+        #for e in existing:
+        #    if not e == "Trash":
+        #        if args.book.lower() == e[0:match].lower():
+        #            matches.extend([e])
+        #if 1 == len(matches):
+        #    args.book = matches[0]
+        #    book = existing.index(matches[0]) # FIXME: not sure this is right; nota.book_number(matches[0])
+        #else:
+        #    nota.error("Book '%s' matches to %d books" % (args.book, len(matches)))
     
     if args.delete:
         nota.fyi("should now delete note %s" % args.delete)
@@ -405,9 +421,9 @@ def nota():
         nota.undelete(args.undelete)
         sys.exit(0)
     
-    if args.emptytrash:
+    if args.empty_trash:
         nota.fyi("should now empty the trash")
-        nota.emptytrash()
+        nota.empty_trash()
         sys.exit(0)
     
     if args.edit:
@@ -524,7 +540,7 @@ def nota():
     if have_default:
         books_used.insert(0, 1)
     for b in books_used:
-        if not args.count:
+        if not args.count and not args.due:
             print(color.book + "%s" % nota.book_name(b) + color.normal + ":")
         for f in found:
             i = i + 1
