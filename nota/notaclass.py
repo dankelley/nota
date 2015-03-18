@@ -314,10 +314,14 @@ class Nota:
         b = self.book_index(book)
         if len(b) > 1:
             self.error("Abbreviation '%s' matches to %d books: %s" % (book, len(b), b.keys()))
+        if len(b) == 0:
+            self.error("No book '%s'" % book)
         book_number = int(b.values()[0])
         note = self.find_by_hash(hash)
         if len(note) > 1:
             self.error("The hash '%s' matches more than one note; try giving more letters" % hash)
+        if len(note) == 0:
+            self.error("The hash '%s' does not match any notes" % hash)
         noteId = int(note[0]['noteId'])
         self.fyi("UPDATE note SET book=%s WHERE noteId=%s;" % (book_number, noteId))
         try:
