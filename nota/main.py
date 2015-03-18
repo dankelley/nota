@@ -12,11 +12,14 @@ from random import randint, seed
 from time import strptime
 import subprocess
 
+indent = "  "
+
 def nota():
     hints = [
             'add a note: "nota -a" (opens EDITOR)', 
             'add a note: "nota -a -t=title -c=content" (no EDITOR)', 
             'add a note: "nota -a -t=title -c=content" -k=keywords"(no EDITOR)', 
+            'add a book: "nota --add-book name"',
             'back up database by e.g. "cp ~/Dropbox/nota.db ~/nota-backup.db"',
             'create new note hashes: "nota --developer=rehash"',
             'delete note with hash \'ab...\': "nota -d ab"',
@@ -24,12 +27,16 @@ def nota():
             'export all notes: "nota --export -" (import with \'--import\')',
             'export notes with hash \'ab...\': "nota --export ab"',
             'import notes: "nota --import file.json" ("file.json" from "--export")',
-            'list all notes: "nota"',
+            'list books: "nota --list-books"',
+            'list keywords: "nota --list-keywords"',
+            'list notes: "nota"',
             'list notes contained in the trash: "nota --trash"',
             'list notes due today: "nota --due today"',
             'list notes in markdown format: "nota --markdown"',
-            'list note with hash \'ab...\': "nota ab"',
+            'list notes with hash \'ab...\': "nota ab"',
             'list notes with keyword \'foo\': "nota -k foo"',
+            'rename book: "nota --rename-book old new"',
+            'rename keyword: "nota --rename-keyword old new"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
             'visit http://dankelley.github.io/nota/documentation.html to learn more']
 
@@ -149,10 +156,11 @@ def nota():
             color = "forest" # green hash, straw keywords
             color = "run" # red hash, underlined keywords
             color = "default" # same as "bubblegum"
-        or specify hash, title, and keyword colors directly:
+        or specify hash, title, keyword, and book colors directly:
             color.hash = "red"
             color.title = "bold"
             color.keyword = "cyan"
+            color.book = "blue"
         where the black variants are: "bold", "dim", "underlined", "blink",
         "reverse" and "normal" and the available colors are: "black", "red",
         "green", "yellow", "blue", "magenta", "cyan", "lightgray", "darkgray",
@@ -169,6 +177,7 @@ def nota():
     
     parser.add_argument("hash", nargs="?", default="", help="abbreviated hash to search for", metavar="hash")
     parser.add_argument("-a", "--add", action="store_true", dest="add", default=False, help="add a note")
+    parser.add_argument("-b", "--book", type=str, dest="book", default="", help="specify a book", metavar="book")
     parser.add_argument("-e", "--edit", type=str, default=None, help="edit note with abbreviated hash 'h'", metavar="h")
     parser.add_argument("-d", "--delete", type=str, default=None, help="move note abbreviated hash 'h' to trash", metavar="h")
     parser.add_argument("-u", "--undelete", type=str, default=None, help="remove note with abbreviated hash 'h' from trash", metavar="h")
@@ -176,12 +185,17 @@ def nota():
     parser.add_argument("-k", "--keywords", type=str, default="", help="string of comma-separated keywords", metavar="k")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
+    parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book", metavar="book")
+    parser.add_argument("--list-books", action="store_true", dest="list_books", default=False, help="list books")
+    parser.add_argument("--list-keywords", action="store_true", dest="list_keywords", default=False, help="list keywords")
+    parser.add_argument("--rename-book", type=str, nargs=2, help="rename a notebook", metavar=("old","new"))
+    parser.add_argument("--rename-keyword", type=str, nargs=2, help="rename a keyword", metavar=("old","new"))
     parser.add_argument("--pager", action="store_true", dest="pager", default=True, help="page output")
     parser.add_argument("--count", action="store_true", dest="count", default=False, help="report only count of found results")
     parser.add_argument("--debug", action="store_true", dest="debug", default=False, help="set debugging on")
     parser.add_argument("--export", type=str, default=None, help="export notes matching hash (use has '-' for all notes)", metavar="hash")
-    parser.add_argument("--import", type=str, default=None, dest="do_import", help="import notes from file created by --export", metavar="file")
-    if False: # may add later but don't tell users so
+    parser.add_argument("--import", type=str, default=None, dest="do_import", help="import notes from --export output", metavar="file")
+    if False: # may add later but don't tell users so, just yet
         parser.add_argument("--privacy", type=int, default=0, help="set privacy level (0=open, 1=closed)", metavar="level")
     parser.add_argument("--file", type=str, help="filename for i/o", metavar="name")
     # Process the dotfile (need for next parser call)
@@ -198,9 +212,16 @@ def nota():
     parser.add_argument("--verbose", type=int, default=None, help="set level of verbosity (0=quiet, 1=default)", metavar="level")
     parser.add_argument("--version", action="store_true", dest="version", default=False, help="get version number")
     args = parser.parse_args()
-    
+
+    # FIXME: probably this commented-out stuff can just be deleted,
+    # since I like the look of the present scheme.
+    # 1. list book in parentheses after the title
+    # 2. list book names with indented notes beneath
+    # book_scheme = get_from_dotfile("~/.notarc", "book_scheme", 1)
+    #print("book_scheme %s" % book_scheme)
+   
     args.keywordsoriginal = args.keywords
-    args.keywords = [key.lstrip().rstrip() for key in args.keywords.split(',')]
+    args.keywords = [key.strip() for key in args.keywords.split(',')]
     #args.Keywordsoriginal = args.Keywords
     #args.Keywords = [Key.lstrip().rstrip() for Key in args.Keywords.split(',')]
 
@@ -235,6 +256,7 @@ def nota():
             color.hash = color_code('red')
             color.title = color_code('bold')
             color.keyword = color_code('magenta')
+            color.book = color_code('blue') + color_code('bold')
         elif color_scheme == "default":
             color.hash = color_code('red')
             color.title = color_code('bold')
@@ -254,6 +276,7 @@ def nota():
             color.hash = color_code(get_from_dotfile("~/.notarc", "color.hash", 'red'))
             color.title = color_code(get_from_dotfile("~/.notarc", "color.title", 'bold'))
             color.keyword = color_code(get_from_dotfile("~/.notarc", "color.keyword", 'magenta'))
+            color.book = color_code('blue') + color_code('bold')
     else:
         print("The color scheme given in the ~/.notarc file should be a string or logical")
         exit(1)
@@ -262,6 +285,7 @@ def nota():
         color.hash = ''
         color.title = ''
         color.keyword = ''
+        color.book = ''
         color.normal = ""
  
     
@@ -289,11 +313,48 @@ def nota():
             else:
                 print(hint)
         sys.exit(0)
-    
-    # look in ~/.notarc to see if a database is named there
-    #if not args.pretty:
-    #    args.pretty = get_from_dotfile("~/.notarc", "pretty", "oneline")
-    
+
+    if args.create_book:
+        nota.create_book(args.create_book)
+        exit(0)
+
+    if args.list_books:
+        ''' List books. '''
+        print("Books: ", end="")
+        books = nota.list_books()
+        nbooks = len(books)
+        for i in range(nbooks):
+            print(books[i], end="")
+            if i < nbooks - 1:
+                print(", ", end="")
+            else:
+                print("")
+        exit(0)
+
+    if args.rename_book:
+        (old, new) = args.rename_book
+        nota.rename_book(old, new)
+        exit(0)
+
+    if args.list_keywords:
+        ''' List keywords. '''
+        print("Keywords: ", end="")
+        keywords = nota.list_keywords()
+        nkeywords = len(keywords)
+        for i in range(nkeywords):
+            #print('"%s"' % keywords[i], end="")
+            print('%s' % keywords[i], end="")
+            if i < nkeywords - 1:
+                print(", ", end="")
+            else:
+                print("")
+        exit(0)
+
+    if args.rename_keyword:
+        (old, new) = args.book_rename
+        nota.keyword_rename(old, new)
+        exit(0)
+  
     if args.special:
         if args.special == "rehash":
             nota.fyi("should rehash now")
@@ -311,10 +372,26 @@ def nota():
         title = args.title
     else:
         title = ""
+
     if args.content:
         content = args.content
     else:
         content = ""
+
+    book = -1 # means all books
+    if args.book:
+        match = len(args.book) # permit initial-letters partial match
+        existing = nota.list_books()
+        matches = []
+        for e in existing:
+            if not e == "Trash":
+                if args.book.lower() == e[0:match].lower():
+                    matches.extend([e])
+        if 1 == len(matches):
+            args.book = matches[0]
+            book = existing.index(matches[0]) # FIXME: not sure this is right; nota.book_number(matches[0])
+        else:
+            nota.error("Book '%s' matches to %d books" % (args.book, len(matches)))
     
     if args.delete:
         nota.fyi("should now delete note %s" % args.delete)
@@ -333,7 +410,7 @@ def nota():
     
     if args.edit:
         nota.fyi("should now edit note %s" % args.edit)
-        idnew = nota.edit(args.edit)
+        nota.edit(args.edit)
         sys.exit(0)
 
     if args.do_import: # need do_ in name to avoid language conflict
@@ -361,6 +438,8 @@ def nota():
             args.export = None
         noteIds = nota.find_by_hash(args.export)
         for n in noteIds:
+            del n["book"] # not useful in any other context
+            del n["noteId"] # not useful in any other context
             print(json.dumps(n))
         sys.exit(0)
      
@@ -370,9 +449,9 @@ def nota():
         #print("args.keywords[0] '%s'" % args.keywords[0])
         #print("args.hash %s" % args.hash)
         if not '' == args.keywords[0]:
-            trashed = nota.find_by_keyword(keywords=args.keywords, in_trash=True)
+            trashed = nota.find_by_keyword(keywords=args.keywords, book=0)
         else:
-            trashed = nota.find_by_hash(hash=args.hash, in_trash=True)
+            trashed = nota.find_by_hash(hash=args.hash, book=0)
         hal = nota.hash_abbreviation_length()
         for t in trashed:
             print(color.hash + "%s: " % t['hash'][0:hal] + color.normal, end="")
@@ -397,11 +476,11 @@ def nota():
             nota.fyi("should handle interactive now")
             ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
                     #privacy=args.privacy, due=args.due)
-            id = nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], due=ee["due"])
-                    #privacy=ee["privacy"], due=ee["due"])
+            print("ee: %s" % ee)
+            nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"])
         else:
-            id = nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
-                    #privacy=args.privacy, due=args.due)
+            # FIXME: allow book below
+            nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
         sys.exit(0)
 
     # By a process of elimination, we must be trying to find notes.
@@ -411,21 +490,17 @@ def nota():
             id_desired = None
     trash_count = None
     if id_desired is not None:
-        nota.fyi("search notes by hash")
-        found = nota.find_by_hash(hash=id_desired, in_trash=False)
-        trash_count = len(nota.find_by_hash(hash=id_desired, in_trash=True))
+        nota.fyi("search notes by hash (book=%s)" % book)
+        found = nota.find_by_hash(hash=id_desired, book=book) # -1 means all books but trash
+        trash_count = len(nota.find_by_hash(hash=id_desired, book=0))
     elif len(args.keywords[0]) and args.keywords[0] != '?':
-        nota.fyi("search notes by keyword")
-        found = nota.find_by_keyword(keywords=args.keywords, in_trash=False)
-        trash_count = len(nota.find_by_keyword(keywords=args.keywords, in_trash=True))
-    # elif len(args.Keywords[0]) and args.Keywords[0] != '?':
-    #     nota.fyi("search notes by keyword (with strict match)")
-    #     found = nota.find_by_keyword(keywords=args.keywords, strict_match=True, in_trash=False)
-    #     trash_count = len(nota.find_by_keyword(keywords=args.keywords, strict_match=True, in_trash=True))
+        nota.fyi("search notes by keyword (book=%s)" % book)
+        found = nota.find_by_keyword(keywords=args.keywords, book=book)
+        trash_count = len(nota.find_by_keyword(keywords=args.keywords, book=0))
     else:
-        nota.fyi("Search notes by hash.")
-        found = nota.find_by_hash(hash=None, in_trash=False)
-        trash_count = len(nota.find_by_hash(hash=None, in_trash=True))
+        nota.fyi("Search notes by hashless method (book=%s)" % book)
+        found = nota.find_by_hash(hash=args.hash, book=book)
+        trash_count = len(nota.find_by_hash(hash=args.hash, book=0))
     count = 0
     nfound = len(found)
     i = -1
@@ -434,108 +509,124 @@ def nota():
     hash = []
     if nfound < 1:
         print("No active notes match this request.")
-    if args.debug:
-        print(hash)
+    nota.fyi("hash: %s" % hash)
+    books = nota.list_books()
+    books_used = []
+    have_default = False
     for f in found:
-        i = i + 1
-        #print(f)
-        try:
-            due = f['due']
-        except:
-            due = None
-        if due_requested[0]:
-            if not due:
-                continue
-            if args.debug:
-                print("due_requested: %s" % due_requested[0])
-            due = datetime.datetime.strptime(due, '%Y-%m-%d %H:%M:%S.%f')
-            if args.debug:
-                print("due value stored in note:", due)
-            if due > due_requested[0]:
-                when = (due - due_requested[0]).total_seconds()
-            else:
-                when = (due_requested[0]- due).total_seconds()
-            if args.debug:
-                print('when:', when)
-            if when < 0:
-                continue
-        count += 1
-        if args.count:
-            continue
-        else:
-            if nfound > 1:
-                if args.markdown:
-                    print("%s: " % f['hash'][0:hal], end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print("**%s** " % f['title'], end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print("*%s*" % f['keywords'][i], end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n\n")
+        if f['book'] > 0 and f['book'] != 1 and f['book'] not in books_used:
+            books_used.append(f['book'])
+        if f['book'] == 1:
+            have_default = True
+    books_used = sorted(books_used, key=lambda s: books[s].lower())
+    if have_default:
+        books_used.insert(0, 1)
+    for b in books_used:
+        if not args.count:
+            print(color.book + "%s" % nota.book_name(b) + color.normal + ":")
+        for f in found:
+            i = i + 1
+            #print(f)
+            try:
+                due = f['due']
+            except:
+                due = None
+            if due_requested[0]:
+                if not due:
+                    continue
+                if args.debug:
+                    print("due_requested: %s" % due_requested[0])
+                due = datetime.datetime.strptime(due, '%Y-%m-%d %H:%M:%S.%f')
+                if args.debug:
+                    print("due value stored in note:", due)
+                if due > due_requested[0]:
+                    when = (due - due_requested[0]).total_seconds()
                 else:
-                    print(color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print(color.keyword + f['keywords'][i] + color.normal, end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n")
-            else:
-                if args.markdown:
-                    print("%s: " % f['hash'][0:7], end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print("**%s** " % f['title'], end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print(f['keywords'][i], end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n\n")
-                    print("  created %s" % f['date'], end=" ")
-                    if f['due'] and len(f['due']) > 0:
-                        print(due_str(f['due']))
+                    when = (due_requested[0]- due).total_seconds()
+                if args.debug:
+                    print('when:', when)
+                if when < 0:
+                    continue
+            count += 1 # FIXME: bug: 'nota --count' gives a huge number
+            if not args.count:
+                if nfound > 1:
+                    if args.markdown:
+                        print("%s: " % f['hash'][0:hal], end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print("**%s** " % f['title'], end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print("*%s*" % f['keywords'][i], end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n\n")
                     else:
-                        print('')
-                    print('')
-                    content = f['content'].replace('\\n', '\n')
-                    for contentLine in content.split('\n'):
-                        c = contentLine.rstrip('\n')
-                        if len(c):
-                            print(" ", contentLine.rstrip('\n'), '\n')
-                    print('')
+                        if f['book'] == b:
+                            #print("{%s}" % f['book']) # a number
+                            print(indent + color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
+                            if show_id:
+                                print("(%s) " % f['noteId'], end="")
+                            print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                            #print("(" + color.hash + books[f['book']] + color.normal + ") ", end="")
+                            print("[", end="")
+                            nk = len(f['keywords'])
+                            for i in range(nk):
+                                print(color.keyword + f['keywords'][i] + color.normal, end="")
+                                if (i < nk-1):
+                                    print(", ", end="")
+                            print("]", end="\n")
                 else:
-                    print(color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
-                    if show_id:
-                        print("(%s) " % f['noteId'], end="")
-                    print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                    print("[", end="")
-                    nk = len(f['keywords'])
-                    for i in range(nk):
-                        print(color.keyword + f['keywords'][i] + color.normal, end="")
-                        if (i < nk-1):
-                            print(", ", end="")
-                    print("]", end="\n")
-                    print("  created %s" % f['date'], end=" ")
-                    if f['due'] and len(f['due']) > 0:
-                        print(due_str(f['due']))
-                    else:
+                    if args.markdown:
+                        print("%s: " % f['hash'][0:7], end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print("**%s** " % f['title'], end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print(f['keywords'][i], end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n\n")
+                        print("  created %s" % f['date'], end=" ")
+                        if f['due'] and len(f['due']) > 0:
+                            print(due_str(f['due']))
+                        else:
+                            print('')
                         print('')
-                    content = f['content'].replace('\\n', '\n')
-                    for contentLine in content.split('\n'):
-                        c = contentLine.rstrip('\n')
-                        if len(c):
-                            print(" ", contentLine.rstrip('\n'))
-                    #print('')
+                        content = f['content'].replace('\\n', '\n')
+                        for contentLine in content.split('\n'):
+                            c = contentLine.rstrip('\n')
+                            if len(c):
+                                print(" ", contentLine.rstrip('\n'), '\n')
+                        print('')
+                    else:
+                        print(indent + color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
+                        if show_id:
+                            print("(%s) " % f['noteId'], end="")
+                        print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                        #if len(books) > 1:
+                        #    print("(" + color.book + books[f['book']] + color.normal + ") ", end="")
+                        print("[", end="")
+                        nk = len(f['keywords'])
+                        for i in range(nk):
+                            print(color.keyword + f['keywords'][i] + color.normal, end="")
+                            if (i < nk-1):
+                                print(", ", end="")
+                        print("]", end="\n")
+                        print("  created %s" % f['date'], end=" ")
+                        if f['due'] and len(f['due']) > 0:
+                            print(due_str(f['due']))
+                        else:
+                            print('')
+                        content = f['content'].replace('\\n', '\n')
+                        for contentLine in content.split('\n'):
+                            c = contentLine.rstrip('\n')
+                            if len(c):
+                                print(" ", contentLine.rstrip('\n'))
+                        #print('')
     if args.count:
         print(count)
     if not args.count and args.verbose > 0:
