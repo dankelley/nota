@@ -391,26 +391,14 @@ def nota():
     else:
         content = ""
 
-    book = -1 # means all books
     if args.book:
         b = nota.book_index(args.book)
         if len(b) > 1:
             nota.error("Abbreviation '%s' matches to %d books: %s" % (args.book, len(b), b.keys()))
         book = b.values()[0]
         nota.fyi("--book yields book index %s" % book)
-        #exit(0)
-        #match = len(args.book) # permit initial-letters partial match
-        #existing = nota.list_books()
-        #matches = []
-        #for e in existing:
-        #    if not e == "Trash":
-        #        if args.book.lower() == e[0:match].lower():
-        #            matches.extend([e])
-        #if 1 == len(matches):
-        #    args.book = matches[0]
-        #    book = existing.index(matches[0]) # FIXME: not sure this is right; nota.book_number(matches[0])
-        #else:
-        #    nota.error("Book '%s' matches to %d books" % (args.book, len(matches)))
+    else:
+        book = -1
     
     if args.delete:
         nota.fyi("should now delete note %s" % args.delete)
@@ -447,6 +435,7 @@ def nota():
             i = i + 1
         for n in notes:
             try:
+                # The 'book' is ignored because different users have different books.
                 id = nota.add(title=n["title"], keywords=n['keywords'], content=n["content"], date=n['date'], due=n['due'])
             except:
                 nota.error("cannot create note with title '%s'" % n["title"])
@@ -493,13 +482,11 @@ def nota():
         # If no title is given, need to use the editor.
         if args.title == "":
             nota.fyi("should handle interactive now")
-            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
-                    #privacy=args.privacy, due=args.due)
-            #print("ee: %s" % ee)
+            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book)
             nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"])
         else:
             # FIXME: allow book below
-            nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
+            nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book)
         sys.exit(0)
 
     # By a process of elimination, we must be trying to find notes.
