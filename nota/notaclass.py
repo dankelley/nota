@@ -915,6 +915,8 @@ class Nota:
         booklist = ""
         for i in range(1, nbooks):
             booklist = booklist + str(i) + " (" + books[i] + ") "
+        if book < 0:
+            book = 1
         initial_message = u'''Instructions: fill in material following the ">" symbol.  (Items following
 the "?>" symbol are optional.  The title and keywords must each fit on one
 line. Use commas to separate keywords.  The content must start *below*
