@@ -40,7 +40,7 @@ def nota():
             'list notes within book: "nota -b Bookname"',
             'move note to new book: "nota --change-book hash Newbook"',
             'page nota output: "nota ... | less -r"',
-            'page nota output: "nota ... | more-r"',
+            'page nota output: "nota ... | more -r"',
             'rename book: "nota --rename-book Old New"',
             'rename keyword: "nota --rename-keyword Old New"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
