@@ -127,6 +127,7 @@ def nota():
     show_id = get_from_dotfile("~/.notarc", "show_id", False)
     debug = get_from_dotfile("~/.notarc", "debug", None)
     verbose = int(get_from_dotfile("~/.notarc", "verbose", -999))
+    pager = get_from_dotfile("~/.notarc", "pager", None)
    
     parser = argparse.ArgumentParser(prog="nota", description="Nota: an organizer for textual notes",
             formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -199,8 +200,7 @@ def nota():
     parser.add_argument("--list-keywords", action="store_true", dest="list_keywords", default=False, help="list keywords")
     parser.add_argument("--rename-book", type=str, nargs=2, help="rename notebook 'O' as 'N'", metavar=("O","N"))
     parser.add_argument("--rename-keyword", type=str, nargs=2, help="rename keyword 'O' as 'N'", metavar=("O","N"))
-    if False:
-        parser.add_argument("--pager", action="store_true", dest="pager", default=True, help="page output")
+    parser.add_argument("--pager", type=str, dest="pager", default=None, help="pager for long output; may be 'more' (the default), 'less', or 'none'. It will be called with arguments '-R -X -F', which make sense for both 'less' and 'more'. If not given with --pager, a value is searched for in ~/.notarc.", metavar="cmd")
     parser.add_argument("--count", action="store_true", dest="count", default=False, help="report only count of found results")
     parser.add_argument("--debug", action="store_true", dest="debug", default=False, help="set debugging on")
     parser.add_argument("--export", type=str, default=None, help="export notes matching hash (use has '-' for all notes)", metavar="hash")
@@ -301,8 +301,21 @@ def nota():
     
     if not args.debug:
         args.debug = debug
+
     if not args.database:
         args.database = defaultDatabase
+
+    # Use specified pager, with --pager taking precedence
+    if args.pager:
+        pager = args.pager
+    elif not pager:
+        pager = "less"
+    if not pager in ("less", "more", "none"):
+        print("pager must be 'less', 'more' or 'none', not '" + pager + "'")
+        exit(1)
+    if (not pager == "none") and sys.stdout.isatty():
+        sys.stdout = os.popen(pager + ' -R -X -F', 'w')
+
     if args.verbose is None:
         if verbose < 0:
             args.verbose = 1
