@@ -495,7 +495,7 @@ def nota():
             nota.fyi("should handle interactive now")
             ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
                     #privacy=args.privacy, due=args.due)
-            print("ee: %s" % ee)
+            #print("ee: %s" % ee)
             nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"])
         else:
             # FIXME: allow book below
