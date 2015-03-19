@@ -9,6 +9,8 @@ setup(name='nota',
       license='GPL3',
       packages=['nota'],
       classifiers=['Development Status :: 3 - Alpha',
+          'Environment :: Console',
+          'Topic :: Utilities',
           'License :: OSI Approved :: GNU General Public License v3 (GPLv3)'],
       test_suite="tests",
       entry_points={ 'console_scripts':
