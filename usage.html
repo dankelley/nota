@@ -131,6 +131,41 @@ nota --emptytrash
 <p>although this is not to be done lightly, because this is a permanent operation.
 </p>
 
+<h2>Organizing notes into books</h2>
+
+<p>When a database is created, it has two books: one named <code>Default</code>
+and another named <code>Trash</code>. Adding a note puts it into the first of
+these, and deleting it puts it into the second. The <code>Trash</code> book
+cannot be renamed, but the <code>Default</code> one can, with e.g.</p>
+<pre>
+nota --rename-book Default Poems
+</pre>
+<p>if you're storing poems there.</p>
+
+<p style="margin-top:1em">A new book can be created with e.g.</p>
+<pre>
+nota --create-book Recipes
+</pre>
+
+<p style="margin-top:1em"> Once there are two non-trash notebooks,
+<code>nota</code> will start displaying the book names in listings. You can
+restrict a listing to a particular book with the <code>-b</code> argument,
+e.g. poems about ham might be recovered with</p>
+<pre>
+nota -b Poems -k ham
+</pre>
+
+<p style="margin-top:1em">Books can be specified when notes are added, either
+with the <code>-b</code> argument or in the text editor.</p>
+
+<p style="margin-top:1em">The book in which a note resides can be changed
+easily, too. If a note with abbreviated hash <code>abc</code> was put into the
+<code>Recipe</code> book by mistake instead of in the <code>Poem</code> book,
+the mistake can be rectified with</p>
+<pre>
+nota --change-book Recipes Poems abc
+</pre>
+
 <h2>Sharing notes</h2>
 
 <p>Notes may be shared by a combination of <code>--export</code> and
@@ -148,6 +183,10 @@ nota --import ab.json
 single user to copy notes between databases. Using <code>-</code> for the note
 hash means to use all notes (except those in the trash). In any case, the
 newly-created note will have new hashes.</p>
+
+<p style="margin-top:1em">It should be noted that exported notes lose some
+information, e.g. the book in which they reside, because such things are likely
+to be different in a recipient database.</p>
 
 <h2>Customizing nota</h2>
 
