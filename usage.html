@@ -140,28 +140,22 @@ cannot be renamed, but the <code>Default</code> one can, with e.g.</p>
 <pre>
 nota --rename-book Default Poems
 </pre>
-<p>if you're storing poems there.</p>
-
-<p style="margin-top:1em">A new book can be created with e.g.</p>
+<p>if you're storing poems there.  A new book can be created with e.g.</p>
 <pre>
 nota --create-book Recipes
 </pre>
-
-<p style="margin-top:1em"> Once there are two non-trash notebooks,
-<code>nota</code> will start displaying the book names in listings. You can
-restrict a listing to a particular book with the <code>-b</code> argument,
-e.g. poems about ham might be recovered with</p>
+<p> Once there are two non-trash notebooks, <code>nota</code> will start
+displaying the book names in listings. You can restrict a listing to a
+particular book with the <code>-b</code> argument, e.g. poems about ham might
+be recovered with</p>
 <pre>
 nota -b Poems -k ham
 </pre>
-
-<p style="margin-top:1em">Books can be specified when notes are added, either
-with the <code>-b</code> argument or in the text editor.</p>
-
-<p style="margin-top:1em">The book in which a note resides can be changed
-easily, too. If a note with abbreviated hash <code>abc</code> was put into the
-<code>Recipe</code> book by mistake instead of in the <code>Poem</code> book,
-the mistake can be rectified with</p>
+<p>Books can be specified when notes are added, either with the <code>-b</code>
+argument or in the text editor.  The book in which a note resides can be
+changed easily, too. If a note with abbreviated hash <code>abc</code> was put
+into the <code>Recipe</code> book by mistake instead of in the
+<code>Poem</code> book, the mistake can be rectified with</p>
 <pre>
 nota --change-book Recipes Poems abc
 </pre>
