@@ -8,7 +8,7 @@ submenu: usage
 <p>A good way to learn how to use <code>nota</code> is to follow along in the
 steps given below.</p>
 
-<h2>Adding notes</h2>
+<h2><a name="adding_notes">Adding notes</a></h2>
 
 <p>The first thing you should do is to save a note.  This may be done interactively with e.g.</p>
 <pre>
@@ -37,7 +37,7 @@ nota -a -t="Second note" -c="Something wiser." -k="test,wiser"
 </pre>
 <p>we have enough to move on to listing and editing notes.</p>
 
-<h2>Listing notes</h2>
+<h2><a name="listing_notes">Listing notes</a></h2>
 
 <p>Typing</p>
 <pre>
@@ -96,7 +96,7 @@ match the given string. If none is found, then the second step is to do a
 ``fuzzy'' string comparision with the ``difflib.get_close_matches`` function.
 This second step can yield surprising results, owing</p>
 
-<h2>Editing notes</h2>
+<h2><a name="editing_notes">Editing notes</a></h2>
 
 <p>Of course, your notes won't be perfect, and you may want to edit them to fix
 errors or add new material. This is done with e.g.</p>
@@ -108,7 +108,7 @@ will open up a text editor, in which you will be able to change the note title,
 contents, keywords, etc. There is also a <code>DUE</code> item that you can
 set, for notes that are plans.</p>
 
-<h2>Deleting notes</h2>
+<h2><a name="deleting_notes">Deleting notes</a></h2>
 
 <p>A note may be deleted by e.g.</p>
 <pre>
@@ -160,7 +160,7 @@ into the <code>Recipe</code> book by mistake instead of in the
 nota --change-book Recipes Poems abc
 </pre>
 
-<h2>Sharing notes</h2>
+<h2><a name="sharing_notes">Sharing notes</a></h2>
 
 <p>Notes may be shared by a combination of <code>--export</code> and
 <code>--import</code> operations.  To share a note with hash <code>ab</code>,
@@ -182,7 +182,7 @@ newly-created note will have new hashes.</p>
 information, e.g. the book in which they reside, because such things are likely
 to be different in a recipient database.</p>
 
-<h2>Customizing nota</h2>
+<h2><a name="customizing_nota">Customizing nota</a></h2>
 
 <p><code>nota</code> may be customized with commandline arguments, and also
 with entries in a resource file named <code>~/.notarc</code>, which can contain
@@ -204,7 +204,7 @@ verbose = 0
 </pre>
 <p>in their <code>~/.notarc</code> file.</p>
 
-<h2>Running nota</h2>
+<h2><a name="running_nota">Running nota</a></h2>
 
 <p style="margin-top:1em">Many users will find it convenient to alias
 <code>nota</code> to a shorter name, e.g. the author uses</p>
@@ -221,7 +221,7 @@ alias np='nota --database=~/Dropbox/nota-personal.db'
 <p>means that <code>nw</code> uses a work-oriented database, while
 <code>np</code> uses a personal one.</p>
 
-<h2>Task count in bash prompt</h2>
+<h2><a name="task_count">Task count in bash prompt</a></h2>
 
 <p>To get a list of notes that are due today, put the following in your
 <code>~/.bash_profile</code> file:</p>
@@ -233,7 +233,7 @@ PS1="\h:\W"
 export PS1="$PS1<\$(nota_count)> "
 </pre>
 
-<h2>Learning more</h2>
+<h2><a name="learning_more">Learning more</a></h2>
 
 <p>Use</p>
 <pre>
