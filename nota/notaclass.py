@@ -304,9 +304,8 @@ class Nota:
         existing = self.list_books()
         matches = {}
         for i in range(len(existing)):
-            if not existing[i] == "Trash":
-                if book.lower() == existing[i][0:match].lower():
-                    matches[existing[i]] = i
+            if book.lower() == existing[i][0:match].lower():
+                matches[existing[i]] = i
         return(matches)
 
 
@@ -371,6 +370,19 @@ class Nota:
         to 7 words).  The keywords are comma-separated, and should be similar
         in style to others in the database.  The content may be of any length.'''
         #self.debug = 1
+        try:
+            known_books = []
+            for b in self.cur.execute("SELECT number FROM book;").fetchall():
+                known_books.extend(b)
+        except:
+            self.error("cannot look up list of known books")
+        #print("known_books %s" % known_books)
+        #print("book %s initially" % book)
+        if not book in known_books:
+            if book != -1:
+                self.warning("the book is not known, so switching to \"Default\"")
+            book = 1
+        #print("book %s later" % book)
         self.fyi("add with title='%s'" % title)
         self.fyi("add with keywords='%s'" % keywords)
         self.fyi("add with due='%s'" % due)
@@ -884,6 +896,7 @@ class Nota:
 
 
     def editor_entry(self, title, keywords, content, book=1, privacy=0, due=""):
+        #print("editor_entry(... book=%s ...)" % book)
         remaining = None
         books = self.list_books()
         nbooks = len(books)
@@ -902,6 +915,8 @@ class Nota:
         booklist = ""
         for i in range(1, nbooks):
             booklist = booklist + str(i) + " (" + books[i] + ") "
+        if book < 0:
+            book = 1
         initial_message = u'''Instructions: fill in material following the ">" symbol.  (Items following
 the "?>" symbol are optional.  The title and keywords must each fit on one
 line. Use commas to separate keywords.  The content must start *below*
@@ -918,6 +933,8 @@ DUE (E.G. 'tomorrow' or '3 days')?> %s
 CONTENT...
 %s
 ''' % (title, ",".join(k for k in keywords), booklist, book, due, content)
+        #print(initial_message)
+        #exit(0)
         try:
             # FIXME: is this polluting filespace with tmp files?
             file = tempfile.NamedTemporaryFile(suffix=".tmp") #, delete=False)

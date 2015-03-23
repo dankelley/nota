@@ -47,6 +47,11 @@ class TestNota(unittest.TestCase):
         self.assertEqual(books[0], "Trash")
         self.assertEqual(books[1], "Test")
         self.assertEqual(books[2], "Library")
+        self.assertEqual(0, len(self.nota.book_index("missing")))
+        self.assertEqual(0, self.nota.book_index("Trash").values()[0])
+        self.assertEqual(1, self.nota.book_index("Test").values()[0])
+        self.assertEqual(2, self.nota.book_index("Library").values()[0])
+
 
     def test_keywords(self):
         self.nota.add(title="foo", keywords=["test","foo"], content="")

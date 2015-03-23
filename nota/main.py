@@ -19,7 +19,6 @@ def nota():
             'add a note: "nota -a" (opens EDITOR)', 
             'add a note: "nota -a -t=title -c=content" (no EDITOR)', 
             'add a note: "nota -a -t=title -c=content" -k=keywords"(no EDITOR)', 
-            'add a book: "nota --add-book name"',
             'back up database by e.g. "cp ~/Dropbox/nota.db ~/nota-backup.db"',
             'create new book: "nota --create-book Bookname"',
             'create new note hashes: "nota --special rehash"',
@@ -27,6 +26,7 @@ def nota():
             'edit note with hash \'ab...\': "nota -e ab" (opens EDITOR)',
             'export all notes: "nota --export -" (import with \'--import\')',
             'export notes with hash \'ab...\': "nota --export ab"',
+            'get help: "nota -h"',
             'import notes: "nota --import file.json" ("file.json" from "--export")',
             'it is conventional to start book names with a capital letter',
             'list books: "nota --list-books"',
@@ -38,6 +38,7 @@ def nota():
             'list notes with hash \'ab...\': "nota ab"',
             'list notes with keyword \'foo\': "nota -k foo"',
             'list notes within book: "nota -b Bookname"',
+            'list notes without pager: "nota --pager=none"',
             'move note to new book: "nota --change-book hash Newbook"',
             'rename book: "nota --rename-book Old New"',
             'rename keyword: "nota --rename-keyword Old New"',
@@ -125,6 +126,7 @@ def nota():
     show_id = get_from_dotfile("~/.notarc", "show_id", False)
     debug = get_from_dotfile("~/.notarc", "debug", None)
     verbose = int(get_from_dotfile("~/.notarc", "verbose", -999))
+    pager = get_from_dotfile("~/.notarc", "pager", None)
    
     parser = argparse.ArgumentParser(prog="nota", description="Nota: an organizer for textual notes",
             formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -182,22 +184,22 @@ def nota():
         '''))
     
     parser.add_argument("hash", nargs="?", default="", help="abbreviated hash to search for", metavar="hash")
-    parser.add_argument("-a", "--add", action="store_true", dest="add", default=False, help="add a note")
-    parser.add_argument("-b", "--book", type=str, dest="book", default="", help="specify a book", metavar="book")
-    parser.add_argument("-e", "--edit", type=str, default=None, help="edit note with abbreviated hash 'h'", metavar="h")
-    parser.add_argument("-d", "--delete", type=str, default=None, help="move note abbreviated hash 'h' to trash", metavar="h")
-    parser.add_argument("-u", "--undelete", type=str, default=None, help="remove note with abbreviated hash 'h' from trash", metavar="h")
-    parser.add_argument("-t", "--title", type=str, default="", help="a short title", metavar="t")
-    parser.add_argument("-k", "--keywords", type=str, default="", help="string of comma-separated keywords", metavar="k")
+    parser.add_argument("-a", "--add", action="store_true", dest="add", default=False, help="add a note; may be given alone, or in combination with --title and possibly also with --content and --keywords")
+    parser.add_argument("-b", "--book", type=str, dest="book", default="", help="specify book named 'B'", metavar="B")
+    parser.add_argument("-e", "--edit", type=str, default=None, help="edit note with hash 'H'", metavar="H")
+    parser.add_argument("-d", "--delete", type=str, default=None, help="move note with hash 'H' to trash", metavar="H")
+    parser.add_argument("-u", "--undelete", type=str, default=None, help="remove note with hash 'H' from trash", metavar="H")
+    parser.add_argument("-t", "--title", type=str, default="", help="string with note title", metavar="T")
+    parser.add_argument("-k", "--keywords", type=str, default="", help="string with comma-separated keywords", metavar="K")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
-    parser.add_argument("-c", "--content", type=str, default="", help="string to be used for content", metavar="c")
-    parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book", metavar="book")
-    parser.add_argument("--change-book", nargs=2, type=str, default="", dest="change_book", help="move note with given hash to another book", metavar=("hash", "Book"))
+    parser.add_argument("-c", "--content", type=str, default="", help="string with note contents", metavar="C")
+    parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book named 'B'", metavar="B")
+    parser.add_argument("--change-book", nargs=2, type=str, default="", dest="change_book", help="move note with hash 'H' to book 'B'", metavar=("H", "B"))
     parser.add_argument("--list-books", action="store_true", dest="list_books", default=False, help="list books")
     parser.add_argument("--list-keywords", action="store_true", dest="list_keywords", default=False, help="list keywords")
-    parser.add_argument("--rename-book", type=str, nargs=2, help="rename a notebook", metavar=("old","new"))
-    parser.add_argument("--rename-keyword", type=str, nargs=2, help="rename a keyword", metavar=("old","new"))
-    parser.add_argument("--pager", action="store_true", dest="pager", default=True, help="page output")
+    parser.add_argument("--rename-book", type=str, nargs=2, help="rename notebook 'O' as 'N'", metavar=("O","N"))
+    parser.add_argument("--rename-keyword", type=str, nargs=2, help="rename keyword 'O' as 'N'", metavar=("O","N"))
+    parser.add_argument("--pager", type=str, dest="pager", default=None, help="pager for long output; may be 'more' (the default), 'less', or 'none'. It will be called with arguments '-R -X -F', which make sense for both 'less' and 'more'. If not given with --pager, a value is searched for in ~/.notarc.", metavar="cmd")
     parser.add_argument("--count", action="store_true", dest="count", default=False, help="report only count of found results")
     parser.add_argument("--debug", action="store_true", dest="debug", default=False, help="set debugging on")
     parser.add_argument("--export", type=str, default=None, help="export notes matching hash (use has '-' for all notes)", metavar="hash")
@@ -298,8 +300,21 @@ def nota():
     
     if not args.debug:
         args.debug = debug
+
     if not args.database:
         args.database = defaultDatabase
+
+    # Use specified pager, with --pager taking precedence
+    if args.pager:
+        pager = args.pager
+    elif not pager:
+        pager = "less"
+    if not pager in ("less", "more", "none"):
+        print("pager must be 'less', 'more' or 'none', not '" + pager + "'")
+        exit(1)
+    if (not pager == "none") and sys.stdout.isatty():
+        sys.stdout = os.popen(pager + ' -R -X -F', 'w')
+
     if args.verbose is None:
         if verbose < 0:
             args.verbose = 1
@@ -390,26 +405,14 @@ def nota():
     else:
         content = ""
 
-    book = -1 # means all books
     if args.book:
         b = nota.book_index(args.book)
         if len(b) > 1:
             nota.error("Abbreviation '%s' matches to %d books: %s" % (args.book, len(b), b.keys()))
         book = b.values()[0]
         nota.fyi("--book yields book index %s" % book)
-        #exit(0)
-        #match = len(args.book) # permit initial-letters partial match
-        #existing = nota.list_books()
-        #matches = []
-        #for e in existing:
-        #    if not e == "Trash":
-        #        if args.book.lower() == e[0:match].lower():
-        #            matches.extend([e])
-        #if 1 == len(matches):
-        #    args.book = matches[0]
-        #    book = existing.index(matches[0]) # FIXME: not sure this is right; nota.book_number(matches[0])
-        #else:
-        #    nota.error("Book '%s' matches to %d books" % (args.book, len(matches)))
+    else:
+        book = -1
     
     if args.delete:
         nota.fyi("should now delete note %s" % args.delete)
@@ -446,6 +449,7 @@ def nota():
             i = i + 1
         for n in notes:
             try:
+                # The 'book' is ignored because different users have different books.
                 id = nota.add(title=n["title"], keywords=n['keywords'], content=n["content"], date=n['date'], due=n['due'])
             except:
                 nota.error("cannot create note with title '%s'" % n["title"])
@@ -492,13 +496,11 @@ def nota():
         # If no title is given, need to use the editor.
         if args.title == "":
             nota.fyi("should handle interactive now")
-            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
-                    #privacy=args.privacy, due=args.due)
-            print("ee: %s" % ee)
+            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book)
             nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"])
         else:
             # FIXME: allow book below
-            nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due)
+            nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book)
         sys.exit(0)
 
     # By a process of elimination, we must be trying to find notes.
