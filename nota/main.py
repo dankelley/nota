@@ -305,6 +305,11 @@ def nota():
         args.database = defaultDatabase
 
     # Use specified pager, with --pager taking precedence
+    permit_pager = True
+    if args.special and "rehash" == args.special:
+        permit_pager = False
+    if args.export:
+        permit_pager = False
     if args.pager:
         pager = args.pager
     elif not pager:
@@ -312,7 +317,7 @@ def nota():
     if not pager in ("less", "more", "none"):
         print("pager must be 'less', 'more' or 'none', not '" + pager + "'")
         exit(1)
-    if (not pager == "none") and sys.stdout.isatty():
+    if permit_pager and (not pager == "none") and sys.stdout.isatty():
         sys.stdout = os.popen(pager + ' -R -X -F', 'w')
 
     if args.verbose is None:
