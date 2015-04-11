@@ -49,7 +49,7 @@ class Nota:
         self.cur = con.cursor()
         self.authorId = authorId
         ## 0.3: add note.modified column
-        self.appversion = [0, 7, 0] # db schema changes always yield first or second digit increment
+        self.appversion = [0, 7, 1] # db schema changes always yield first or second digit increment
         self.dbversion = self.appversion
         if mustInitialize:
             print("Initializing database; run 'nota' again to use it.")
@@ -246,7 +246,8 @@ class Nota:
             date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if not title:
             title = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(100))
-        return(hashlib.sha256((str(noteId) + str(date) + str(title)).encode('utf8')).hexdigest())
+        #print(str(title)+str(noteId)+str(date))
+        return(hashlib.sha256((str(title) + str(noteId) + str(date)).encode('utf8')).hexdigest())
 
 
     def book_name(self, number):
