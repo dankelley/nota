@@ -9,5 +9,7 @@ http://dankelley.github.io/nota for documentation on installing and using
 
 * 0.6.0: improve command arguments, esp. relating to searching and trash
 
-* 0.7.0: notes may be organized into books
+* 0.7.0: notes may be organized into books.
+
+* 0.7.1: add --pager argument (helps with long output)
 
