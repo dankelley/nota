@@ -548,7 +548,10 @@ def nota():
         books_used.insert(0, 1)
     for b in books_used:
         if not args.count and not args.due:
-            print(color.book + "%s" % nota.book_name(b) + color.normal + ":")
+            if args.markdown:
+                print("%s" % nota.book_name(b))
+            else:
+                print(color.book + "%s" % nota.book_name(b) + color.normal)
         for f in found:
             i = i + 1
             #print(f)
@@ -576,10 +579,10 @@ def nota():
             if not args.count:
                 if nfound > 1:
                     if args.markdown:
-                        print("%s: " % f['hash'][0:hal], end="")
+                        print("%s " % f['hash'][0:hal], end="")
                         if show_id:
                             print("(%s) " % f['noteId'], end="")
-                        print("**%s** " % f['title'], end="")
+                        print("**%s**\n\n" % f['title'], end="")
                         print("[", end="")
                         nk = len(f['keywords'])
                         for i in range(nk):
@@ -590,7 +593,7 @@ def nota():
                     else:
                         if f['book'] == b:
                             #print("{%s}" % f['book']) # a number
-                            print(indent + color.hash + "%s: " % f['hash'][0:hal] + color.normal, end="")
+                            print(indent + color.hash + "%s " % f['hash'][0:hal] + color.normal, end="")
                             if show_id:
                                 print("(%s) " % f['noteId'], end="")
                             print(color.title + "%s" % f['title'] + color.normal + " ", end="")
@@ -604,10 +607,10 @@ def nota():
                             print("]", end="\n")
                 else:
                     if args.markdown:
-                        print("%s: " % f['hash'][0:7], end="")
+                        print("%s\n\n" % f['hash'][0:7], end="")
                         if show_id:
                             print("(%s) " % f['noteId'], end="")
-                        print("**%s** " % f['title'], end="")
+                        print("**%s**\n\n" % f['title'], end="")
                         print("[", end="")
                         nk = len(f['keywords'])
                         for i in range(nk):
@@ -615,7 +618,7 @@ def nota():
                             if (i < nk-1):
                                 print(", ", end="")
                         print("]", end="\n\n")
-                        print("  created %s" % f['date'], end=" ")
+                        print("  %s" % f['date'], end=" ")
                         if f['due'] and len(f['due']) > 0:
                             print(due_str(f['due']))
                         else:
@@ -628,7 +631,7 @@ def nota():
                                 print(" ", contentLine.rstrip('\n'), '\n')
                         print('')
                     else:
-                        print(indent + color.hash + "%s: " % f['hash'][0:7] + color.normal, end="")
+                        print(indent + color.hash + "%s " % f['hash'][0:7] + color.normal, end="")
                         if show_id:
                             print("(%s) " % f['noteId'], end="")
                         print(color.title + "%s" % f['title'] + color.normal + " ", end="")
@@ -641,7 +644,7 @@ def nota():
                             if (i < nk-1):
                                 print(", ", end="")
                         print("]", end="\n")
-                        print("  created %s" % f['date'], end=" ")
+                        print("  %s" % f['date'], end=" ")
                         if f['due'] and len(f['due']) > 0:
                             print(due_str(f['due']))
                         else:
@@ -654,7 +657,7 @@ def nota():
                         #print('')
     if args.count:
         print(count)
-    if not args.count and args.verbose > 0:
+    if not args.count and args.verbose > 0 and not args.markdown:
         t = nota.trash_length()[0] # FIXME: should just return the [0]
         t = trash_count
         if t == 0:
@@ -663,8 +666,6 @@ def nota():
             print("The trash has 1 note matching ths search.")
         else:
             print("The trash has %s notes matching this search." % t)
-        if args.markdown:
-            print("\n")
         print("Hint:", end=" ")
         hint = random_hint()
         if args.markdown:
