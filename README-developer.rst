@@ -44,11 +44,11 @@ After this, the ``dist`` directory will contain some packages.
 Installing package locally
 --------------------------
 
-To install a local test version, do e.g. (with altered version number)
+To install a local test version, do e.g. (with the up-to-date version number, if the line below has the wrong one)
 
 ::
 
-    sudo -H pip install dist/nota-0.7.1.tar.gz --upgrade
+    sudo -H pip install dist/nota-0.7.2.tar.gz --upgrade
 
 Installing package on pypi.python
 ---------------------------------

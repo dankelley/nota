@@ -49,7 +49,7 @@ class Nota:
         self.cur = con.cursor()
         self.authorId = authorId
         ## 0.3: add note.modified column
-        self.appversion = [0, 7, 1] # db schema changes always yield first or second digit increment
+        self.appversion = [0, 7, 2] # db schema changes always yield first or second digit increment
         self.dbversion = self.appversion
         if mustInitialize:
             print("Initializing database; run 'nota' again to use it.")
@@ -974,10 +974,10 @@ CONTENT...
                     self.error("book cannot be > %s" % nbooks)
             elif "CONTENT" in line:
                 inContent = True
-        if not title:
-            self.error("no title given, so no note stored.")
         content = content.rstrip('\n')
         keywords = [key.lstrip().rstrip() for key in keywords.split(',')]
+        if not title and not content and (len(keywords) == 1 and not keywords[0]):
+            self.error("empty note, not stored. Please add title, keywords, or content.")
         self.fyi("LATE keywords= %s" % keywords)
         return {"title":title, "keywords":keywords, "content":content, "privacy":privacy, "book":book, "due":due}
 
