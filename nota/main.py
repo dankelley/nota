@@ -28,7 +28,6 @@ def nota():
             'export notes with hash \'ab...\': "nota --export ab"',
             'get help: "nota -h"',
             'import notes: "nota --import file.json" ("file.json" from "--export")',
-            'it is conventional to start book names with a capital letter',
             'list books: "nota --list-books"',
             'list keywords: "nota --list-keywords"',
             'list notes: "nota"',
