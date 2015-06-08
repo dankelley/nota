@@ -642,8 +642,9 @@ def nota():
                             print(color.keyword + f['keywords'][i] + color.normal, end="")
                             if (i < nk-1):
                                 print(", ", end="")
-                        print("]", end="\n")
-                        print("  %s" % f['date'], end=" ")
+                        print("]", end="")
+                        #print(" %s" % f['date'], end=" ")
+                        print(" %s " % nota.age(f['date']), end="")
                         if f['due'] and len(f['due']) > 0:
                             print(due_str(f['due']))
                         else:
