@@ -997,7 +997,7 @@ CONTENT...
 
     def age(self, d):
         d = datetime.datetime.strptime(d, '%Y-%m-%d %H:%M:%S')
-        diff = datetime.datetime.utcnow() - d
+        diff = datetime.datetime.now() - d
         s = diff.seconds
         if diff.days > 200 or diff.days < 0:
             return d.strftime('%y-%b-%d')
