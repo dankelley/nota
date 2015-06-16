@@ -360,9 +360,9 @@ def nota():
                 print("")
         exit(0)
 
-    if args.recent_notes:
-        print("RECENT NOTES... (not coded yet)", end="")
-        exit(0)
+    #if args.recent_notes:
+    #    print("RECENT NOTES... (not coded yet)", end="")
+    #    exit(0)
 
     if args.change_book:
         (hash, book) = args.change_book
@@ -528,6 +528,9 @@ def nota():
         nota.fyi("search notes by keyword (book=%s)" % book)
         found = nota.find_by_keyword(keywords=args.keywords, book=book)
         trash_count = len(nota.find_by_keyword(keywords=args.keywords, book=0))
+    elif args.recent_notes:
+        found = nota.find_recent(nrecent=4)
+        trash_count = 0
     else:
         nota.fyi("Search notes by hashless method (book=%s)" % book)
         found = nota.find_by_hash(hash=args.hash, book=book)

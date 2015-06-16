@@ -852,6 +852,36 @@ class Nota:
                     "date":note[2], "modified":note[7], "hash":note[8], "book":note[9]})
         return rval
 
+    
+    def find_recent(self, nrecent=4):
+        '''Find recent non-trashed notes'''
+        try:
+            rows = self.cur.execute("SELECT noteId FROM note WHERE book > 0 ORDER BY date DESC LIMIT 0, 4;").fetchall()
+        except:
+            self.error("nota.find_recent() cannot look up note list")
+        # Possibly save time by finding IDs first.
+        noteIds = []
+        for r in rows:
+            noteIds.append(r[0],)
+        self.fyi("noteIds: %s" % noteIds)
+        rval = []
+        for n in noteIds:
+            note = None
+            try:
+                note = self.cur.execute("SELECT noteId, date, title, content, hash, book FROM note WHERE noteId = ?;", [n]).fetchone()
+            except:
+                self.warning("Problem extracting note %s from database for recent-list" % n)
+                next
+            if note:
+                keywordIds = []
+                keywordIds.extend(self.con.execute("SELECT keywordid FROM notekeyword WHERE notekeyword.noteid=?;", [n]))
+                keywords = []
+                for k in keywordIds:
+                    keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId=?;", k).fetchone()[0])
+                rval.append({"noteId":note[0], "date":note[1], "title":note[2], "keywords":keywords,
+                    "content":note[3], "hash":note[4], "book":note[5]})
+        return rval
+
 
     def get_keywords(self, id):
         if id < 0:
