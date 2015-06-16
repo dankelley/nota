@@ -16,6 +16,7 @@ indent = "  "
 
 def nota():
     hints = [
+            'see recent notes "nota -r"',
             'add a note: "nota -a" (opens EDITOR)', 
             'add a note: "nota -a -t=title -c=content" (no EDITOR)', 
             'add a note: "nota -a -t=title -c=content" -k=keywords"(no EDITOR)', 
@@ -144,6 +145,7 @@ def nota():
         nota --import F         # import note(s) from file 'F'
         nota --create-book Foo  # create a new book named Foo
         nota -b Foo             # list notes in book named Foo
+        nota -r                 # list recent notes
 
     The ~/.notarc file may be used for customization, and may contain e.g. the
     following:
@@ -192,6 +194,7 @@ def nota():
     parser.add_argument("-k", "--keywords", type=str, default="", help="string with comma-separated keywords", metavar="K")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string with note contents", metavar="C")
+    parser.add_argument("-r", "--recent", action="store_true", dest="recent_notes", default=False, help="show recent notes")
     parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book named 'B'", metavar="B")
     parser.add_argument("--change-book", nargs=2, type=str, default="", dest="change_book", help="move note with hash 'H' to book 'B'", metavar=("H", "B"))
     parser.add_argument("--list-books", action="store_true", dest="list_books", default=False, help="list books")
@@ -355,6 +358,10 @@ def nota():
                 print(", ", end="")
             else:
                 print("")
+        exit(0)
+
+    if args.recent_notes:
+        print("RECENT NOTES... (not coded yet)", end="")
         exit(0)
 
     if args.change_book:
