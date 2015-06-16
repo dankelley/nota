@@ -613,7 +613,8 @@ def nota():
                                 print(color.keyword + f['keywords'][i] + color.normal, end="")
                                 if (i < nk-1):
                                     print(", ", end="")
-                            print("]", end="\n")
+                            print("]", end="")
+                            print(" %s " % nota.age(f['date']), end="\n")
                 else:
                     if args.markdown:
                         print("%s\n\n" % f['hash'][0:7], end="")

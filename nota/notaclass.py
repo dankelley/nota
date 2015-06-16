@@ -12,6 +12,7 @@ import subprocess
 import hashlib
 import random
 import string
+from math import trunc
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -1029,13 +1030,15 @@ CONTENT...
         d = datetime.datetime.strptime(d, '%Y-%m-%d %H:%M:%S')
         diff = datetime.datetime.now() - d
         s = diff.seconds
-        if diff.days > 200 or diff.days < 0:
-            return d.strftime('%y-%b-%d')
-        elif diff.days > 7 or diff.days < 0:
-            return d.strftime('%b %d')
-        elif diff.days == 1:
-            return '1 day ago'
-        elif diff.days > 1:
+        if diff.days < 0:
+            return d.strftime('%b %d, %Y')
+        elif diff.days > 200:
+            return d.strftime('%b %d, %Y')
+        elif diff.days > 7*4:
+            return '{} months ago'.format(trunc(0.5+diff.days/28))
+        elif diff.days > 7*2:
+            return '{} weeks ago'.format(trunc(0.5+diff.days/7))
+        elif diff.days > 1 and diff.days < 14:
             return '{} days ago'.format(diff.days)
         elif s <= 1:
             return 'just now'

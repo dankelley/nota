@@ -19,3 +19,5 @@ http://dankelley.github.io/nota for documentation on installing and using
 
 * 0.7.4: fix bug in note age
 
+* 0.7.5: indicate ages in relative manner
+
