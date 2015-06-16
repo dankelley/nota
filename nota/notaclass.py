@@ -12,6 +12,7 @@ import subprocess
 import hashlib
 import random
 import string
+from math import trunc
 
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -49,7 +50,7 @@ class Nota:
         self.cur = con.cursor()
         self.authorId = authorId
         ## 0.3: add note.modified column
-        self.appversion = [0, 7, 2] # db schema changes always yield first or second digit increment
+        self.appversion = [0, 7, 3] # db schema changes always yield first or second digit increment
         self.dbversion = self.appversion
         if mustInitialize:
             print("Initializing database; run 'nota' again to use it.")
@@ -852,6 +853,36 @@ class Nota:
                     "date":note[2], "modified":note[7], "hash":note[8], "book":note[9]})
         return rval
 
+    
+    def find_recent(self, nrecent=4):
+        '''Find recent non-trashed notes'''
+        try:
+            rows = self.cur.execute("SELECT noteId FROM note WHERE book > 0 ORDER BY date DESC LIMIT 0, 4;").fetchall()
+        except:
+            self.error("nota.find_recent() cannot look up note list")
+        # Possibly save time by finding IDs first.
+        noteIds = []
+        for r in rows:
+            noteIds.append(r[0],)
+        self.fyi("noteIds: %s" % noteIds)
+        rval = []
+        for n in noteIds:
+            note = None
+            try:
+                note = self.cur.execute("SELECT noteId, date, title, content, hash, book FROM note WHERE noteId = ?;", [n]).fetchone()
+            except:
+                self.warning("Problem extracting note %s from database for recent-list" % n)
+                next
+            if note:
+                keywordIds = []
+                keywordIds.extend(self.con.execute("SELECT keywordid FROM notekeyword WHERE notekeyword.noteid=?;", [n]))
+                keywords = []
+                for k in keywordIds:
+                    keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId=?;", k).fetchone()[0])
+                rval.append({"noteId":note[0], "date":note[1], "title":note[2], "keywords":keywords,
+                    "content":note[3], "hash":note[4], "book":note[5]})
+        return rval
+
 
     def get_keywords(self, id):
         if id < 0:
@@ -997,15 +1028,17 @@ CONTENT...
 
     def age(self, d):
         d = datetime.datetime.strptime(d, '%Y-%m-%d %H:%M:%S')
-        diff = datetime.datetime.utcnow() - d
+        diff = datetime.datetime.now() - d
         s = diff.seconds
-        if diff.days > 200 or diff.days < 0:
-            return d.strftime('%y-%b-%d')
-        elif diff.days > 7 or diff.days < 0:
-            return d.strftime('%b %d')
-        elif diff.days == 1:
-            return '1 day ago'
-        elif diff.days > 1:
+        if diff.days < 0:
+            return d.strftime('%b %d, %Y')
+        elif diff.days > 200:
+            return d.strftime('%b %d, %Y')
+        elif diff.days > 7*4:
+            return '{} months ago'.format(trunc(0.5+diff.days/28))
+        elif diff.days > 7*2:
+            return '{} weeks ago'.format(trunc(0.5+diff.days/7))
+        elif diff.days > 1 and diff.days < 14:
             return '{} days ago'.format(diff.days)
         elif s <= 1:
             return 'just now'

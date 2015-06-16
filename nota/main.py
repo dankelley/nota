@@ -16,6 +16,7 @@ indent = "  "
 
 def nota():
     hints = [
+            'see recent notes "nota -r"',
             'add a note: "nota -a" (opens EDITOR)', 
             'add a note: "nota -a -t=title -c=content" (no EDITOR)', 
             'add a note: "nota -a -t=title -c=content" -k=keywords"(no EDITOR)', 
@@ -28,7 +29,6 @@ def nota():
             'export notes with hash \'ab...\': "nota --export ab"',
             'get help: "nota -h"',
             'import notes: "nota --import file.json" ("file.json" from "--export")',
-            'it is conventional to start book names with a capital letter',
             'list books: "nota --list-books"',
             'list keywords: "nota --list-keywords"',
             'list notes: "nota"',
@@ -145,6 +145,7 @@ def nota():
         nota --import F         # import note(s) from file 'F'
         nota --create-book Foo  # create a new book named Foo
         nota -b Foo             # list notes in book named Foo
+        nota -r                 # list recent notes
 
     The ~/.notarc file may be used for customization, and may contain e.g. the
     following:
@@ -193,6 +194,7 @@ def nota():
     parser.add_argument("-k", "--keywords", type=str, default="", help="string with comma-separated keywords", metavar="K")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string with note contents", metavar="C")
+    parser.add_argument("-r", "--recent", action="store_true", dest="recent_notes", default=False, help="show recent notes")
     parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book named 'B'", metavar="B")
     parser.add_argument("--change-book", nargs=2, type=str, default="", dest="change_book", help="move note with hash 'H' to book 'B'", metavar=("H", "B"))
     parser.add_argument("--list-books", action="store_true", dest="list_books", default=False, help="list books")
@@ -358,6 +360,10 @@ def nota():
                 print("")
         exit(0)
 
+    #if args.recent_notes:
+    #    print("RECENT NOTES... (not coded yet)", end="")
+    #    exit(0)
+
     if args.change_book:
         (hash, book) = args.change_book
         nota.change_book(hash, book)
@@ -522,6 +528,9 @@ def nota():
         nota.fyi("search notes by keyword (book=%s)" % book)
         found = nota.find_by_keyword(keywords=args.keywords, book=book)
         trash_count = len(nota.find_by_keyword(keywords=args.keywords, book=0))
+    elif args.recent_notes:
+        found = nota.find_recent(nrecent=4)
+        trash_count = 0
     else:
         nota.fyi("Search notes by hashless method (book=%s)" % book)
         found = nota.find_by_hash(hash=args.hash, book=book)
@@ -604,7 +613,8 @@ def nota():
                                 print(color.keyword + f['keywords'][i] + color.normal, end="")
                                 if (i < nk-1):
                                     print(", ", end="")
-                            print("]", end="\n")
+                            print("]", end="")
+                            print(" %s " % nota.age(f['date']), end="\n")
                 else:
                     if args.markdown:
                         print("%s\n\n" % f['hash'][0:7], end="")
