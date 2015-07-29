@@ -638,7 +638,10 @@ def nota():
                         for contentLine in content.split('\n'):
                             c = contentLine.rstrip('\n')
                             if len(c):
-                                print(" ", contentLine.rstrip('\n'), '\n')
+                                if args.markdown:
+                                    print(contentLine.rstrip('\n'), '\n')
+                                else:
+                                    print(" ", contentLine.rstrip('\n'), '\n')
                         print('')
                     else:
                         print(indent + color.hash + "%s " % f['hash'][0:7] + color.normal, end="")
@@ -664,7 +667,10 @@ def nota():
                         for contentLine in content.split('\n'):
                             c = contentLine.rstrip('\n')
                             if len(c):
-                                print(" ", contentLine.rstrip('\n'))
+                                if args.markdown:
+                                    print(contentLine.rstrip('\n'))
+                                else:
+                                    print(" ", contentLine.rstrip('\n'))
                         #print('')
     if args.count:
         print(count)
