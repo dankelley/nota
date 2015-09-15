@@ -48,7 +48,7 @@ To install a local test version, do e.g. (with the up-to-date version number, if
 
 ::
 
-    sudo -H pip install dist/nota-0.7.5.tar.gz --upgrade
+    sudo -H pip install dist/nota-0.7.6.tar.gz --upgrade
 
 Installing package on pypi.python
 ---------------------------------
