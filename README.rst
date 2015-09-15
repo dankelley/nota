@@ -1,4 +1,4 @@
-.. image:: https://travis-ci.org/dankelley/nota.svg?branch=develop
+.. image:: https://travis-ci.org/dankelley/nota.svg?branch=master
     :target: https://travis-ci.org/dankelley/nota
 
 ``nota`` is an open-source application for organizing textual notes and
