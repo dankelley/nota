@@ -50,7 +50,7 @@ class Nota:
         self.cur = con.cursor()
         self.authorId = authorId
         ## 0.3: add note.modified column
-        self.appversion = [0, 7, 3] # db schema changes always yield first or second digit increment
+        self.appversion = [0, 7, 6] # db schema changes always yield first or second digit increment
         self.dbversion = self.appversion
         if mustInitialize:
             print("Initializing database; run 'nota' again to use it.")
