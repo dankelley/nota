@@ -23,6 +23,7 @@ def nota():
             'back up database by e.g. "cp ~/Dropbox/nota.db ~/nota-backup.db"',
             'create new book: "nota --create-book Bookname"',
             'create new note hashes: "nota --special rehash"',
+            'create PDF of note with hash \'abcd\': "nota --markdown abcd | pandoc -V geometry:margin=1in -o abcd.pdf"',
             'delete note with hash \'ab...\': "nota -d ab"',
             'edit note with hash \'ab...\': "nota -e ab" (opens EDITOR)',
             'export all notes: "nota --export -" (import with \'--import\')',
@@ -558,9 +559,9 @@ def nota():
     for b in books_used:
         if not args.count and not args.due:
             if args.markdown:
-                print("%s" % nota.book_name(b))
+                print("Book: %s" % nota.book_name(b), end="\n\n")
             else:
-                print(color.book + "%s" % nota.book_name(b) + color.normal)
+                print(color.book + "Book: %s" % nota.book_name(b) + color.normal, end="\n")
         for f in found:
             i = i + 1
             #print(f)
@@ -588,10 +589,10 @@ def nota():
             if not args.count:
                 if nfound > 1:
                     if args.markdown:
-                        print("%s " % f['hash'][0:hal], end="")
+                        print("%s" % f['hash'][0:hal], end="\n")
                         if show_id:
                             print("(%s) " % f['noteId'], end="")
-                        print("**%s**\n\n" % f['title'], end="")
+                        print("Title: %s\n\n" % f['title'], end="")
                         print("[", end="")
                         nk = len(f['keywords'])
                         for i in range(nk):
@@ -605,7 +606,7 @@ def nota():
                             print(indent + color.hash + "%s " % f['hash'][0:hal] + color.normal, end="")
                             if show_id:
                                 print("(%s) " % f['noteId'], end="")
-                            print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                            print(color.title + "Title: %s" % f['title'] + color.normal + " ", end="")
                             #print("(" + color.hash + books[f['book']] + color.normal + ") ", end="")
                             print("[", end="")
                             nk = len(f['keywords'])
@@ -617,18 +618,18 @@ def nota():
                             print(" %s " % nota.age(f['date']), end="\n")
                 else:
                     if args.markdown:
-                        print("%s\n\n" % f['hash'][0:7], end="")
+                        print("Hash: `%s`\n\n" % f['hash'][0:7], end="")
                         if show_id:
                             print("(%s) " % f['noteId'], end="")
-                        print("**%s**\n\n" % f['title'], end="")
-                        print("[", end="")
+                        print("Title: %s\n\n" % f['title'], end="")
+                        print("Keywords: ", end="")
                         nk = len(f['keywords'])
                         for i in range(nk):
                             print(f['keywords'][i], end="")
                             if (i < nk-1):
                                 print(", ", end="")
-                        print("]", end="\n\n")
-                        print("  %s" % f['date'], end=" ")
+                        print("", end="\n\n")
+                        print("Created: %s" % f['date'], end=" ")
                         if f['due'] and len(f['due']) > 0:
                             print(due_str(f['due']))
                         else:
