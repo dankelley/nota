@@ -184,7 +184,6 @@ def nota():
     
 
         '''))
-    
     parser.add_argument("hash", nargs="?", default="", help="abbreviated hash to search for", metavar="hash")
     parser.add_argument("-a", "--add", action="store_true", dest="add", default=False, help="add a note; may be given alone, or in combination with --title and possibly also with --content and --keywords")
     parser.add_argument("-b", "--book", type=str, dest="book", default="", help="specify book named 'B'", metavar="B")
@@ -195,7 +194,8 @@ def nota():
     parser.add_argument("-k", "--keywords", type=str, default="", help="string with comma-separated keywords", metavar="K")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string with note contents", metavar="C")
-    parser.add_argument("-r", "--recent", action="store_true", dest="recent_notes", default=False, help="show recent notes")
+    #parser.add_argument("-r", "--recent", action="store_true", dest="recent_notes", default=False, help="show recent notes")
+    parser.add_argument("-r", "--recent", nargs='?', type=int, action="store", const=-2, default=-1, dest="recent_notes", help="show N recent notes (defaults to N=4)", metavar="N")
     parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book named 'B'", metavar="B")
     parser.add_argument("--change-book", nargs=2, type=str, default="", dest="change_book", help="move note with hash 'H' to book 'B'", metavar=("H", "B"))
     parser.add_argument("--list-books", action="store_true", dest="list_books", default=False, help="list books")
@@ -530,7 +530,13 @@ def nota():
         found = nota.find_by_keyword(keywords=args.keywords, book=book)
         trash_count = len(nota.find_by_keyword(keywords=args.keywords, book=0))
     elif args.recent_notes:
-        found = nota.find_recent(nrecent=4)
+        if args.recent_notes is -2:
+            found = nota.find_recent(nrecent=4)
+        elif args.recent_notes is -1:
+            found = nota.find_by_hash(hash=args.hash, book=book)
+            trash_count = len(nota.find_by_hash(hash=args.hash, book=0))
+        else:
+            found = nota.find_recent(nrecent=args.recent_notes)
         trash_count = 0
     else:
         nota.fyi("Search notes by hashless method (book=%s)" % book)
@@ -660,9 +666,12 @@ def nota():
                         print("]", end="")
                         #print(" %s" % f['date'], end=" ")
                         print(" %s " % nota.age(f['date']), end="")
-                        if f['due'] and len(f['due']) > 0:
-                            print(due_str(f['due']))
-                        else:
+                        try:
+                            if f['due'] and len(f['due']) > 0:
+                                print(due_str(f['due']))
+                            else:
+                                print('')
+                        except:
                             print('')
                         content = f['content'].replace('\\n', '\n')
                         for contentLine in content.split('\n'):

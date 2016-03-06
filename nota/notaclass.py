@@ -857,7 +857,7 @@ class Nota:
     def find_recent(self, nrecent=4):
         '''Find recent non-trashed notes'''
         try:
-            rows = self.cur.execute("SELECT noteId FROM note WHERE book > 0 ORDER BY date DESC LIMIT 0, 4;").fetchall()
+            rows = self.cur.execute("SELECT noteId FROM note WHERE book > 0 ORDER BY date DESC LIMIT %d;"%nrecent).fetchall()
         except:
             self.error("nota.find_recent() cannot look up note list")
         # Possibly save time by finding IDs first.
