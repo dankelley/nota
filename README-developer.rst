@@ -48,7 +48,8 @@ To install a local test version, do e.g. (with the up-to-date version number, if
 
 ::
 
-    sudo -H pip install dist/nota-0.7.7.tar.gz --upgrade
+    sudo -H pip install dist/nota-0.7.8.tar.gz --upgrade
+
 
 Installing package on pypi.python
 ---------------------------------
@@ -59,6 +60,11 @@ then do:
 ::
 
     twine upload dist/*
+
+
+**Reminder** After uploading, be sure to increment the version number in line 4
+of setup.py and also in the present file, at the instruction in the previous
+subsection. It might be smart to grep all files for these patterns, actually.
 
 Suggested aliases for nota
 --------------------------
