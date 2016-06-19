@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='nota',
-      version='0.7.8',
+      version='0.7.9',
       description='Text-based note taker',
       url='https://github.com/dankelley/nota',
       author='Dan Kelley',

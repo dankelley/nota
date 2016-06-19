@@ -20,6 +20,22 @@ to install it. Next, install ``wheel``
 
 Note: the steps listed above need only be done once.
 
+Increasing the version number
+-----------------------------
+
+Several manual steps are required.
+
+1. Alter the 'version=' line in `setup.py`.
+2. Ensure that `README.rst` has an entry for the version.
+3. Ensure that the version numbers in the present document are updated, so that
+   cut/paste will work for local installations.
+4. Update the `self.appversion =` line in `nota/notaclass.py` for the new version. Look 
+   carefully at the nearby code, if changes have been made to the database.
+5. Remove old files from the `dist/` directory.   
+6. Perform the steps listed under "Packaging" and "Installing package locally" below.
+7. Use it for a while, only updating to pypi (see "Installing package on pypi.python" below) 
+   when it is clear that this new version is good.
+
 Testing before packaging
 ------------------------
 
@@ -48,7 +64,7 @@ To install a local test version, do e.g. (with the up-to-date version number, if
 
 ::
 
-    sudo -H pip install dist/nota-0.7.8.tar.gz --upgrade
+    sudo -H pip install dist/nota-0.7.9.tar.gz --upgrade
 
 
 Installing package on pypi.python
