@@ -8,6 +8,8 @@ http://dankelley.github.io/nota for documentation on installing and using
 
 **Version history**
 
+* 0.7.8: aesthetic improvements
+
 * 0.7.7: --recent improved
 
 * 0.7.6: --markdown improvements; --recent added

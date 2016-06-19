@@ -598,7 +598,7 @@ def nota():
                         print("%s" % f['hash'][0:hal], end="\n")
                         if show_id:
                             print("(%s) " % f['noteId'], end="")
-                        print("Title: %s\n\n" % f['title'], end="")
+                        print("%s\n\n" % f['title'], end="")
                         print("[", end="")
                         nk = len(f['keywords'])
                         for i in range(nk):
@@ -612,7 +612,7 @@ def nota():
                             print(indent + color.hash + "%s " % f['hash'][0:hal] + color.normal, end="")
                             if show_id:
                                 print("(%s) " % f['noteId'], end="")
-                            print(color.title + "Title: %s" % f['title'] + color.normal + " ", end="")
+                            print(color.title + "%s" % f['title'] + color.normal + " ", end="")
                             #print("(" + color.hash + books[f['book']] + color.normal + ") ", end="")
                             print("[", end="")
                             nk = len(f['keywords'])
@@ -627,7 +627,7 @@ def nota():
                         print("Hash: `%s`\n\n" % f['hash'][0:7], end="")
                         if show_id:
                             print("(%s) " % f['noteId'], end="")
-                        print("Title: %s\n\n" % f['title'], end="")
+                        print("%s\n\n" % f['title'], end="")
                         print("Keywords: ", end="")
                         nk = len(f['keywords'])
                         for i in range(nk):
