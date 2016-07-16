@@ -50,7 +50,7 @@ class Nota:
         self.cur = con.cursor()
         self.authorId = authorId
         ## 0.3: add note.modified column
-        self.appversion = [0, 7, 3] # db schema changes always yield first or second digit increment
+        self.appversion = [0, 7, 9] # db schema changes always yield first or second digit increment
         self.dbversion = self.appversion
         if mustInitialize:
             print("Initializing database; run 'nota' again to use it.")
@@ -233,7 +233,7 @@ class Nota:
 
 
     def version(self):
-        return("Nota %d.%d.%d" % (self.appversion[0], self.appversion[1], self.appversion[2]))
+        return("nota version %d.%d.%d" % (self.appversion[0], self.appversion[1], self.appversion[2]))
 
 
     def compute_hash(self, noteId, date, title):
@@ -857,7 +857,7 @@ class Nota:
     def find_recent(self, nrecent=4):
         '''Find recent non-trashed notes'''
         try:
-            rows = self.cur.execute("SELECT noteId FROM note WHERE book > 0 ORDER BY date DESC LIMIT 0, 4;").fetchall()
+            rows = self.cur.execute("SELECT noteId FROM note WHERE book > 0 ORDER BY date DESC LIMIT %d;"%nrecent).fetchall()
         except:
             self.error("nota.find_recent() cannot look up note list")
         # Possibly save time by finding IDs first.

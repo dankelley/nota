@@ -23,6 +23,7 @@ def nota():
             'back up database by e.g. "cp ~/Dropbox/nota.db ~/nota-backup.db"',
             'create new book: "nota --create-book Bookname"',
             'create new note hashes: "nota --special rehash"',
+            'create PDF of note with hash \'abcd\': "nota --markdown abcd | pandoc -V geometry:margin=1in -o abcd.pdf"',
             'delete note with hash \'ab...\': "nota -d ab"',
             'edit note with hash \'ab...\': "nota -e ab" (opens EDITOR)',
             'export all notes: "nota --export -" (import with \'--import\')',
@@ -183,7 +184,6 @@ def nota():
     
 
         '''))
-    
     parser.add_argument("hash", nargs="?", default="", help="abbreviated hash to search for", metavar="hash")
     parser.add_argument("-a", "--add", action="store_true", dest="add", default=False, help="add a note; may be given alone, or in combination with --title and possibly also with --content and --keywords")
     parser.add_argument("-b", "--book", type=str, dest="book", default="", help="specify book named 'B'", metavar="B")
@@ -194,7 +194,8 @@ def nota():
     parser.add_argument("-k", "--keywords", type=str, default="", help="string with comma-separated keywords", metavar="K")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string with note contents", metavar="C")
-    parser.add_argument("-r", "--recent", action="store_true", dest="recent_notes", default=False, help="show recent notes")
+    #parser.add_argument("-r", "--recent", action="store_true", dest="recent_notes", default=False, help="show recent notes")
+    parser.add_argument("-r", "--recent", nargs='?', type=int, action="store", const=-2, default=-1, dest="recent_notes", help="show N recent notes (defaults to N=4)", metavar="N")
     parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book named 'B'", metavar="B")
     parser.add_argument("--change-book", nargs=2, type=str, default="", dest="change_book", help="move note with hash 'H' to book 'B'", metavar=("H", "B"))
     parser.add_argument("--list-books", action="store_true", dest="list_books", default=False, help="list books")
@@ -529,7 +530,13 @@ def nota():
         found = nota.find_by_keyword(keywords=args.keywords, book=book)
         trash_count = len(nota.find_by_keyword(keywords=args.keywords, book=0))
     elif args.recent_notes:
-        found = nota.find_recent(nrecent=4)
+        if args.recent_notes is -2:
+            found = nota.find_recent(nrecent=4)
+        elif args.recent_notes is -1:
+            found = nota.find_by_hash(hash=args.hash, book=book)
+            trash_count = len(nota.find_by_hash(hash=args.hash, book=0))
+        else:
+            found = nota.find_recent(nrecent=args.recent_notes)
         trash_count = 0
     else:
         nota.fyi("Search notes by hashless method (book=%s)" % book)
@@ -558,9 +565,9 @@ def nota():
     for b in books_used:
         if not args.count and not args.due:
             if args.markdown:
-                print("%s" % nota.book_name(b))
+                print("Book: %s" % nota.book_name(b), end="\n\n")
             else:
-                print(color.book + "%s" % nota.book_name(b) + color.normal)
+                print(color.book + "Book: %s" % nota.book_name(b) + color.normal, end="\n")
         for f in found:
             i = i + 1
             #print(f)
@@ -588,10 +595,10 @@ def nota():
             if not args.count:
                 if nfound > 1:
                     if args.markdown:
-                        print("%s " % f['hash'][0:hal], end="")
+                        print("%s" % f['hash'][0:hal], end="\n")
                         if show_id:
                             print("(%s) " % f['noteId'], end="")
-                        print("**%s**\n\n" % f['title'], end="")
+                        print("%s\n\n" % f['title'], end="")
                         print("[", end="")
                         nk = len(f['keywords'])
                         for i in range(nk):
@@ -617,18 +624,18 @@ def nota():
                             print(" %s " % nota.age(f['date']), end="\n")
                 else:
                     if args.markdown:
-                        print("%s\n\n" % f['hash'][0:7], end="")
+                        print("Hash: `%s`\n\n" % f['hash'][0:7], end="")
                         if show_id:
                             print("(%s) " % f['noteId'], end="")
-                        print("**%s**\n\n" % f['title'], end="")
-                        print("[", end="")
+                        print("%s\n\n" % f['title'], end="")
+                        print("Keywords: ", end="")
                         nk = len(f['keywords'])
                         for i in range(nk):
                             print(f['keywords'][i], end="")
                             if (i < nk-1):
                                 print(", ", end="")
-                        print("]", end="\n\n")
-                        print("  %s" % f['date'], end=" ")
+                        print("", end="\n\n")
+                        print("Created: %s" % f['date'], end=" ")
                         if f['due'] and len(f['due']) > 0:
                             print(due_str(f['due']))
                         else:
@@ -659,9 +666,12 @@ def nota():
                         print("]", end="")
                         #print(" %s" % f['date'], end=" ")
                         print(" %s " % nota.age(f['date']), end="")
-                        if f['due'] and len(f['due']) > 0:
-                            print(due_str(f['due']))
-                        else:
+                        try:
+                            if f['due'] and len(f['due']) > 0:
+                                print(due_str(f['due']))
+                            else:
+                                print('')
+                        except:
                             print('')
                         content = f['content'].replace('\\n', '\n')
                         for contentLine in content.split('\n'):

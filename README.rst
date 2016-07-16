@@ -1,4 +1,4 @@
-.. image:: https://travis-ci.org/dankelley/nota.svg?branch=develop
+.. image:: https://travis-ci.org/dankelley/nota.svg?branch=master
     :target: https://travis-ci.org/dankelley/nota
 
 ``nota`` is an open-source application for organizing textual notes and
@@ -8,7 +8,13 @@ http://dankelley.github.io/nota for documentation on installing and using
 
 **Version history**
 
-* 0.7.6: --markdown improvements
+* 0.7.9: TBA
+
+* 0.7.8: aesthetic improvements
+
+* 0.7.7: --recent improved
+
+* 0.7.6: --markdown improvements; --recent added
 
 * 0.7.5: indicate ages in relative manner
 
