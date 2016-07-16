@@ -192,6 +192,7 @@ def nota():
     parser.add_argument("-u", "--undelete", type=str, default=None, help="remove note with hash 'H' from trash", metavar="H")
     parser.add_argument("-t", "--title", type=str, default="", help="string with note title", metavar="T")
     parser.add_argument("-k", "--keywords", type=str, default="", help="string with comma-separated keywords", metavar="K")
+    parser.add_argument("-A", "--attachments", type=str, default="", help="string with comma-separated filenames", metavar="A")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string with note contents", metavar="C")
     #parser.add_argument("-r", "--recent", action="store_true", dest="recent_notes", default=False, help="show recent notes")
@@ -234,6 +235,8 @@ def nota():
    
     args.keywordsoriginal = args.keywords
     args.keywords = [key.strip() for key in args.keywords.split(',')]
+    args.attachmentsoriginal = args.attachments
+    args.attachments = [key.strip() for key in args.attachments.split(',')]
     #args.Keywordsoriginal = args.Keywords
     #args.Keywords = [Key.lstrip().rstrip() for Key in args.Keywords.split(',')]
 
@@ -507,12 +510,16 @@ def nota():
             nota.error("cannot specify a hash-code if the -a argument is given")
         # If no title is given, need to use the editor.
         if args.title == "":
-            nota.fyi("should handle interactive now")
-            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book)
-            nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"])
+            ee = nota.editor_entry(title=args.title, content=args.content, keywords=args.keywords, attachments=args.attachments, due=args.due, book=book)
+            nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"],
+                    attachments=ee["attachments"])
+            print("FIXME(dk): add attachments now (from editor)")
+            print(ee["attachments"])
         else:
             # FIXME: allow book below
-            nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book)
+            nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book,
+                    attachments=args.attachments)
+            print("FIXME(dk): add attachments now (from args)")
         sys.exit(0)
 
     # By a process of elimination, we must be trying to find notes.

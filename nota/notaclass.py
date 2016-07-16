@@ -382,10 +382,12 @@ class Nota:
         self.con.commit()
 
 
-    def add(self, title="", keywords="", content="", due="", book=1, privacy=0, date="", modified=""):
+    def add(self, title="", keywords="", content="", attachments="", due="", book=1, privacy=0, date="", modified=""):
         ''' Add a note to the database.  The title should be short (perhaps 3
         to 7 words).  The keywords are comma-separated, and should be similar
-        in style to others in the database.  The content may be of any length.'''
+        in style to others in the database.  The content may be of any length. The
+        attachments are comma-separated, and must be full pathnames to files 
+        that exist.'''
         #self.debug = 1
         try:
             known_books = []
@@ -402,6 +404,7 @@ class Nota:
         #print("book %s later" % book)
         self.fyi("add with title='%s'" % title)
         self.fyi("add with keywords='%s'" % keywords)
+        self.fyi("add with attachments='%s'" % attachments)
         self.fyi("add with due='%s'" % due)
         self.fyi("add with book='%s'" % book)
         if not isinstance(due, str):
@@ -435,8 +438,19 @@ class Nota:
                 self.cur.execute("INSERT INTO keyword(keyword) VALUES (?);", [keyword])
                 keywordId = self.cur.lastrowid
             self.con.execute("INSERT INTO notekeyword(noteId, keywordID) VALUES(?, ?)", [noteId, keywordId])
+        for attachment in attachments:
+            self.fyi("  (SHOULD BE) inserting attachment: '%s'" % attachment)
         self.con.commit()
         self.fyi("add() returning noteId=%d ... is all ok?" % noteId)
+        # Handle attachments. These must be existing files.
+        print("ATTACHMENTS:")
+        attachments = [key.lstrip().rstrip() for key in attachments.split(',')]
+        for attachment in attachments:
+            print(attachment)
+            if not os.path.isfile(attachment):
+                print(" ... file does not exist")
+            else:
+                print(" ... file exists")
         return noteId
 
 
@@ -651,7 +665,8 @@ class Nota:
         old = old[0]
         keywords = []
         keywords.extend(self.get_keywords(old['noteId']))
-        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], book=old['book'], due=old['due'])
+        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], attachments=old['attachments'], 
+                book=old['book'], due=old['due'])
         noteId = int(old["noteId"])
         try:
             self.cur.execute("UPDATE note SET title = (?) WHERE noteId = ?;", (ee["title"], noteId))
@@ -672,6 +687,8 @@ class Nota:
                 self.cur.execute("UPDATE note SET due=(?) WHERE noteId=?;", (due, noteId))
             except:
                 self.error("cannot update the 'due' date")
+        print("ATTACHMENTS:")
+        print(ee["attachments"])
         self.con.commit()
         return noteId
 
@@ -942,8 +959,7 @@ class Nota:
         return due
 
 
-    def editor_entry(self, title, keywords, content, book=1, privacy=0, due=""):
-        #print("editor_entry(... book=%s ...)" % book)
+    def editor_entry(self, title, content, keywords, attachments, book=1, privacy=0, due=""):
         remaining = None
         books = self.list_books()
         nbooks = len(books)
@@ -973,13 +989,15 @@ TITLE> %s
 
 KEYWORDS?> %s
 
+ATTACHMENTS?> %s
+
 BOOK (integer: %s) > %s
 
 DUE (E.G. 'tomorrow' or '3 days')?> %s
 
 CONTENT...
 %s
-''' % (title, ",".join(k for k in keywords), booklist, book, due, content)
+''' % (title, ",".join(k for k in keywords), ",".join(a for a in attachments), booklist, book, due, content)
         #print(initial_message)
         #exit(0)
         try:
@@ -1012,6 +1030,8 @@ CONTENT...
                 PRIVACY = re.sub(r'.*>', '', line).strip()
             elif "KEYWORDS" in line:
                 keywords = re.sub(r'.*>', '', line).strip()
+            elif "ATTACHMENTS" in line:
+                attachments = re.sub(r'.*>', '', line).strip()
             elif "BOOK" in line:
                 book = int(re.sub(r'.*>', '', line).strip())
                 if book < 1:
@@ -1025,7 +1045,8 @@ CONTENT...
         if not title and not content and (len(keywords) == 1 and not keywords[0]):
             self.error("empty note, not stored. Please add title, keywords, or content.")
         self.fyi("LATE keywords= %s" % keywords)
-        return {"title":title, "keywords":keywords, "content":content, "privacy":privacy, "book":book, "due":due}
+        return {"title":title, "keywords":keywords, "content":content, "attachments":attachments,
+                "privacy":privacy, "book":book, "due":due}
 
 
     def rename_keyword(self, old, new):
