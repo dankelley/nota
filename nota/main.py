@@ -214,7 +214,7 @@ def nota():
     defaultDatabase = get_from_dotfile("~/.notarc", "database", "~/Dropbox/nota.db")
     # Back to the parser
     parser.add_argument("--color", type=str, default=None, help="specify named scheme or True/False", metavar="c")
-    parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database", metavar="db")
+    parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database (defaults to ~/Dropbox/nota.db if not supplied as this argument, and if not specified in the ~/.notarc", metavar="db")
     parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
     parser.add_argument("--empty-trash", action="store_true", dest="empty_trash", default=False, help="empty trash, permanently deleting notes therein")
     parser.add_argument("--hints", action="store_true", dest="hints", default=False, help="get hints")

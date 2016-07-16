@@ -50,7 +50,7 @@ class Nota:
         self.cur = con.cursor()
         self.authorId = authorId
         ## 0.3: add note.modified column
-        self.appversion = [0, 7, 9] # db schema changes always yield first or second digit increment
+        self.appversion = [0, 8, 0] # db schema changes always yield first or second digit increment
         self.dbversion = self.appversion
         if mustInitialize:
             print("Initializing database; run 'nota' again to use it.")
@@ -201,6 +201,21 @@ class Nota:
                 self.cur.execute("INSERT INTO book(number, name) VALUES (0, 'Trash');")
                 self.cur.execute("INSERT INTO book(number, name) VALUES (1, 'Default');")
                 print("  Created books named Trash and Default.")
+
+            if StrictVersion(dbversion) < StrictVersion("0.8"):
+                # Attachments were added in 0.7.0, so we need a table to cross-reference
+                # each attachment to a storage location, plus a table linking notes and 
+                # attachments.
+                print("Updating database %s to version 0.8.x ..." % db)
+                try:
+                    self.cur.execute("CREATE TABLE attachment (attachmentId integer primary key autoincrement, filename, hashcode);")
+                except:
+                    self.error("Problem with step 1 of update to version 0.8.x (adding attachment table)")
+                try:
+                    self.cur.execute("CREATE TABLE noteAttachment (noteAttachmentId integer primary key autoincrement, noteId, attachmentId);")
+                except:
+                    self.error("Problem with step 2 of update to version 0.8.x (adding note-attachment table)")
+
             # OK, done with the updates, so we now update the actual version number.
             try:
                 self.cur.execute("DROP TABLE version;")
