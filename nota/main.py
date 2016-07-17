@@ -8,6 +8,7 @@ import os
 import re
 import textwrap
 import datetime
+import tempfile
 from random import randint, seed
 from time import strptime
 import subprocess
@@ -195,6 +196,7 @@ def nota():
     parser.add_argument("-A", "--attachments", type=str, default="", help="string with comma-separated filenames", metavar="A")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string with note contents", metavar="C")
+    parser.add_argument("--extract", action="store_true", dest="extract_attachments", default=False, help="Extract attachments to a temporary directory")
     #parser.add_argument("-r", "--recent", action="store_true", dest="recent_notes", default=False, help="show recent notes")
     parser.add_argument("-r", "--recent", nargs='?', type=int, action="store", const=-2, default=-1, dest="recent_notes", help="show N recent notes (defaults to N=4)", metavar="N")
     parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book named 'B'", metavar="B")
@@ -513,13 +515,10 @@ def nota():
             ee = nota.editor_entry(title=args.title, content=args.content, keywords=args.keywords, attachments=args.attachments, due=args.due, book=book)
             nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"],
                     attachments=ee["attachments"])
-            print("FIXME(dk): add attachments now (from editor)")
-            print(ee["attachments"])
         else:
             # FIXME: allow book below
             nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book,
                     attachments=args.attachments)
-            print("FIXME(dk): add attachments now (from args)")
         sys.exit(0)
 
     # By a process of elimination, we must be trying to find notes.
@@ -601,6 +600,7 @@ def nota():
             count += 1 # FIXME: bug: 'nota --count' gives a huge number
             if not args.count:
                 if nfound > 1:
+                    # Several notes, so just summarize.
                     if args.markdown:
                         print("%s" % f['hash'][0:hal], end="\n")
                         if show_id:
@@ -630,6 +630,7 @@ def nota():
                             print("]", end="")
                             print(" %s " % nota.age(f['date']), end="\n")
                 else:
+                    # Just 1 note, so print in full
                     if args.markdown:
                         print("Hash: `%s`\n\n" % f['hash'][0:7], end="")
                         if show_id:
@@ -689,6 +690,32 @@ def nota():
                                 else:
                                     print(" ", contentLine.rstrip('\n'))
                         #print('')
+                    #print("id=%d"%f['noteId'])
+                    #print("attachmentIds:")
+                    attachmentIds = nota.get_attachment_list(noteId=f['noteId'])
+                    if len(attachmentIds) > 0:
+                        if args.extract_attachments:
+                            print("  Attachments: ")
+                        else:
+                            print("  Attachments (use --extract argument to extract these): ")
+                    for attachmentId in attachmentIds:
+                        #print(attachmentId[0])
+                        filename = nota.get_attachment_filename(attachmentId=attachmentId[0])[0]
+                        #print("attachmentId %d" % attachmentId[0])
+                        #echo "SELECT contents FROM attachment WHERE attachmentId=3;" | sqlite3 ~/Dropbox/nota.db
+                        if args.extract_attachments:
+                            #tmp = tempfile.NamedTemporaryFile(mode="wb", prefix="nota_", suffix="_"+str(filename[0]))
+                            contents = nota.get_attachment_contents(attachmentId=attachmentId[0])
+                            tmpname = str(f['hash'][0:7]) + "_" + str(filename[0])
+                            try:
+                                tmpfile = open(tmpname, "wb")
+                                tmpfile.write(str(contents[0]))
+                                tmpfile.close()
+                            except:
+                                print("cannot store attachment in local directory")
+                            print("   '%s' (saved as '%s' in present directory)" % (str(filename[0]), tmpname))
+                        else:
+                            print("   %s" % filename)
     if args.count:
         print(count)
     if not args.count and args.verbose > 0 and not args.markdown:
