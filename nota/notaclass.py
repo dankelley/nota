@@ -22,27 +22,31 @@ class Nota:
         '''
 
         A class used for the storing and searching of textual notes in a
-        sqlite3 database.  Keywords may be attached to notes, providing a
-        convenient way to search later.
+        sqlite3 database.  Keywords may be associated to notes, providing a
+        convenient way to search for content. File attachments may also be
+        made.
 
         '''
         self.debug = debug 
         self.quiet = quiet
-        self.fyi("Working with database named '%s' (before path expansion)." % db)
-        db = os.path.expanduser(db)
-        self.fyi("Working with database named '%s' (after path expansion)." % db)
-        mustInitialize = not os.path.exists(db)
+        self.db = db
+        self.fyi("Database '%s' (before path expansion)." % self.db)
+        self.db = os.path.expanduser(self.db)
+        self.fyi("Database '%s' (after path expansion)." % self.db)
+        self.attachmentDir = re.sub(".db$","", self.db) + "_attachments"
+        self.fyi("Attachment directory '%s' (after path expansion)." % self.attachmentDir)
+        mustInitialize = not os.path.exists(self.db)
         if mustInitialize:
-            print("Creating new database named \"%s\"." % db)
+            print("Creating new database named \"%s\"." % self.db)
         else:
             try:
-                dbsize = os.path.getsize(db)
+                dbsize = os.path.getsize(self.db)
                 self.fyi("Database file size %s bytes." % dbsize)
                 mustInitialize = not dbsize
             except:
                 pass
         try:
-            con = sqlite.connect(db)
+            con = sqlite.connect(self.db)
             con.text_factory = str # permits accented characters in notes
         except:
             self.error("Error opening connection to database named '%s'" % db)
@@ -215,6 +219,13 @@ class Nota:
                     self.cur.execute("CREATE TABLE noteAttachment (noteAttachmentId integer primary key autoincrement, noteId, attachmentId);")
                 except:
                     self.error("Problem with step 2 of update to version 0.8.x (adding note-attachment table)")
+                # Create directory to hold attachments.
+                try:
+                    os.makedirs(self.attachmentDir)
+                except OSError:
+                    if not os.path.isdir(self.attachmentDir):
+                        self.error("Problem with step 3 of update to version 0.8.x (creating attachment directory '%s'" % self.attachmentDir)
+                print("Created attachment directory '%s'" % self.attachmentDir)
 
             # OK, done with the updates, so we now update the actual version number.
             try:
@@ -438,19 +449,33 @@ class Nota:
                 self.cur.execute("INSERT INTO keyword(keyword) VALUES (?);", [keyword])
                 keywordId = self.cur.lastrowid
             self.con.execute("INSERT INTO notekeyword(noteId, keywordID) VALUES(?, ?)", [noteId, keywordId])
+        # Attachments
+        os.path.exists(os.path.expanduser("~/Dropbox"))
         for attachment in attachments:
             self.fyi("  (SHOULD BE) inserting attachment: '%s'" % attachment)
         self.con.commit()
         self.fyi("add() returning noteId=%d ... is all ok?" % noteId)
         # Handle attachments. These must be existing files.
-        print("ATTACHMENTS:")
         attachments = [key.lstrip().rstrip() for key in attachments.split(',')]
-        for attachment in attachments:
-            print(attachment)
-            if not os.path.isfile(attachment):
-                print(" ... file does not exist")
-            else:
-                print(" ... file exists")
+        if len(attachments) > 0:
+            try:
+                os.makedirs(self.attachmentDir)
+            except OSError:
+                if not os.path.isdir(self.attachmentDir):
+                    raise
+            if not os.path.exists(self.attachmentDir):
+                self.error("no attachmentDir '%s'" % self.attachmentDir)
+            print("ATTACHMENTS:")
+            for attachment in attachments:
+                print(attachment)
+                if not os.path.isfile(attachment):
+                    print(" ... file does not exist")
+                else:
+                    print(" ... file exists. FIXME(dk): set up local storage in %s" % self.db)
+                    h = hashlib.md5(open(attachment, "rb").read()).hexdigest()
+                    print(" ... hash is '%s'" % h)
+                    h2 = h[:2]
+                    print(" ... h2 is '%s'" % h2)
         return noteId
 
 
