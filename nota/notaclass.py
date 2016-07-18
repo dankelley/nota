@@ -486,7 +486,7 @@ class Nota:
             for attachment in attachments:
                 self.fyi("processing attachment '%s'" % attachment)
                 if not os.path.isfile(attachment):
-                    self.waring(" cannot attach file '%s' because it does not exist" % attachment)
+                    self.warning(" cannot attach file '%s' because it does not exist" % attachment)
                 else:
                     self.fyi("    '%s' exists" % attachment)
                     attachment = os.path.expanduser(attachment)
