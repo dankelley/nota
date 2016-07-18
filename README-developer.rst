@@ -79,8 +79,9 @@ then do:
 
 
 **Reminder** After uploading, be sure to increment the version number in line 4
-of setup.py and also in the present file, at the instruction in the previous
-subsection. It might be smart to grep all files for these patterns, actually.
+of setup.py and in the present file, and also add a blank entry for the new
+version in README.rst.
+
 
 Suggested aliases for nota
 --------------------------
