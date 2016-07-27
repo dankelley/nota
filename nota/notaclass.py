@@ -1065,13 +1065,13 @@ the "?>" symbol are optional.  The title and keywords must each fit on one
 line. Use commas to separate keywords.  The content must start *below*
 the line with the dots.
 
-TITLE> %s
+TITLE > %s
 
-KEYWORDS?> %s
+KEYWORDS (optional) > %s
 
-ATTACHMENTS?> %s
+ATTACHMENTS (optional) > %s
 
-BOOK (integer: %s) > %s
+BOOK (integer, one of: %s) > %s
 
 DUE (E.G. 'tomorrow' or '3 days')?> %s
 

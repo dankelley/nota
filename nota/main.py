@@ -45,6 +45,7 @@ def nota():
             'rename book: "nota --rename-book Old New"',
             'rename keyword: "nota --rename-keyword Old New"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
+            'extract attachments from note with given hash: "nota --extract hash"',
             'visit http://dankelley.github.io/nota/documentation.html to learn more']
 
     def color_code(c, default="\033[0m"):
@@ -133,7 +134,7 @@ def nota():
     parser = argparse.ArgumentParser(prog="nota", description="Nota: an organizer for textual notes",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=textwrap.dedent('''\
-    There are several ways to use nota. Try 'nota -h' for some hints, and see
+    There are several ways to use nota. Try 'nota --hints' for some hints, and see
     http://dankelley.github.io/nota/ for more. Some common uses are as follows.
     
         nota                    # list notes, with first column being hash code
@@ -706,14 +707,14 @@ def nota():
                         if args.extract_attachments:
                             #tmp = tempfile.NamedTemporaryFile(mode="wb", prefix="nota_", suffix="_"+str(filename[0]))
                             contents = nota.get_attachment_contents(attachmentId=attachmentId[0])
-                            tmpname = str(f['hash'][0:7]) + "_" + str(filename[0])
+                            tmpname = str(f['hash'][0:7]) + "_" + os.path.basename(str(filename[0]))
                             try:
                                 tmpfile = open(tmpname, "wb")
                                 tmpfile.write(str(contents[0]))
                                 tmpfile.close()
                             except:
                                 print("cannot store attachment in local directory")
-                            print("   '%s' (saved as '%s' in present directory)" % (str(filename[0]), tmpname))
+                            print("   '%s'\n        saved as '%s' in present directory" % (str(filename[0]), tmpname))
                         else:
                             print("   %s" % filename)
     if args.count:
