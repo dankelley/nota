@@ -462,6 +462,7 @@ class Nota:
             self.con.execute("INSERT INTO notekeyword(noteId, keywordID) VALUES(?, ?)", [noteId, keywordId])
         # Handle attachments, which must be existing files.
         attachments = [key.lstrip().rstrip() for key in attachments.split(',')]
+        attachments = filter(None, attachments) # remove blanks
         if not self.attachments_in_db:
             if len(attachments) > 0:
                 try:
