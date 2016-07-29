@@ -205,7 +205,7 @@ class Nota:
                 print("  Created books named Trash and Default.")
 
             if StrictVersion(dbversion) < StrictVersion("0.8"):
-                # Attachments were added in 0.7.0, so we need a table to cross-reference
+                # Attachments were added in 0.8.0, so we need a table to cross-reference
                 # each attachment to a storage location, plus a table linking notes and 
                 # attachments.
                 print("Updating database %s to version 0.8.x ..." % db)
@@ -649,9 +649,21 @@ class Nota:
             noteIds.extend(self.con.execute("SELECT noteId from note WHERE book=0;"))
             for n in noteIds:
                 self.fyi("  trashing note with noteId: %s" % n)
-                self.con.execute("DELETE FROM note where noteId=?", n)
+                self.con.execute("DELETE FROM note WHERE noteId=?", n)
+                # keywords
                 self.fyi("  trashing notekeyword with noteId: %s" % n)
-                self.con.execute("DELETE FROM notekeyword where noteid=?", n)
+                self.con.execute("DELETE FROM notekeyword WHERE noteId=?", n)
+                # attachments
+                attachmentIds = []
+                attachmentIds.extend(self.con.execute("SELECT attachmentId from note_attachment WHERE noteId=?", n))
+                if len(attachmentIds):
+                    self.fyi("  trashing note_attachment with noteId: %s" % n)
+                    self.con.execute("DELETE FROM note_attachment WHERE noteId=?", n)
+                    for a in attachmentIds:
+                        self.fyi("  trashing attachmentId: %s" % a)
+                        self.con.execute("DELETE FROM attachment WHERE attachmentId=?", a)
+                else:
+                    self.fyi("  this note has no attachments")
             self.fyi("trashed %s notes" % len(noteIds))
             self.con.commit()
         except:
