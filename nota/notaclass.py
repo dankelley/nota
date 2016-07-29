@@ -28,15 +28,11 @@ class Nota:
 
         '''
         self.debug = debug 
-        self.attachments_in_db = True
         self.quiet = quiet
         self.db = db
         self.fyi("Database '%s' (before path expansion)." % self.db)
         self.db = os.path.expanduser(self.db)
         self.fyi("Database '%s' (after path expansion)." % self.db)
-        if self.attachments_in_db:
-            self.attachmentDir = re.sub(".db$","", self.db) + "_attachments"
-            self.fyi("Attachment directory '%s' (after path expansion)." % self.attachmentDir)
         mustInitialize = not os.path.exists(self.db)
         if mustInitialize:
             print("Creating new database named \"%s\"." % self.db)
@@ -214,30 +210,14 @@ class Nota:
                 # attachments.
                 print("Updating database %s to version 0.8.x ..." % db)
                 ## Attachments
-                if not self.attachments_in_db:
-                    try:
-                        self.cur.execute("CREATE TABLE attachment (attachmentId integer primary key autoincrement, filename, hashcode);")
-                    except:
-                        self.error("Problem with step 1 of update to version 0.8.x (adding table for external attachments)")
-                else:
-                    try:
-                        self.cur.execute("CREATE TABLE attachment (attachmentId integer primary key autoincrement, filename, contents BLOB);")
-                    except:
-                        self.error("Problem with step 1 of update to version 0.8.x (adding table for internal attachments)")
+                try:
+                    self.cur.execute("CREATE TABLE attachment (attachmentId integer primary key autoincrement, filename, contents BLOB);")
+                except:
+                    self.error("Problem with step 1 of update to version 0.8.x (adding table for internal attachments)")
                 try:
                     self.cur.execute("CREATE TABLE note_attachment (note_attachmentId integer primary key autoincrement, noteId, attachmentId);")
                 except:
                     self.error("Problem with step 2 of update to version 0.8.x (adding note-attachment table)")
-                # Create directory to hold attachments.
-
-                if not self.attachments_in_db:
-                        try:
-                            os.makedirs(self.attachmentDir)
-                        except OSError:
-                            if not os.path.isdir(self.attachmentDir):
-                                self.error("Problem with step 3 of update to version 0.8.x (creating attachment directory '%s'" % self.attachmentDir)
-                        print("Created attachment directory '%s'" % self.attachmentDir)
-
             # OK, done with the updates, so we now update the actual version number.
             try:
                 self.cur.execute("DROP TABLE version;")
@@ -463,52 +443,31 @@ class Nota:
         # Handle attachments, which must be existing files.
         attachments = [key.lstrip().rstrip() for key in attachments.split(',')]
         attachments = filter(None, attachments) # remove blanks
-        if not self.attachments_in_db:
-            if len(attachments) > 0:
+        for attachment in attachments:
+            self.fyi("processing attachment '%s'" % attachment)
+            if not os.path.isfile(attachment):
+                self.warning(" cannot attach file '%s' because it does not exist" % attachment)
+            else:
+                self.fyi("    '%s' exists" % attachment)
+                attachment = os.path.expanduser(attachment)
+                afile = open(attachment, "rb")
                 try:
-                    os.makedirs(self.attachmentDir)
-                except OSError:
-                    if not os.path.isdir(self.attachmentDir):
-                        raise
-                if not os.path.exists(self.attachmentDir):
-                    self.error("no attachmentDir '%s'" % self.attachmentDir)
-                print("ATTACHMENTS:")
-                for attachment in attachments:
-                    print(attachment)
-                    if not os.path.isfile(attachment):
-                        print(" ... file does not exist")
-                    else:
-                        print(" ... file exists. FIXME(dk): set up local storage in %s" % self.db)
-                        h = hashlib.md5(open(attachment, "rb").read()).hexdigest()
-                        print(" ... hash is '%s'" % h)
-                        h2 = h[:2]
-                        print(" ... h2 is '%s'" % h2)
-        else:
-            for attachment in attachments:
-                self.fyi("processing attachment '%s'" % attachment)
-                if not os.path.isfile(attachment):
-                    self.warning(" cannot attach file '%s' because it does not exist" % attachment)
-                else:
-                    self.fyi("    '%s' exists" % attachment)
-                    attachment = os.path.expanduser(attachment)
-                    afile = open(attachment, "rb")
-                    try:
-                        blob = afile.read()
-                        self.fyi("    read file '%s'" % attachment)
-                        self.cur.execute('INSERT INTO attachment(filename,contents) VALUES(?,?)', [attachment,buffer(blob)])
-                        attachmentId = self.cur.lastrowid
-                        self.fyi("    inserted OK; attachmentID=%d" % attachmentId)
-                        self.con.commit()
-                        self.fyi("    added to attachment table")
-                        self.fyi('    try "INSERT INTO note_attachment(noteId, attachmentId) VALUES(%d,%d)"' % (noteId,attachmentId))
-                        self.cur.execute('INSERT INTO note_attachment(noteId, attachmentId) VALUES(?,?)', [noteId,attachmentId])
-                        self.con.commit()
-                        self.fyi("    ... OK")
-                    except:
-                        self.error("Problem storing attachment named '%s'" % attachment)
-                    finally:
-                        afile.close()
-                    self.fyi(" ... all done, writing attachment")
+                    blob = afile.read()
+                    self.fyi("    read file '%s'" % attachment)
+                    self.cur.execute('INSERT INTO attachment(filename,contents) VALUES(?,?)', [attachment,buffer(blob)])
+                    attachmentId = self.cur.lastrowid
+                    self.fyi("    inserted OK; attachmentID=%d" % attachmentId)
+                    self.con.commit()
+                    self.fyi("    added to attachment table")
+                    self.fyi('    try "INSERT INTO note_attachment(noteId, attachmentId) VALUES(%d,%d)"' % (noteId,attachmentId))
+                    self.cur.execute('INSERT INTO note_attachment(noteId, attachmentId) VALUES(?,?)', [noteId,attachmentId])
+                    self.con.commit()
+                    self.fyi("    ... OK")
+                except:
+                    self.error("Problem storing attachment named '%s'" % attachment)
+                finally:
+                    afile.close()
+                self.fyi(" ... all done, writing attachment")
         self.con.commit()
         self.fyi("add() returning noteId=%d ... is all ok?" % noteId)
         return noteId
