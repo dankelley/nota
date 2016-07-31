@@ -8,6 +8,8 @@ http://dankelley.github.io/nota for documentation on installing and using
 
 **Version history**
 
+* 0.8.1: TBA
+
 * 0.8.0: attachments
 
 * 0.7.9: aesthetic improvements

@@ -64,7 +64,7 @@ To install a local test version, do e.g. (with the up-to-date version number, if
 
 ::
 
-    sudo -H pip install dist/nota-0.8.0.tar.gz --upgrade
+    sudo -H pip install dist/nota-0.8.1.tar.gz --upgrade
 
 
 Installing package on pypi.python
@@ -78,9 +78,10 @@ then do:
     twine upload dist/*
 
 
-**Reminder** After uploading, be sure to increment the version number in line 4
-of setup.py and in the present file, and also add a blank entry for the new
-version in README.rst.
+**Reminder** After uploading, be sure to increment the version number (a) in
+line 4 of setup.py, (b) in the present file and (c) in nota/notaclass.py where
+self.appversion is define. Then add a blank entry for this new version, in
+README.rst.
 
 
 Suggested aliases for nota
