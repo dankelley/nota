@@ -696,8 +696,8 @@ class Nota:
         old = old[0]
         keywords = []
         keywords.extend(self.get_keywords(old['noteId']))
-        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], attachments=old['attachments'], 
-                book=old['book'], due=old['due'])
+        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'],
+                attachments='', book=old['book'], due=old['due'])
         noteId = int(old["noteId"])
         try:
             self.cur.execute("UPDATE note SET title = (?) WHERE noteId = ?;", (ee["title"], noteId))
@@ -718,8 +718,6 @@ class Nota:
                 self.cur.execute("UPDATE note SET due=(?) WHERE noteId=?;", (due, noteId))
             except:
                 self.error("cannot update the 'due' date")
-        print("ATTACHMENTS:")
-        print(ee["attachments"])
         self.con.commit()
         return noteId
 
