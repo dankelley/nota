@@ -22,27 +22,29 @@ class Nota:
         '''
 
         A class used for the storing and searching of textual notes in a
-        sqlite3 database.  Keywords may be attached to notes, providing a
-        convenient way to search later.
+        sqlite3 database.  Keywords may be associated to notes, providing a
+        convenient way to search for content. File attachments may also be
+        made.
 
         '''
         self.debug = debug 
         self.quiet = quiet
-        self.fyi("Working with database named '%s' (before path expansion)." % db)
-        db = os.path.expanduser(db)
-        self.fyi("Working with database named '%s' (after path expansion)." % db)
-        mustInitialize = not os.path.exists(db)
+        self.db = db
+        self.fyi("Database '%s' (before path expansion)." % self.db)
+        self.db = os.path.expanduser(self.db)
+        self.fyi("Database '%s' (after path expansion)." % self.db)
+        mustInitialize = not os.path.exists(self.db)
         if mustInitialize:
-            print("Creating new database named \"%s\"." % db)
+            print("Creating new database named \"%s\"." % self.db)
         else:
             try:
-                dbsize = os.path.getsize(db)
+                dbsize = os.path.getsize(self.db)
                 self.fyi("Database file size %s bytes." % dbsize)
                 mustInitialize = not dbsize
             except:
                 pass
         try:
-            con = sqlite.connect(db)
+            con = sqlite.connect(self.db)
             con.text_factory = str # permits accented characters in notes
         except:
             self.error("Error opening connection to database named '%s'" % db)
@@ -50,7 +52,7 @@ class Nota:
         self.cur = con.cursor()
         self.authorId = authorId
         ## 0.3: add note.modified column
-        self.appversion = [0, 7, 9] # db schema changes always yield first or second digit increment
+        self.appversion = [0, 8, 0] # db schema changes always yield first or second digit increment
         self.dbversion = self.appversion
         if mustInitialize:
             print("Initializing database; run 'nota' again to use it.")
@@ -201,6 +203,21 @@ class Nota:
                 self.cur.execute("INSERT INTO book(number, name) VALUES (0, 'Trash');")
                 self.cur.execute("INSERT INTO book(number, name) VALUES (1, 'Default');")
                 print("  Created books named Trash and Default.")
+
+            if StrictVersion(dbversion) < StrictVersion("0.8"):
+                # Attachments were added in 0.8.0, so we need a table to cross-reference
+                # each attachment to a storage location, plus a table linking notes and 
+                # attachments.
+                print("Updating database %s to version 0.8.x ..." % db)
+                ## Attachments
+                try:
+                    self.cur.execute("CREATE TABLE attachment (attachmentId integer primary key autoincrement, filename, contents BLOB);")
+                except:
+                    self.error("Problem with step 1 of update to version 0.8.x (adding table for internal attachments)")
+                try:
+                    self.cur.execute("CREATE TABLE note_attachment (note_attachmentId integer primary key autoincrement, noteId, attachmentId);")
+                except:
+                    self.error("Problem with step 2 of update to version 0.8.x (adding note-attachment table)")
             # OK, done with the updates, so we now update the actual version number.
             try:
                 self.cur.execute("DROP TABLE version;")
@@ -367,10 +384,12 @@ class Nota:
         self.con.commit()
 
 
-    def add(self, title="", keywords="", content="", due="", book=1, privacy=0, date="", modified=""):
+    def add(self, title="", keywords="", content="", attachments="", due="", book=1, privacy=0, date="", modified=""):
         ''' Add a note to the database.  The title should be short (perhaps 3
         to 7 words).  The keywords are comma-separated, and should be similar
-        in style to others in the database.  The content may be of any length.'''
+        in style to others in the database.  The content may be of any length. The
+        attachments are comma-separated, and must be full pathnames to files 
+        that exist.'''
         #self.debug = 1
         try:
             known_books = []
@@ -387,6 +406,7 @@ class Nota:
         #print("book %s later" % book)
         self.fyi("add with title='%s'" % title)
         self.fyi("add with keywords='%s'" % keywords)
+        self.fyi("add with attachments='%s' (comma-separated string)" % attachments)
         self.fyi("add with due='%s'" % due)
         self.fyi("add with book='%s'" % book)
         if not isinstance(due, str):
@@ -420,6 +440,34 @@ class Nota:
                 self.cur.execute("INSERT INTO keyword(keyword) VALUES (?);", [keyword])
                 keywordId = self.cur.lastrowid
             self.con.execute("INSERT INTO notekeyword(noteId, keywordID) VALUES(?, ?)", [noteId, keywordId])
+        # Handle attachments, which must be existing files.
+        attachments = [key.lstrip().rstrip() for key in attachments.split(',')]
+        attachments = filter(None, attachments) # remove blanks
+        for attachment in attachments:
+            self.fyi("processing attachment '%s'" % attachment)
+            if not os.path.isfile(attachment):
+                self.warning(" cannot attach file '%s' because it does not exist" % attachment)
+            else:
+                self.fyi("    '%s' exists" % attachment)
+                attachment = os.path.expanduser(attachment)
+                afile = open(attachment, "rb")
+                try:
+                    blob = afile.read()
+                    self.fyi("    read file '%s'" % attachment)
+                    self.cur.execute('INSERT INTO attachment(filename,contents) VALUES(?,?)', [attachment,buffer(blob)])
+                    attachmentId = self.cur.lastrowid
+                    self.fyi("    inserted OK; attachmentID=%d" % attachmentId)
+                    self.con.commit()
+                    self.fyi("    added to attachment table")
+                    self.fyi('    try "INSERT INTO note_attachment(noteId, attachmentId) VALUES(%d,%d)"' % (noteId,attachmentId))
+                    self.cur.execute('INSERT INTO note_attachment(noteId, attachmentId) VALUES(?,?)', [noteId,attachmentId])
+                    self.con.commit()
+                    self.fyi("    ... OK")
+                except:
+                    self.error("Problem storing attachment named '%s'" % attachment)
+                finally:
+                    afile.close()
+                self.fyi(" ... all done, writing attachment")
         self.con.commit()
         self.fyi("add() returning noteId=%d ... is all ok?" % noteId)
         return noteId
@@ -601,9 +649,21 @@ class Nota:
             noteIds.extend(self.con.execute("SELECT noteId from note WHERE book=0;"))
             for n in noteIds:
                 self.fyi("  trashing note with noteId: %s" % n)
-                self.con.execute("DELETE FROM note where noteId=?", n)
+                self.con.execute("DELETE FROM note WHERE noteId=?", n)
+                # keywords
                 self.fyi("  trashing notekeyword with noteId: %s" % n)
-                self.con.execute("DELETE FROM notekeyword where noteid=?", n)
+                self.con.execute("DELETE FROM notekeyword WHERE noteId=?", n)
+                # attachments
+                attachmentIds = []
+                attachmentIds.extend(self.con.execute("SELECT attachmentId from note_attachment WHERE noteId=?", n))
+                if len(attachmentIds):
+                    self.fyi("  trashing note_attachment with noteId: %s" % n)
+                    self.con.execute("DELETE FROM note_attachment WHERE noteId=?", n)
+                    for a in attachmentIds:
+                        self.fyi("  trashing attachmentId: %s" % a)
+                        self.con.execute("DELETE FROM attachment WHERE attachmentId=?", a)
+                else:
+                    self.fyi("  this note has no attachments")
             self.fyi("trashed %s notes" % len(noteIds))
             self.con.commit()
         except:
@@ -636,7 +696,8 @@ class Nota:
         old = old[0]
         keywords = []
         keywords.extend(self.get_keywords(old['noteId']))
-        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'], book=old['book'], due=old['due'])
+        ee = self.editor_entry(title=old['title'], keywords=keywords, content=old['content'],
+                attachments='', book=old['book'], due=old['due'])
         noteId = int(old["noteId"])
         try:
             self.cur.execute("UPDATE note SET title = (?) WHERE noteId = ?;", (ee["title"], noteId))
@@ -894,7 +955,27 @@ class Nota:
         for k in keywordIds:
             keywords.append(self.cur.execute("SELECT keyword FROM keyword WHERE keywordId = ?;", k).fetchone()[0])
         return keywords
- 
+
+    def get_attachment_list(self, noteId):
+        if noteId < 0:
+            self.error("Cannot have a negative note ID")
+            return None
+        #print("get_attachments id=%d" % noteId)
+        attachmentIds = []
+        attachmentIds.extend(self.con.execute("SELECT attachmentid FROM note_attachment WHERE note_attachment.noteid = ?;", [noteId]))
+        attachmentIds = []
+        attachmentIds.extend(self.con.execute("SELECT attachmentid FROM note_attachment WHERE note_attachment.noteid = ?;", [noteId]))
+        return attachmentIds
+
+    def get_attachment_filename(self, attachmentId):
+        filename = []
+        filename.extend(self.con.execute("SELECT filename FROM attachment WHERE attachmentId = ?;", [attachmentId]))
+        return filename
+
+    def get_attachment_contents(self, attachmentId):
+        contents = self.con.execute("SELECT contents FROM attachment WHERE attachmentId=?;",
+                [attachmentId]).fetchone()
+        return contents
 
     def interpret_time(self, due):
         # catch "tomorrow" and "Nhours", "Ndays", "Nweeks" (with N an integer)
@@ -927,8 +1008,7 @@ class Nota:
         return due
 
 
-    def editor_entry(self, title, keywords, content, book=1, privacy=0, due=""):
-        #print("editor_entry(... book=%s ...)" % book)
+    def editor_entry(self, title, content, keywords, attachments, book=1, privacy=0, due=""):
         remaining = None
         books = self.list_books()
         nbooks = len(books)
@@ -954,17 +1034,19 @@ the "?>" symbol are optional.  The title and keywords must each fit on one
 line. Use commas to separate keywords.  The content must start *below*
 the line with the dots.
 
-TITLE> %s
+TITLE > %s
 
-KEYWORDS?> %s
+KEYWORDS (optional) > %s
 
-BOOK (integer: %s) > %s
+ATTACHMENTS (optional) > %s
+
+BOOK (integer, one of: %s) > %s
 
 DUE (E.G. 'tomorrow' or '3 days')?> %s
 
 CONTENT...
 %s
-''' % (title, ",".join(k for k in keywords), booklist, book, due, content)
+''' % (title, ",".join(k for k in keywords), ",".join(a for a in attachments), booklist, book, due, content)
         #print(initial_message)
         #exit(0)
         try:
@@ -997,6 +1079,8 @@ CONTENT...
                 PRIVACY = re.sub(r'.*>', '', line).strip()
             elif "KEYWORDS" in line:
                 keywords = re.sub(r'.*>', '', line).strip()
+            elif "ATTACHMENTS" in line:
+                attachments = re.sub(r'.*>', '', line).strip()
             elif "BOOK" in line:
                 book = int(re.sub(r'.*>', '', line).strip())
                 if book < 1:
@@ -1010,7 +1094,8 @@ CONTENT...
         if not title and not content and (len(keywords) == 1 and not keywords[0]):
             self.error("empty note, not stored. Please add title, keywords, or content.")
         self.fyi("LATE keywords= %s" % keywords)
-        return {"title":title, "keywords":keywords, "content":content, "privacy":privacy, "book":book, "due":due}
+        return {"title":title, "keywords":keywords, "content":content, "attachments":attachments,
+                "privacy":privacy, "book":book, "due":due}
 
 
     def rename_keyword(self, old, new):

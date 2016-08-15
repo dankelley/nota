@@ -8,6 +8,7 @@ import os
 import re
 import textwrap
 import datetime
+import tempfile
 from random import randint, seed
 from time import strptime
 import subprocess
@@ -44,6 +45,7 @@ def nota():
             'rename book: "nota --rename-book Old New"',
             'rename keyword: "nota --rename-keyword Old New"',
             'untrash notes with hash \'ab...\': "nota --undelete ab"',
+            'extract attachments from note with given hash: "nota --extract hash"',
             'visit http://dankelley.github.io/nota/documentation.html to learn more']
 
     def color_code(c, default="\033[0m"):
@@ -132,7 +134,7 @@ def nota():
     parser = argparse.ArgumentParser(prog="nota", description="Nota: an organizer for textual notes",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=textwrap.dedent('''\
-    There are several ways to use nota. Try 'nota -h' for some hints, and see
+    There are several ways to use nota. Try 'nota --hints' for some hints, and see
     http://dankelley.github.io/nota/ for more. Some common uses are as follows.
     
         nota                    # list notes, with first column being hash code
@@ -192,8 +194,10 @@ def nota():
     parser.add_argument("-u", "--undelete", type=str, default=None, help="remove note with hash 'H' from trash", metavar="H")
     parser.add_argument("-t", "--title", type=str, default="", help="string with note title", metavar="T")
     parser.add_argument("-k", "--keywords", type=str, default="", help="string with comma-separated keywords", metavar="K")
+    parser.add_argument("-A", "--attachments", type=str, default="", help="string with comma-separated filenames", metavar="A")
     #parser.add_argument("-K", "--Keywords", type=str, default="", help="string of comma-separated keywords", metavar="K")
     parser.add_argument("-c", "--content", type=str, default="", help="string with note contents", metavar="C")
+    parser.add_argument("--extract", action="store_true", dest="extract_attachments", default=False, help="Extract attachments to a temporary directory")
     #parser.add_argument("-r", "--recent", action="store_true", dest="recent_notes", default=False, help="show recent notes")
     parser.add_argument("-r", "--recent", nargs='?', type=int, action="store", const=-2, default=-1, dest="recent_notes", help="show N recent notes (defaults to N=4)", metavar="N")
     parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book named 'B'", metavar="B")
@@ -214,7 +218,7 @@ def nota():
     defaultDatabase = get_from_dotfile("~/.notarc", "database", "~/Dropbox/nota.db")
     # Back to the parser
     parser.add_argument("--color", type=str, default=None, help="specify named scheme or True/False", metavar="c")
-    parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database", metavar="db")
+    parser.add_argument("--database", type=str, default=defaultDatabase, help="filename for database (defaults to ~/Dropbox/nota.db if not supplied as this argument, and if not specified in the ~/.notarc", metavar="db")
     parser.add_argument("--due", type=str, default="", help="time when item is due", metavar="when")
     parser.add_argument("--empty-trash", action="store_true", dest="empty_trash", default=False, help="empty trash, permanently deleting notes therein")
     parser.add_argument("--hints", action="store_true", dest="hints", default=False, help="get hints")
@@ -234,6 +238,8 @@ def nota():
    
     args.keywordsoriginal = args.keywords
     args.keywords = [key.strip() for key in args.keywords.split(',')]
+    args.attachmentsoriginal = args.attachments
+    args.attachments = [key.strip() for key in args.attachments.split(',')]
     #args.Keywordsoriginal = args.Keywords
     #args.Keywords = [Key.lstrip().rstrip() for Key in args.Keywords.split(',')]
 
@@ -507,12 +513,13 @@ def nota():
             nota.error("cannot specify a hash-code if the -a argument is given")
         # If no title is given, need to use the editor.
         if args.title == "":
-            nota.fyi("should handle interactive now")
-            ee = nota.editor_entry(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book)
-            nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"])
+            ee = nota.editor_entry(title=args.title, content=args.content, keywords=args.keywords, attachments=args.attachments, due=args.due, book=book)
+            nota.add(title=ee["title"], keywords=ee["keywords"], content=ee["content"], book=ee["book"], due=ee["due"],
+                    attachments=ee["attachments"])
         else:
             # FIXME: allow book below
-            nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book)
+            nota.add(title=args.title, keywords=args.keywords, content=args.content, due=args.due, book=book,
+                    attachments=args.attachments)
         sys.exit(0)
 
     # By a process of elimination, we must be trying to find notes.
@@ -594,6 +601,7 @@ def nota():
             count += 1 # FIXME: bug: 'nota --count' gives a huge number
             if not args.count:
                 if nfound > 1:
+                    # Several notes, so just summarize.
                     if args.markdown:
                         print("%s" % f['hash'][0:hal], end="\n")
                         if show_id:
@@ -623,6 +631,7 @@ def nota():
                             print("]", end="")
                             print(" %s " % nota.age(f['date']), end="\n")
                 else:
+                    # Just 1 note, so print in full
                     if args.markdown:
                         print("Hash: `%s`\n\n" % f['hash'][0:7], end="")
                         if show_id:
@@ -682,6 +691,32 @@ def nota():
                                 else:
                                     print(" ", contentLine.rstrip('\n'))
                         #print('')
+                    #print("id=%d"%f['noteId'])
+                    #print("attachmentIds:")
+                    attachmentIds = nota.get_attachment_list(noteId=f['noteId'])
+                    if len(attachmentIds) > 0:
+                        if args.extract_attachments:
+                            print("  Attachments: ")
+                        else:
+                            print("  Attachments (use --extract argument to extract these): ")
+                    for attachmentId in attachmentIds:
+                        #print(attachmentId[0])
+                        filename = nota.get_attachment_filename(attachmentId=attachmentId[0])[0]
+                        #print("attachmentId %d" % attachmentId[0])
+                        #echo "SELECT contents FROM attachment WHERE attachmentId=3;" | sqlite3 ~/Dropbox/nota.db
+                        if args.extract_attachments:
+                            #tmp = tempfile.NamedTemporaryFile(mode="wb", prefix="nota_", suffix="_"+str(filename[0]))
+                            contents = nota.get_attachment_contents(attachmentId=attachmentId[0])
+                            tmpname = str(f['hash'][0:7]) + "_" + os.path.basename(str(filename[0]))
+                            try:
+                                tmpfile = open(tmpname, "wb")
+                                tmpfile.write(str(contents[0]))
+                                tmpfile.close()
+                            except:
+                                print("cannot store attachment in local directory")
+                            print("   '%s'\n        saved as '%s' in present directory" % (str(filename[0]), tmpname))
+                        else:
+                            print("   %s" % filename)
     if args.count:
         print(count)
     if not args.count and args.verbose > 0 and not args.markdown:
