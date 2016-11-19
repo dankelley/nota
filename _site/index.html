@@ -10,8 +10,8 @@
 <!-- Basic Page Needs
   ================================================== -->
 <meta charset="utf-8">
-<title>Oce: an R package for Oceanography</title>
-<meta name="description" content="Oce: an R package for oceanographic analysis">
+<title>nota: an application for textual notes</title>
+<meta name="description" content="nota: an application for textual notes">
 <meta name="author" content="Dan Kelley">
 
 <!--[if lt IE 9]>
@@ -41,13 +41,13 @@
 <div class="container">
     <div class="three columns sidebar">
         <nav>
-        <img src="css/oce-logo-2.png" alt="OCE">
+        <img src="css/nota-logo-1.png" alt="NOTA">
             <ul>
-                <li><a href="/oce/index.html">Overview</a></li>
-                <li><a href="/oce/installation.html">Installation</a></li>
-                <li><a href="/oce/examples.html">Examples</a></li>
-                <li><a href="/oce/documentation.html">Documentation</a></li>
-                <li><a href="/oce/bugs.html">Bugs</a></li>
+                <li><a href="/nota/index.html">Overview</a></li>
+                <li><a href="/nota/installation.html">Installation</a></li>
+                <li><a href="/nota/usage.html">Usage</a></li>
+                <li><a href="/nota/development.html">Development</a></li>
+                <li><a href="/nota/bugs.html">Bugs</a></li>
             </ul>
         </nav>
         &nbsp;
@@ -60,32 +60,16 @@
         <hr class="large" />
 
 <div id="content">
-    <p>Oce is a package for the <a href="http://www.r-project.org/">R statistical
-    language</a> that helps Oceanographers do their work by providing functions
-to read Oceanographic data files, to process the data in instrument-specific
-ways, and to represent the results with plots that follow Oceanographic
-convention.</p>
+    <p><code>nota</code> is a python application for note taking. It is designed
+for people who do their work at the command line, are comfortable with
+plain-text editors such as vim and emacs, and choose to use open-source
+software. If you prefer GUI systems, you may as well stop reading now.  If not,
+try the links at the left to learn about <code>nota</code>.</p>
 
-<p>Developed in a university and research setting, Oce is simple enough for
-novices but powerful enough for experts.</p>
-
-<p>Oce makes heavy use of the R notion of <i>generic functions</i>, which means
-that a single function call works across a wide range of data types.  For example,</p>
-<div class="highlight"><pre><code class="r">library<span class="p">(</span>oce<span class="p">)</span>
-d <span class="o">&lt;-</span> read.oce<span class="p">(</span><span class="s">&quot;file&quot;</span><span class="p">)</span>
-plot<span class="p">(</span>d<span class="p">)</span></code></pre></div>
-<p>will produce a useful plot that is tailored to the type of data stored in
-the file named <code>file</code>.  For example, if <code>file</code> contains
-CTD data, then the <code>read.oce()</code> function will return an object of
-class <code>ctd</code>, causing <code>plot()</code> to produce profiles of
-salinity, temperature, density and buoyancy frequency, along with a TS plot and
-a location map.  But if <code>file</code> contains ADCP data, the results will
-instead be a set of images giving space-time variation of velocity components.
-Similar behaviours result from the dozens of data types recognized by Oce.</p>
-
-<p>Installing Oce is a simple matter, as shown in the next tab of this website.
-Other tabs provide entries into the documentation and the bug-reporting
-system.</p>
+<p style="margin-top:1em">NB. the letters at the start of this paragraph stand
+for the Latin phrase "nota bene," the first word of which explains the name of
+the application.  Most people pronounce <code>nota</code> as in "not a chance,"
+but Canadians might pronounce it as in "ready or not, eh."</p>
 
 </div>
 
@@ -97,9 +81,10 @@ system.</p>
 
 <p class="footnote">This website is written in <a
     href="http://jekyllrb.com">Jekyll</a>, and the source is available on <a
-    href="https://github.com/dankelley/oce/tree/gh-pages">GitHub</a>.</p>
+    href="https://github.com/dankelley/nota/tree/gh-pages">GitHub</a>.</p>
 
 <div class="resize"></div>
+
 </body>
 </html>
 

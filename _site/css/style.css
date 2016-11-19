@@ -68,8 +68,8 @@ code.r {
 
 pre {
     padding: 2px;
-    margin-left: 0.5em;
-    margin-right: 0.5em;
+    margin-left: 1em;
+    margin-right: 1em;
     margin-top: 1px;
     margin-bottom: 1px;
     font-family: Monaco,"Courier New","DejaVu Sans Mono","Bitstream Vera Sans Mono",monospace;
@@ -112,7 +112,7 @@ h1 {
     margin-bottom: 0.2ex;
 }
 
-h2 {
+h2 { /* seems to be over-ridden by base.css */
     font-size:100%;
     line-height:110%;
     margin-top: 0.5em;
