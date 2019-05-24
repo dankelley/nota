@@ -41,7 +41,7 @@ Testing before packaging
 
 ::
 
-    PYTHONPATH=/Users/kelley/src/nota python -m nota
+    PYTHONPATH=/Users/kelley/git/nota python -m nota
 
 Packaging
 ---------
@@ -55,7 +55,8 @@ it:
     python setup.py sdist
     python setup.py bdist_wheel --universal
 
-After this, the ``dist`` directory will contain some packages.
+(Update 2019-May-24: the bdist method fails for me.) After this, the ``dist``
+directory will contain some packages.
 
 Installing package locally
 --------------------------
@@ -93,5 +94,5 @@ The developer uses the following, so that ``n`` runs the packaged version and
 ::
 
     alias n=nota
-    alias nn='PYTHONPATH=~/src/nota python -m nota'
+    alias nn='PYTHONPATH=~/git/nota python -m nota'
 

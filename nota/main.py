@@ -427,6 +427,8 @@ def nota():
         b = nota.book_index(args.book)
         if len(b) > 1:
             nota.error("Abbreviation '%s' matches to %d books: %s" % (args.book, len(b), b.keys()))
+        if not b:
+            nota.error("No book named '%s'" % args.book)
         book = b.values()[0]
         nota.fyi("--book yields book index %s" % book)
     else:
