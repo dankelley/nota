@@ -15,7 +15,7 @@ import string
 from math import trunc
 
 #reload(sys)
-sys.setdefaultencoding('utf8')
+#sys.setdefaultencoding('utf8')
 
 class Nota:
     def __init__(self, db="nota.db", authorId=1, debug=0, quiet=False):
