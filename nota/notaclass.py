@@ -14,7 +14,7 @@ import random
 import string
 from math import trunc
 
-reload(sys)
+#reload(sys)
 sys.setdefaultencoding('utf8')
 
 class Nota:
