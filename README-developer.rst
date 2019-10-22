@@ -1,6 +1,11 @@
 Developer notes
 ===============
 
+References
+----------
+
+1. https://packaging.python.org/tutorials/packaging-projects/ provides information on packaging.
+
 Setup
 -----
 
@@ -39,6 +44,7 @@ Several manual steps are required.
 Testing before packaging
 ------------------------
 
+
 ::
 
     PYTHONPATH=/Users/kelley/git/nota python3 -m nota
@@ -65,7 +71,7 @@ To install a local test version, do e.g. (with the up-to-date version number, if
 
 ::
 
-    sudo -H pip install dist/nota-0.8.2.tar.gz --upgrade
+    sudo -H pip install dist/nota-0.8.3.tar.gz --upgrade
 
 
 Installing package on pypi.python
