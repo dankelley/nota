@@ -51,9 +51,9 @@ it:
 
 ::
 
-    python setup.py test
-    python setup.py sdist
-    python setup.py bdist_wheel --universal
+    python3 setup.py test
+    python3 setup.py sdist
+    python3 setup.py bdist_wheel --universal
 
 (Update 2019-May-24: the bdist method fails for me.) After this, the ``dist``
 directory will contain some packages.

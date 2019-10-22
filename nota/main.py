@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from __future__ import print_function
+
 from .notaclass import Nota
 import argparse
 import sys
@@ -18,9 +18,9 @@ indent = "  "
 def nota():
     hints = [
             'see recent notes "nota -r"',
-            'add a note: "nota -a" (opens EDITOR)', 
-            'add a note: "nota -a -t=title -c=content" (no EDITOR)', 
-            'add a note: "nota -a -t=title -c=content" -k=keywords"(no EDITOR)', 
+            'add a note: "nota -a" (opens EDITOR)',
+            'add a note: "nota -a -t=title -c=content" (no EDITOR)',
+            'add a note: "nota -a -t=title -c=content" -k=keywords"(no EDITOR)',
             'back up database by e.g. "cp ~/Dropbox/nota.db ~/nota-backup.db"',
             'create new book: "nota --create-book Bookname"',
             'create new note hashes: "nota --special rehash"',
@@ -71,7 +71,7 @@ def nota():
             rval = default
         return(rval)
 
- 
+
     def due_str(due):
         due = datetime.datetime.strptime(due, '%Y-%m-%d %H:%M:%S.%f')
         now = datetime.datetime.now()
@@ -90,10 +90,10 @@ def nota():
                 return("(overdue by %d hours)" % (when / 3600))
             else:
                 return("(overdue by %.1f days)" % (when / 3600 / 24))
- 
+
     def random_hint():
         return hints[randint(0, len(hints)-1)]
-    
+
     def get_from_dotfile(file, token, default=""):
         try:
             with open(os.path.expanduser(file), "r") as f:
@@ -115,8 +115,8 @@ def nota():
                 return(default)
         except:
             return(default)
-    
-    
+
+
     # If second arg is a number, it is a noteId
     id_desired = None
     if len(sys.argv) > 1:
@@ -125,18 +125,18 @@ def nota():
             #del sys.argv[1]
         except:
             pass
-    
+
     show_id = get_from_dotfile("~/.notarc", "show_id", False)
     debug = get_from_dotfile("~/.notarc", "debug", None)
     verbose = int(get_from_dotfile("~/.notarc", "verbose", -999))
     pager = get_from_dotfile("~/.notarc", "pager", None)
-   
+
     parser = argparse.ArgumentParser(prog="nota", description="Nota: an organizer for textual notes",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog=textwrap.dedent('''\
     There are several ways to use nota. Try 'nota --hints' for some hints, and see
     http://dankelley.github.io/nota/ for more. Some common uses are as follows.
-    
+
         nota                    # list notes, with first column being hash code
         nota ab                 # list notes with hash starting 'ab'
         nota -k key             # list notes with indicated keyword
@@ -152,7 +152,7 @@ def nota():
 
     The ~/.notarc file may be used for customization, and may contain e.g. the
     following:
-    
+
         Specify database name
             db = \"~/Dropbox/nota.db\"
         Turn on debugging mode
@@ -180,10 +180,10 @@ def nota():
         and "lightcyan".
 
     Advanced usage:
-        
+
         Recreate hashes (to remove duplicate hashes, which are unlikely)
             nota --special=rehash
-    
+
 
         '''))
     parser.add_argument("hash", nargs="?", default="", help="abbreviated hash to search for", metavar="hash")
@@ -235,7 +235,7 @@ def nota():
     # 2. list book names with indented notes beneath
     # book_scheme = get_from_dotfile("~/.notarc", "book_scheme", 1)
     #print("book_scheme %s" % book_scheme)
-   
+
     args.keywordsoriginal = args.keywords
     args.keywords = [key.strip() for key in args.keywords.split(',')]
     args.attachmentsoriginal = args.attachments
@@ -305,8 +305,8 @@ def nota():
         color.keyword = ''
         color.book = ''
         color.normal = ""
- 
-    
+
+
     if not args.debug:
         args.debug = debug
 
@@ -335,13 +335,13 @@ def nota():
         else:
             args.verbose = verbose
     #print("args.verbose: %s" % args.verbose)
-    
+
     nota = Nota(debug=args.debug, db=args.database, quiet=args.count)
-    
+
     if args.version:
         print(nota.version())
         sys.exit(0)
-    
+
     if args.hints:
         for hint in hints:
             if use_color:
@@ -399,7 +399,7 @@ def nota():
         (old, new) = args.book_rename
         nota.keyword_rename(old, new)
         exit(0)
-  
+
     if args.special:
         if args.special == "rehash":
             nota.fyi("should rehash now")
@@ -407,12 +407,12 @@ def nota():
             sys.exit(0)
         else:
             nota.error("unknown action '%s'" % args.special)
-    
+
     if args.file:
         file = args.file
     else:
         file = "stdout"
-    
+
     if args.title:
         title = args.title
     else:
@@ -426,29 +426,29 @@ def nota():
     if args.book:
         b = nota.book_index(args.book)
         if len(b) > 1:
-            nota.error("Abbreviation '%s' matches to %d books: %s" % (args.book, len(b), b.keys()))
+            nota.error("Abbreviation '%s' matches to %d books: %s" % (args.book, len(b), list(b.keys())))
         if not b:
             nota.error("No book named '%s'" % args.book)
-        book = b.values()[0]
+        book = list(b.values())[0]
         nota.fyi("--book yields book index %s" % book)
     else:
         book = -1
-    
+
     if args.delete:
         nota.fyi("should now delete note %s" % args.delete)
         nota.delete(args.delete)
         sys.exit(0)
-    
+
     if args.undelete:
         nota.fyi("should now undelete note with hash %s" % args.undelete)
         nota.undelete(args.undelete)
         sys.exit(0)
-    
+
     if args.empty_trash:
         nota.fyi("should now empty the trash")
         nota.empty_trash()
         sys.exit(0)
-    
+
     if args.edit:
         nota.fyi("should now edit note %s" % args.edit)
         nota.edit(args.edit)
@@ -484,7 +484,7 @@ def nota():
             del n["noteId"] # not useful in any other context
             print(json.dumps(n))
         sys.exit(0)
-     
+
     if args.trash:
         nota.fyi("should show trash contents now")
         #print("args.keywords %s" % args.keywords)
@@ -509,7 +509,7 @@ def nota():
             print("]", end="\n")
         sys.exit(0)
 
-    
+
     if args.add:
         if args.hash:
             nota.error("cannot specify a hash-code if the -a argument is given")
@@ -738,4 +738,4 @@ def nota():
             print(hint.replace(' "',' \'\033[1m').replace('"', '\033[0m\''))
         else:
             print(hint)
-    
+
