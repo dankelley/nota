@@ -1,98 +1,25 @@
-<!DOCTYPE html>
-<!--[if lt IE 7 ]><html class="ie ie6" lang="en"> <![endif]-->
-<!--[if IE 7 ]><html class="ie ie7" lang="en"> <![endif]-->
-<!--[if IE 8 ]><html class="ie ie8" lang="en"> <![endif]-->
-<!--[if (gte IE 9)|!(IE)]><!--><html lang="en"> <!--<![endif]-->
-<head>
+---
+permalink: installation.html
+layout: default
+title: Installation
+submenu: installation
+---
 
-<!-- the css and html are based on https://github.com/dhg/Skeleton -->
-
-<!-- Basic Page Needs
-  ================================================== -->
-<meta charset="utf-8">
-<title>nota: an application for textual notes</title>
-<meta name="description" content="nota: an application for textual notes">
-<meta name="author" content="Dan Kelley">
-
-<!--[if lt IE 9]>
-                <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-        <![endif]-->
-
-<!-- Mobile Specific Metas
-  ================================================== -->
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-
-<!-- CSS
-  ================================================== -->
-
-<link rel="stylesheet" href="/css/base.css">
-<link rel="stylesheet" href="/css/skeleton.css">
-<link rel="stylesheet" href="/css/layout.css">
-<link rel="stylesheet" href="/css/syntax.css">
-<!-- <link rel="stylesheet" href="/css/style.css"> -->
-
-<!-- Favicon
-        ================================================== -->
-<link rel="shortcut icon" href="src/images/favicon.ico">
-
-</head>
-
-<body>
-<div class="container">
-    <div class="three columns sidebar">
-        <nav>
-        <img src="/css/nota-logo-1.png" alt="NOTA">
-            <ul>
-                <li><a href="/nota/index.html">Overview</a></li>
-                <li><a href="/nota/installation.html">Installation</a></li>
-                <li><a href="/nota/usage.html">Usage</a></li>
-                <li><a href="/nota/development.html">Development</a></li>
-                <li><a href="/nota/bugs.html">Bugs</a></li>
-            </ul>
-        </nav>
-        &nbsp;
-    </div>
-    <div class="twelve columns offset-by-one content">
-        <header>
-            <h1>Installation</h1>
-            <!--<a href="http://twitter.com/share" class="twitter-share-button" data-text="Skeleton - A Beautiful Boilerplate for Responsive, Mobile-Friendly Development" data-count="horizontal" data-via="dhg">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>-->
-        </header>
-        <hr class="large" />
-
-<div id="content">
-    <p>The stable version is stored on <a href="https://pypi.python.org/pypi/nota">
-    pypy.python.org</a>, and can be installed with the <code>pip</code> system
+<p>The stable version is stored on <a href="https://pypi.python.org/pypi/nota">
+    pypy.python.org</a>, and can be installed with the <code>pip3</code> system
 command. Most systems will already have python installed, but it may be
-necessary to install <code>pip</code> also. Do that with</p>
+necessary to install <code>pip3</code> also. Do that with</p>
 <pre>
-sudo easy_install pip
+sudo easy_install pip3
 </pre>
-<p>in a unix shell. This must only be done once; after that, the <code>pip</code> command will be available for installing any python package on pypi.</p>
+<p>in a unix shell. This must only be done once; after that, the <code>pip3</code> command will be available for installing any python package on pypi.</p>
 
 <p>Now that the OS is set up, it's time to install <code>nota</code> itself. This is done with</p>
 <pre>
-sudo pip install nota
+sudo pip3 install nota
 </pre>
 <p>or, if you are upgrading to a new version, use</p>
 <pre>
-sudo pip install nota --upgrade
+sudo pip3 install nota --upgrade
 </pre>
-
-
-</div>
-
-        <!-- END {the actual content} -->
-
-
-    </div><!-- container -->
-</div><!-- container -->
-
-<p class="footnote">This website is written in <a
-    href="http://jekyllrb.com">Jekyll</a>, and the source is available on <a
-    href="https://github.com/dankelley/nota/tree/gh-pages">GitHub</a>.</p>
-
-<div class="resize"></div>
-
-</body>
-</html>
 
