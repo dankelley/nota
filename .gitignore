@@ -4,3 +4,5 @@ nota.egg-info
 nota
 *.swp
 tests
+*~
+.DS_Store
