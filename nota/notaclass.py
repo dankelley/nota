@@ -1,5 +1,5 @@
-#!/usr/bin/python
-from __future__ import print_function
+#!/usr/bin/python3
+
 import sys
 import sqlite3 as sqlite
 import datetime
@@ -14,8 +14,8 @@ import random
 import string
 from math import trunc
 
-reload(sys)
-sys.setdefaultencoding('utf8')
+#reload(sys)
+#sys.setdefaultencoding('utf8')
 
 class Nota:
     def __init__(self, db="nota.db", authorId=1, debug=0, quiet=False):
@@ -27,7 +27,7 @@ class Nota:
         made.
 
         '''
-        self.debug = debug 
+        self.debug = debug
         self.quiet = quiet
         self.db = db
         self.fyi("Database '%s' (before path expansion)." % self.db)
@@ -142,7 +142,7 @@ class Nota:
                 except:
                     self.error("Problem adding a 'middle' column to the 'version' table.")
             if StrictVersion(dbversion) < StrictVersion("0.7"):
-                # Books were added in 0.7.0, so the in_book column of the note table must be 
+                # Books were added in 0.7.0, so the in_book column of the note table must be
                 # removed and a new column, 'book', added. This requires copying the whole
                 # 'note' table, because sqlite3 doesn't permit such modifications (!).
                 # The new table will have new noteId values, so we also must alter the
@@ -206,7 +206,7 @@ class Nota:
 
             if StrictVersion(dbversion) < StrictVersion("0.8"):
                 # Attachments were added in 0.8.0, so we need a table to cross-reference
-                # each attachment to a storage location, plus a table linking notes and 
+                # each attachment to a storage location, plus a table linking notes and
                 # attachments.
                 print("Updating database %s to version 0.8.x ..." % db)
                 ## Attachments
@@ -331,10 +331,10 @@ class Nota:
     def change_book(self, hash, book):
         b = self.book_index(book)
         if len(b) > 1:
-            self.error("Abbreviation '%s' matches to %d books: %s" % (book, len(b), b.keys()))
+            self.error("Abbreviation '%s' matches to %d books: %s" % (book, len(b), list(b.keys())))
         if len(b) == 0:
             self.error("No book '%s'" % book)
-        book_number = int(b.values()[0])
+        book_number = int(list(b.values())[0])
         note = self.find_by_hash(hash)
         if len(note) > 1:
             self.error("The hash '%s' matches more than one note; try giving more letters" % hash)
@@ -388,7 +388,7 @@ class Nota:
         ''' Add a note to the database.  The title should be short (perhaps 3
         to 7 words).  The keywords are comma-separated, and should be similar
         in style to others in the database.  The content may be of any length. The
-        attachments are comma-separated, and must be full pathnames to files 
+        attachments are comma-separated, and must be full pathnames to files
         that exist.'''
         #self.debug = 1
         try:
@@ -442,7 +442,7 @@ class Nota:
             self.con.execute("INSERT INTO notekeyword(noteId, keywordID) VALUES(?, ?)", [noteId, keywordId])
         # Handle attachments, which must be existing files.
         attachments = [key.lstrip().rstrip() for key in attachments.split(',')]
-        attachments = filter(None, attachments) # remove blanks
+        attachments = [_f for _f in attachments if _f] # remove blanks
         for attachment in attachments:
             self.fyi("processing attachment '%s'" % attachment)
             if not os.path.isfile(attachment):
@@ -530,7 +530,7 @@ class Nota:
                 self.error("error hooking up keyword '%s'" % keyword)
         self.con.commit()
 
-    
+
     def list_keywords(self):
         ''' Return the list of keywords '''
         names = []
@@ -914,7 +914,7 @@ class Nota:
                     "date":note[2], "modified":note[7], "hash":note[8], "book":note[9]})
         return rval
 
-    
+
     def find_recent(self, nrecent=4):
         '''Find recent non-trashed notes'''
         try:
@@ -1029,7 +1029,7 @@ class Nota:
             booklist = booklist + str(i) + " (" + books[i] + ") "
         if book < 0:
             book = 1
-        initial_message = u'''Instructions: fill in material following the ">" symbol.  (Items following
+        initial_message = '''Instructions: fill in material following the ">" symbol.  (Items following
 the "?>" symbol are optional.  The title and keywords must each fit on one
 line. Use commas to separate keywords.  The content must start *below*
 the line with the dots.
@@ -1056,7 +1056,7 @@ CONTENT...
             self.error('cannot create tempfile')
         file.write(initial_message.encode('utf-8'))
         file.flush()
-        EDITOR = os.environ.get('EDITOR','vi') 
+        EDITOR = os.environ.get('EDITOR','vi')
         try:
             call([EDITOR, file.name])
         except:

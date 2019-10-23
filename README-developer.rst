@@ -1,10 +1,15 @@
 Developer notes
 ===============
 
+References
+----------
+
+1. https://packaging.python.org/tutorials/packaging-projects/ provides information on packaging.
+
 Setup
 -----
 
-Of course, you need python to be installed.
+Of course, you need python3 to be installed.
 
 Then, make sure that ``pip`` is installed; if not, do
 
@@ -29,19 +34,20 @@ Several manual steps are required.
 2. Ensure that `README.rst` has an entry for the version.
 3. Ensure that the version numbers in the present document are updated, so that
    cut/paste will work for local installations.
-4. Update the `self.appversion =` line in `nota/notaclass.py` for the new version. Look 
+4. Update the `self.appversion =` line in `nota/notaclass.py` for the new version. Look
    carefully at the nearby code, if changes have been made to the database.
-5. Remove old files from the `dist/` directory.   
+5. Remove old files from the `dist/` directory.
 6. Perform the steps listed under "Packaging" and "Installing package locally" below.
-7. Use it for a while, only updating to pypi (see "Installing package on pypi.python" below) 
+7. Use it for a while, only updating to pypi (see "Installing package on pypi.python" below)
    when it is clear that this new version is good.
 
 Testing before packaging
 ------------------------
 
+
 ::
 
-    PYTHONPATH=/Users/kelley/git/nota python -m nota
+    PYTHONPATH=/Users/kelley/git/nota python3 -m nota
 
 Packaging
 ---------
@@ -51,9 +57,9 @@ it:
 
 ::
 
-    python setup.py test
-    python setup.py sdist
-    python setup.py bdist_wheel --universal
+    python3 setup.py test
+    python3 setup.py sdist
+    python3 setup.py bdist_wheel --universal
 
 (Update 2019-May-24: the bdist method fails for me.) After this, the ``dist``
 directory will contain some packages.
@@ -65,7 +71,7 @@ To install a local test version, do e.g. (with the up-to-date version number, if
 
 ::
 
-    sudo -H pip install dist/nota-0.8.1.tar.gz --upgrade
+    sudo -H pip3 install dist/nota-0.8.3.tar.gz --upgrade
 
 
 Installing package on pypi.python
@@ -94,5 +100,5 @@ The developer uses the following, so that ``n`` runs the packaged version and
 ::
 
     alias n=nota
-    alias nn='PYTHONPATH=~/git/nota python -m nota'
+    alias nn='PYTHONPATH=~/git/nota python3 -m nota'
 
