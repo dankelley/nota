@@ -1,12 +1,11 @@
-.. image:: https://travis-ci.org/dankelley/nota.svg?branch=master
-    :target: https://travis-ci.org/dankelley/nota
-
 ``nota`` is an open-source application for organizing textual notes and
 associated meta-information that may be used for later retrieval.  See
 http://dankelley.github.io/nota for documentation on installing and using
 ``nota``.
 
 **Version history**
+
+* 0.8.6: remove string-decode bug (from python3 switch); try pypi description
 
 * 0.8.1: switch from python2 to python3
 

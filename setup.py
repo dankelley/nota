@@ -1,8 +1,14 @@
-from setuptools import setup
+import setuptools
 
-setup(name='nota',
-      version='0.8.4',
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+
+setuptools.setup(name='nota',
+      version='0.8.6',
       description='Text-based note taker',
+      long_description=long_description,
+      long_description_content_type="text/markdown",
       url='https://github.com/dankelley/nota',
       author='Dan Kelley',
       author_email='kelley.dan@gmail.com',
