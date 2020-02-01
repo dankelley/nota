@@ -512,7 +512,6 @@ class Nota:
             self.error("ERROR: cannot unhook previous keywords")
         # Now, hook up new the entries, one by one.
         for keyword in keywords:
-            keyword = keyword.decode('utf-8')
             self.fyi(" inserting keyword:", keyword)
             # Make sure the keyword table contains the word in question.
             keywordId = self.con.execute("SELECT keywordId FROM keyword WHERE keyword = ?;", [keyword]).fetchone()
