@@ -15,13 +15,13 @@ Then, make sure that ``pip`` is installed; if not, do
 
 ::
 
-    easy_install pip
+    easy_install-3.8 pip
 
 to install it. Next, install ``wheel``
 
 ::
 
-    pip install wheel
+    pip3.8 install wheel
 
 Note: the steps listed above need only be done once.
 
@@ -31,7 +31,7 @@ Increasing the version number
 Several manual steps are required.
 
 1. Alter the 'version=' line in `setup.py`.
-2. Ensure that `README.rst` has an entry for the version.
+2. Ensure that `README.md` has an entry for the version.
 3. Ensure that the version numbers in the present document are updated, so that
    cut/paste will work for local installations.
 4. Update the `self.appversion =` line in `nota/notaclass.py` for the new version. Look
@@ -71,7 +71,7 @@ To install a local test version, do e.g. (with the up-to-date version number, if
 
 ::
 
-    sudo -H pip3 install dist/nota-0.8.6.tar.gz --upgrade
+    sudo -H pip3 install dist/nota-0.8.7.tar.gz --upgrade
 
 
 Installing package on pypi.python
@@ -82,6 +82,7 @@ then do:
 
 ::
 
+    pip3.8 install twine
     twine upload dist/*
 
 

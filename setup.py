@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 
 setuptools.setup(name='nota',
-      version='0.8.6',
+      version='0.8.7',
       description='Text-based note taker',
       long_description=long_description,
       long_description_content_type="text/markdown",

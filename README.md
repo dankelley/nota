@@ -5,6 +5,8 @@ http://dankelley.github.io/nota for documentation on installing and using
 
 **Version history**
 
+* 0.8.7: improve time formatting
+
 * 0.8.6: remove string-decode bug (from python3 switch); try pypi description
 
 * 0.8.1: switch from python2 to python3

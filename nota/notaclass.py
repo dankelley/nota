@@ -52,7 +52,7 @@ class Nota:
         self.cur = con.cursor()
         self.authorId = authorId
         ## 0.3: add note.modified column
-        self.appversion = [0, 8, 0] # db schema changes always yield first or second digit increment
+        self.appversion = [0, 8, 7] # db schema changes always yield first or second digit increment
         self.dbversion = self.appversion
         if mustInitialize:
             print("Initializing database; run 'nota' again to use it.")
@@ -1123,16 +1123,16 @@ CONTENT...
         elif diff.days > 7*2:
             return '{} weeks ago'.format(trunc(0.5+diff.days/7))
         elif diff.days > 1 and diff.days < 14:
-            return '{} days ago'.format(diff.days)
+            return '{} days ago'.format(trunc(diff.days))
         elif s <= 1:
             return 'just now'
         elif s < 60:
-            return '{} seconds ago'.format(s)
+            return '{} seconds ago'.format(trunc(s))
         elif s < 120:
-            return '1 minute ago'
+            return 'about a minute ago'
         elif s < 3600:
-            return '{} minutes ago'.format(s/60)
+            return '{} minutes ago'.format(trunc(s/60))
         elif s < 7200:
-            return '1 hour ago'
+            return 'about an hour ago'
         else:
-            return '{} hours ago'.format(s/3600)
+            return '{} hours ago'.format(trunc(s/3600))
