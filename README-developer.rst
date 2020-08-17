@@ -61,8 +61,9 @@ it:
     python3 setup.py sdist
     python3 setup.py bdist_wheel --universal
 
-(Update 2019-May-24: the bdist method fails for me.) After this, the ``dist``
-directory will contain some packages.
+(Update 2019-May-24: the bdist method fails for me.) (Update 2020-Aug-17: the
+bdist method works for me, now.)  After this, the ``dist`` directory will
+contain some packages.
 
 Installing package locally
 --------------------------
