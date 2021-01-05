@@ -725,7 +725,8 @@ def nota():
         t = nota.trash_length()[0] # FIXME: should just return the [0]
         t = trash_count
         if t == 0:
-            print("The trash has no notes matching this search.")
+            if nfound == 0:
+                print("The trash has no notes matching this search.")
         elif t == 1:
             print("The trash has 1 note matching ths search.")
         else:
