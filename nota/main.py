@@ -14,6 +14,7 @@ from time import strptime
 import subprocess
 
 indent = "  "
+showRandomHint = False
 
 def nota():
     hints = [
@@ -731,12 +732,13 @@ def nota():
             print("The trash has 1 note matching ths search.")
         else:
             print("The trash has %s notes matching this search." % t)
-        print("Hint:", end=" ")
-        hint = random_hint()
-        if args.markdown:
-            print(hint.replace(' "', ' `').replace('"', '`'))
-        elif use_color:
-            print(hint.replace(' "',' \'\033[1m').replace('"', '\033[0m\''))
-        else:
-            print(hint)
+        if showRandomHint:
+            print("Hint:", end=" ")
+            hint = random_hint()
+            if args.markdown:
+                print(hint.replace(' "', ' `').replace('"', '`'))
+            elif use_color:
+                print(hint.replace(' "',' \'\033[1m').replace('"', '\033[0m\''))
+            else:
+                print(hint)
 
