@@ -200,6 +200,7 @@ def nota():
     parser.add_argument("-c", "--content", type=str, default="", help="string with note contents", metavar="C")
     parser.add_argument("--extract", action="store_true", dest="extract_attachments", default=False, help="Extract attachments to a temporary directory")
     #parser.add_argument("-r", "--recent", action="store_true", dest="recent_notes", default=False, help="show recent notes")
+    parser.add_argument("-p", "--pipe", action="store_true", dest="pipe", default=False, help="output is to a pipe")
     parser.add_argument("-r", "--recent", nargs='?', type=int, action="store", const=-2, default=-1, dest="recent_notes", help="show N recent notes (defaults to N=4)", metavar="N")
     parser.add_argument("--create-book", type=str, default="", dest="create_book", help="create a book named 'B'", metavar="B")
     parser.add_argument("--change-book", nargs=2, type=str, default="", dest="change_book", help="move note with hash 'H' to book 'B'", metavar=("H", "B"))
@@ -540,9 +541,9 @@ def nota():
         found = nota.find_by_keyword(keywords=args.keywords, book=book)
         trash_count = len(nota.find_by_keyword(keywords=args.keywords, book=0))
     elif args.recent_notes:
-        if args.recent_notes is -2:
+        if args.recent_notes == -2:
             found = nota.find_recent(nrecent=4)
-        elif args.recent_notes is -1:
+        elif args.recent_notes == -1:
             found = nota.find_by_hash(hash=args.hash, book=book)
             trash_count = len(nota.find_by_hash(hash=args.hash, book=0))
         else:
@@ -574,10 +575,11 @@ def nota():
         books_used.insert(0, 1)
     for b in books_used:
         if not args.count and not args.due:
-            if args.markdown:
-                print("Book: %s" % nota.book_name(b), end="\n\n")
-            else:
-                print(color.book + "Book: %s" % nota.book_name(b) + color.normal, end="\n")
+            if not args.pipe:
+                if args.markdown:
+                    print("Book: %s" % nota.book_name(b), end="\n\n")
+                else:
+                    print(color.book + "Book: %s" % nota.book_name(b) + color.normal, end="\n")
         for f in found:
             i = i + 1
             #print(f)
@@ -663,28 +665,27 @@ def nota():
                                     print(" ", contentLine.rstrip('\n'), '\n')
                         print('')
                     else:
-                        print(indent + color.hash + "%s " % f['hash'][0:7] + color.normal, end="")
-                        if show_id:
-                            print("(%s) " % f['noteId'], end="")
-                        print(color.title + "%s" % f['title'] + color.normal + " ", end="")
-                        #if len(books) > 1:
-                        #    print("(" + color.book + books[f['book']] + color.normal + ") ", end="")
-                        print("[", end="")
-                        nk = len(f['keywords'])
-                        for i in range(nk):
-                            print(color.keyword + f['keywords'][i] + color.normal, end="")
-                            if (i < nk-1):
-                                print(", ", end="")
-                        print("]", end="")
-                        #print(" %s" % f['date'], end=" ")
-                        print(" %s " % nota.age(f['date']), end="")
-                        try:
-                            if f['due'] and len(f['due']) > 0:
-                                print(due_str(f['due']))
-                            else:
+                        if not args.pipe:
+                            print(indent + color.hash + "%s " % f['hash'][0:7] + color.normal, end="")
+                            if show_id:
+                                print("(%s) " % f['noteId'], end="")
+                            print(color.title + "%s" % f['title'] + color.normal + " ", end="")
+                            print("[", end="")
+                            nk = len(f['keywords'])
+                            for i in range(nk):
+                                print(color.keyword + f['keywords'][i] + color.normal, end="")
+                                if (i < nk-1):
+                                    print(", ", end="")
+                            print("]", end="")
+                            #print(" %s" % f['date'], end=" ")
+                            print(" %s " % nota.age(f['date']), end="")
+                            try:
+                                if f['due'] and len(f['due']) > 0:
+                                    print(due_str(f['due']))
+                                else:
+                                    print('')
+                            except:
                                 print('')
-                        except:
-                            print('')
                         content = f['content'].replace('\\n', '\n')
                         for contentLine in content.split('\n'):
                             c = contentLine.rstrip('\n')

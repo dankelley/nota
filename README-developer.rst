@@ -70,7 +70,7 @@ To install a local test version, do e.g. (with the up-to-date version number, if
 
 ::
 
-    sudo -H pip3 install dist/nota-0.8.9.tar.gz --upgrade
+    sudo -H pip3 install dist/nota-0.8.10.tar.gz --upgrade
 
 
 Installing package on pypi.python
@@ -81,7 +81,7 @@ then do:
 
 ::
 
-    pip3.8 install twine
+    pip3.9 install twine
     twine upload dist/*
 
 
