@@ -324,7 +324,7 @@ def nota():
     if args.pager:
         pager = args.pager
     elif not pager:
-        pager = "less"
+        pager = "none"
     if not pager in ("less", "more", "none"):
         print("pager must be 'less', 'more' or 'none', not '" + pager + "'")
         exit(1)

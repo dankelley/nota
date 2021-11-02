@@ -5,6 +5,9 @@ http://dankelley.github.io/nota for documentation on installing and using
 
 **Version history**
 
+* 0.8.11: default pager to 'none'.  (I was seeing problems in macos. Perhaps
+  the arguments to 'less' have changed.)
+
 * 0.8.10: add -p argument (for piping output of single notes)
 
 * 0.8.9: only show hints if --hints arg is given
