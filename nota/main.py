@@ -657,12 +657,12 @@ def nota():
                         print('')
                         content = f['content'].replace('\\n', '\n')
                         for contentLine in content.split('\n'):
-                            c = contentLine.rstrip('\n')
-                            if len(c):
-                                if args.markdown:
-                                    print(contentLine.rstrip('\n'), '\n')
-                                else:
-                                    print(" ", contentLine.rstrip('\n'), '\n')
+                            print(contentLine.rstrip('\n'))
+                            #if len(c):
+                            #    if args.markdown:
+                            #        print(contentLine.rstrip('\n'), '\n')
+                            #    else:
+                            #        print(" ", contentLine.rstrip('\n'), '\n')
                         print('')
                     else:
                         if not args.pipe:
@@ -689,11 +689,12 @@ def nota():
                         content = f['content'].replace('\\n', '\n')
                         for contentLine in content.split('\n'):
                             c = contentLine.rstrip('\n')
-                            if len(c):
-                                if args.markdown:
-                                    print(contentLine.rstrip('\n'))
-                                else:
-                                    print(" ", contentLine.rstrip('\n'))
+                            print(" ", contentLine.rstrip('\n'))
+                            #> if len(c):
+                            #>     if args.markdown:
+                            #>         print(contentLine.rstrip('\n'))
+                            #>     else:
+                            #>         print(" ", contentLine.rstrip('\n'))
                         #print('')
                     #print("id=%d"%f['noteId'])
                     #print("attachmentIds:")
